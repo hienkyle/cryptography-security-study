@@ -1,0 +1,1425 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unit 4 · Finite Fields &amp; AES</title>
+<meta name="description" content="Study guide for Stallings, Cryptography and Network Security, Chapters 5–6: groups, rings, fields, GF(p), polynomial arithmetic, GF(2^n), AES structure, SubBytes, ShiftRows, MixColumns, AddRoundKey, key expansion, avalanche effect, implementation.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,700;1,400&family=Cousine:wght@400;700&family=Noto+Sans+Mono:wght@400;600&display=swap">
+<style>
+
+/* Layout: graph-paper study notebook — sticky contents rail on desktop, single column on phones; each section = one book section */
+:root{
+  --bg:#f3f5f4; --paper:#ffffff; --ink:#17201d; --muted:#56635e; --line:#d8dfdc;
+  --grid:rgba(23,32,29,.045);
+  --accent:#0b7a5f; --accent-soft:#dff1ea; --mark:#c98a00; --mark-soft:#fdf1d2;
+  --bad:#b4372f; --bad-soft:#f9e1de;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono:"Cousine", "Noto Sans Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101614; --paper:#161e1b; --ink:#e4ece8; --muted:#97a6a0; --line:#2b3733;
+  --grid:rgba(228,236,232,.04);
+  --accent:#4fd1a8; --accent-soft:#173a30; --mark:#f0b93a; --mark-soft:#3a2f12;
+  --bad:#f08c84; --bad-soft:#3c1d1a; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#101614; --paper:#161e1b; --ink:#e4ece8; --muted:#97a6a0; --line:#2b3733;
+  --grid:rgba(228,236,232,.04);
+  --accent:#4fd1a8; --accent-soft:#173a30; --mark:#f0b93a; --mark-soft:#3a2f12;
+  --bad:#f08c84; --bad-soft:#3c1d1a; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16.5px;line-height:1.6;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;padding-inline:16px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;padding-block:32px 80px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr);gap:16px}}
+
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;font-size:.88rem}
+nav.toc .lbl{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+nav.toc a{display:flex;gap:10px;padding:5px 8px;border-radius:6px;color:var(--ink);text-decoration:none}
+nav.toc a span{font-family:var(--mono);color:var(--accent);min-width:2.6em;font-size:.8rem;padding-top:2px}
+nav.toc a{position:relative;transition:background .15s,color .15s}
+nav.toc a:hover,nav.toc a:focus-visible{background:var(--accent-soft);outline:none}
+nav.toc a.active{background:var(--accent);color:var(--paper);font-weight:700}
+nav.toc a.active span{color:var(--paper)}
+nav.toc .bar{height:3px;background:var(--line);border-radius:2px;margin:12px 0 0;overflow:hidden}
+nav.toc .bar i{display:block;height:100%;width:0;background:var(--accent)}
+@media (max-width:900px){
+  nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border:1px solid var(--line);border-radius:0 0 10px 10px;padding:8px 10px;margin-inline:-4px}
+  nav.toc .lbl{display:none}
+  nav.toc ol{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth}
+  nav.toc ol::-webkit-scrollbar{display:none}
+  nav.toc li{flex:0 0 auto}
+  nav.toc a{white-space:nowrap;padding:5px 10px}
+  nav.toc .bar{margin-top:8px}
+  section.unit{scroll-margin-top:72px}}
+
+main{min-width:0}
+header.hero{padding-block:8px 28px;border-bottom:2px solid var(--ink);margin-bottom:28px}
+.eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,6vw,4rem);line-height:1;margin:.25em 0 .3em;letter-spacing:-.02em;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{max-width:65ch;color:var(--muted);margin:0}
+.formula-strip{font-family:var(--mono);font-size:.85rem;color:var(--muted);margin-top:18px;display:flex;flex-wrap:wrap;gap:8px 18px}
+.formula-strip b{color:var(--ink);font-weight:600}
+
+section.unit{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:28px clamp(18px,4vw,40px);margin-bottom:28px;scroll-margin-top:20px}
+h2{font-family:var(--display);font-weight:700;font-size:1.75rem;line-height:1.15;margin:0 0 4px;text-wrap:balance;display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
+h2 .sec{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:600}
+h3{font-family:var(--display);font-weight:700;font-size:1.2rem;margin:28px 0 8px}
+.why{color:var(--muted);font-size:.95rem;margin:0 0 18px;max-width:70ch}
+p,li{max-width:70ch}
+code,.m{font-family:var(--mono);font-size:.9em}
+.m{white-space:nowrap}
+.m.wr{white-space:normal;overflow-wrap:anywhere}
+.def,.ex,.warn{min-width:0;overflow-wrap:break-word}
+.gk{font-family:var(--mono);font-style:normal}
+
+.def{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+.def b:first-child{font-family:var(--display);font-weight:700}
+.eq{font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;overflow-x:auto;white-space:pre;line-height:1.7;font-size:.92rem}
+.eq .n{color:var(--muted)}
+.eqrows{display:grid;gap:8px;margin:12px 0}
+.eqrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px 14px;align-items:center;font-family:var(--mono);font-size:.92rem;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.eqrow .ex1{min-width:0;line-height:1.6}
+.eqrow .n{color:var(--muted)}
+.eqrow .tag{font-size:.75rem;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--accent-soft);color:var(--accent)}
+.tag.no{background:var(--bad-soft);color:var(--bad)}
+@media (max-width:560px){.eqrow{grid-template-columns:minmax(0,1fr) auto}.eqrow .ex1{grid-column:1 / -1}}
+.ex{border:1px dashed var(--mark);background:var(--mark-soft);border-radius:8px;padding:10px 16px;margin:12px 0}
+.ex .t{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mark);font-weight:600}
+.ex .eq{background:transparent;border:0;padding:4px 0;margin:2px 0}
+.warn{border-left:3px solid var(--bad);background:var(--bad-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+ul.props{padding-left:1.2em}
+ul.props li{margin:4px 0}
+
+/* tables */
+.tbl{overflow-x:auto;margin:12px 0}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.9rem}
+th,td{border:1px solid var(--line);padding:5px 9px;text-align:center}
+th{background:var(--bg);font-family:var(--mono);font-weight:600;font-size:.8rem}
+td.l,th.l{text-align:left}
+td.hi{background:var(--accent-soft);font-weight:700}
+td.one{background:var(--mark-soft);font-weight:700}
+td.dim{color:var(--muted)}
+
+/* interactive lab */
+.lab{border:1px solid var(--line);border-radius:12px;margin:18px 0;overflow:hidden}
+.lab-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--line)}
+.lab-h .t{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.lab-b{padding:14px}
+.controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:end;margin-bottom:12px}
+.controls label{display:grid;gap:3px;font-size:.78rem;font-family:var(--mono);color:var(--muted)}
+input[type=number]{width:9.5em;font:inherit;font-family:var(--mono);font-size:.95rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+button{font-family:var(--mono);font-size:.82rem;padding:7px 12px;border:1px solid var(--accent);background:var(--accent);color:var(--paper);border-radius:6px;cursor:pointer}
+button.ghost{background:transparent;color:var(--accent)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.out{font-family:var(--mono);font-size:.9rem}
+.out .res{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:600}
+.res.ok{background:var(--accent-soft);color:var(--accent)}
+.res.no{background:var(--bad-soft);color:var(--bad)}
+.err{color:var(--bad);font-family:var(--mono);font-size:.85rem}
+svg text{font-family:var(--mono)}
+.figure{margin:16px 0;overflow-x:auto}
+.figure svg{display:block;max-width:100%;height:auto}
+.cap{font-size:.82rem;color:var(--muted);margin-top:6px}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.grid2>*{min-width:0}
+
+/* totient grid */
+.cells{display:flex;flex-wrap:wrap;gap:4px}
+.cells span{font-family:var(--mono);font-size:.78rem;width:2.6em;text-align:center;padding:4px 0;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.cells span.on{background:var(--accent);border-color:var(--accent);color:var(--paper);font-weight:600}
+
+/* mapping row */
+.maprow{display:grid;grid-template-columns:7.5em repeat(8,minmax(2.2em,1fr));gap:4px;font-family:var(--mono);font-size:.85rem;min-width:420px}
+.maprow div{padding:5px 0;text-align:center;border-radius:4px}
+.maprow .h{text-align:left;color:var(--muted);font-size:.75rem;padding-top:7px}
+.maprow .c{background:var(--bg)}
+.maprow .dup{background:var(--bad-soft);color:var(--bad);font-weight:600}
+.maprow .uni{background:var(--accent-soft);color:var(--accent);font-weight:600}
+
+/* glossary & review */
+dl.gloss{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr);gap:0;margin:0}
+dl.gloss dt,dl.gloss dd{padding:9px 0;border-bottom:1px solid var(--line);margin:0}
+dl.gloss dt{font-family:var(--display);font-weight:700;padding-right:16px}
+@media (max-width:560px){dl.gloss{grid-template-columns:minmax(0,1fr)} dl.gloss dt{border-bottom:0;padding-bottom:0}}
+details{border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:8px 0;background:var(--paper)}
+summary{cursor:pointer;font-weight:700}
+details p{margin:.6em 0 0}
+.src{font-size:.85rem;color:var(--muted)}
+.src a,a{color:var(--accent)}
+footer{font-size:.82rem;color:var(--muted);margin-top:24px}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---- Sticky "All units" bar + back-to-top (shared across unit pages) ---- */
+:root{--topbar-h:52px}
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.topbar-in{max-width:1180px;margin:0 auto;height:var(--topbar-h);padding-inline:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.topbar a.home{flex:0 0 auto;font-family:var(--f-mono,var(--mono));font-size:.84rem;font-weight:600;color:var(--ink);text-decoration:none;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface,var(--paper))}
+.topbar a.home:hover{border-color:var(--accent);color:var(--accent)}
+.topbar a.home:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.topbar .where{min-width:0;font-family:var(--f-mono,var(--mono));font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.to-top{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono,var(--mono));font-size:.82rem;font-weight:600;padding:10px 14px;border:1px solid var(--accent);border-radius:999px;background:var(--accent);color:var(--surface,var(--paper));cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.18);opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .2s,transform .2s,visibility 0s linear .2s}
+.to-top.show{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .2s}
+.to-top:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.to-top{transition:none}}
+
+.topbar{margin-inline:-16px}
+.topbar-in{padding-inline:16px}
+nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h) + 20px)}
+section.unit{scroll-margin-top:calc(20px + var(--topbar-h))}
+@media (max-width:900px){nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h))}section.unit{scroll-margin-top:calc(72px + var(--topbar-h))}}
+
+input[type=text],textarea,select{font:inherit;font-family:var(--mono);font-size:.92rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);max-width:100%}
+input[type=text]{width:18em}
+input.wide{width:min(34em,100%)}
+textarea{width:100%;min-height:4.6em;resize:vertical}
+input[type=range]{accent-color:var(--accent)}
+.controls label.grow{flex:1 1 280px}
+.controls label.grow input,.controls label.grow textarea{width:100%}
+.mono{font-family:var(--mono)}
+.big{font-family:var(--mono);font-size:1.05rem;letter-spacing:.06em;overflow-wrap:anywhere}
+.hlrow td{background:var(--accent-soft);font-weight:700;color:var(--accent)}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:12px 0}
+.cmp>div{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--paper);min-width:0}
+.cmp h4{margin:0 0 6px;font-family:var(--display);font-size:1.02rem}
+.cmp p{margin:0;font-size:.95rem}
+.diffbit{color:var(--bad);font-weight:700}
+@media (max-width:560px){input[type=text]{width:100%}}
+/* ---- Unit 4 additions ---- */
+.st{display:inline-grid;grid-template-columns:repeat(4,2.35em);gap:3px;font-family:var(--mono);font-size:.86rem}
+.st div{height:2.1em;display:grid;place-items:center;border:1px solid var(--line);border-radius:5px;background:var(--bg)}
+.st div.chg{background:var(--mark-soft);border-color:var(--mark);color:var(--ink);font-weight:600}
+.st div.key{background:var(--accent-soft);border-color:var(--accent)}
+.stwrap{display:flex;flex-wrap:wrap;gap:14px 18px;align-items:flex-start}
+.stbox{min-width:0}
+.stbox .h{font-family:var(--mono);font-size:.72rem;color:var(--muted);margin-bottom:4px;letter-spacing:.04em}
+.stbox .op{font-family:var(--mono);color:var(--muted);align-self:center;padding-top:20px}
+.ladder td.y{color:var(--accent);font-weight:700}
+.ladder td.n{color:var(--line)}
+.ladder td.new{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.ladder th.l,.ladder td.l{white-space:nowrap}
+.sbox{border-collapse:collapse;font-family:var(--mono);font-size:.74rem}
+.sbox td,.sbox th{width:2.15em;height:1.9em;padding:0;border:1px solid var(--line)}
+.sbox td{cursor:pointer;transition:background .12s}
+.sbox td:hover{background:var(--accent-soft)}
+.sbox td.sel{background:var(--mark);color:var(--paper);font-weight:700}
+.sbox th.rh,.sbox th.ch{background:var(--bg)}
+.sbox th.hi{background:var(--mark-soft);color:var(--mark)}
+.seg{display:inline-flex;border:1px solid var(--accent);border-radius:6px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent;color:var(--accent)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--paper)}
+.bitrow{display:grid;width:max-content;max-width:100%;grid-template-columns:auto repeat(8,1.9em);gap:2px;font-family:var(--mono);font-size:.82rem;align-items:center}
+.bitrow span{text-align:center;padding:2px 0;border-radius:3px}
+.bitrow .lb{text-align:left;color:var(--muted);font-size:.74rem;padding-right:8px}
+.bitrow .b1{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.bitrow .b0{background:var(--bg);color:var(--muted)}
+.sr-stage{position:relative;width:calc(4*3em + 3*6px);height:calc(4*2.4em + 3*6px);margin:8px 0}
+.sr-cell{position:absolute;width:3em;height:2.4em;display:grid;place-items:center;font-family:var(--mono);font-size:.82rem;font-weight:600;border-radius:6px;color:#fff;transition:transform .7s cubic-bezier(.5,.1,.2,1)}
+.sr-cell.c0{background:#0b7a5f}.sr-cell.c1{background:#2f6fb5}.sr-cell.c2{background:#b5652f}.sr-cell.c3{background:#8a4fb0}
+.fillgrid{display:inline-grid;grid-template-columns:repeat(4,2.9em);gap:3px;font-family:var(--mono);font-size:.78rem}
+.fillgrid div{height:2.2em;display:grid;place-items:center;border:1px dashed var(--line);border-radius:5px;color:transparent;transition:background .25s,color .25s}
+.fillgrid div.on{background:var(--accent-soft);border-style:solid;border-color:var(--accent);color:var(--accent);font-weight:600}
+.pseudo{font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;overflow-x:auto;white-space:pre;line-height:1.55;font-size:.86rem}
+.pseudo .kw{color:var(--accent);font-weight:600}
+.pseudo .cm{color:var(--muted)}
+.xt td.used{background:var(--accent-soft);font-weight:700}
+.xt td.red{color:var(--bad);font-weight:600}
+.xt tr.hide{opacity:.15}
+.xt tr{transition:opacity .35s}
+.gftab td{font-family:var(--mono);font-size:.8rem;padding:3px 7px}
+.gftab td.one{background:var(--mark-soft);font-weight:700}
+.chip{display:inline-block;font-family:var(--mono);font-size:.78rem;padding:2px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--line);margin:2px}
+.chip.ok{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.chip.no{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.cnt td{font-family:var(--mono)}
+.kx td{font-family:var(--mono);font-size:.82rem;white-space:nowrap}
+.kx tr.gr td{background:var(--mark-soft)}
+.kx td.rk{color:var(--accent);font-weight:600}
+input[type=text].hex{width:23em}
+input[type=text].byte{width:4.2em}
+@media (max-width:560px){input[type=text].hex{width:100%}.sbox{font-size:.62rem}.sbox td,.sbox th{width:1.75em;height:1.7em}}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-in"><a class="home" href="./">← All units</a><span class="where">Unit 4 · Finite Fields &amp; AES</span></div></header>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <div class="lbl">Contents</div>
+  <ol>
+    <li><a href="#s51"><span>5.1</span>Groups</a></li>
+    <li><a href="#s52"><span>5.2</span>Rings</a></li>
+    <li><a href="#s53"><span>5.3</span>Fields</a></li>
+    <li><a href="#s54"><span>5.4</span>GF(p)</a></li>
+    <li><a href="#s55"><span>5.5</span>Polynomial arithmetic</a></li>
+    <li><a href="#s56"><span>5.6</span>GF(2ⁿ)</a></li>
+    <li><a href="#s61"><span>6.1</span>Field arithmetic in AES</a></li>
+    <li><a href="#s62"><span>6.2</span>AES structure</a></li>
+    <li><a href="#s63"><span>6.3</span>Transformations</a></li>
+    <li><a href="#s64"><span>6.4</span>Key expansion</a></li>
+    <li><a href="#s65"><span>6.5</span>AES example</a></li>
+    <li><a href="#s66"><span>6.6</span>Implementation</a></li>
+    <li><a href="#s6a"><span>6A</span>Polynomials over GF(2⁸)</a></li>
+    <li><a href="#terms">Key terms</a></li>
+    <li><a href="#review">Review</a></li>
+    <li><a href="#res"><span>Ref</span>Sources</a></li>
+  </ol>
+  <div class="bar" aria-hidden="true"><i id="toc-progress"></i></div>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Unit 4 · Stallings, Chapters 5–6</div>
+  <h1>Finite Fields <em>&amp; AES</em></h1>
+  <p class="lede">Chapter 5 builds up the algebra AES needs: groups, rings and fields, then the finite fields GF(p) and GF(2ⁿ), where every byte has a sum, a product and (if nonzero) an inverse. Chapter 6 uses arithmetic in GF(2⁸) to build the Advanced Encryption Standard: four round transformations, a key expansion, and fast implementations.</p>
+  <div class="formula-strip">
+    <span><b>m(x) = x⁸ + x⁴ + x³ + x + 1</b></span>
+    <span><b>a + b = a ⊕ b</b></span>
+    <span><b>{02}·a = (a ≪ 1) ⊕ [a₇]{1B}</b></span>
+    <span><b>w[i] = w[i−4] ⊕ temp</b></span>
+    <span><b>AES-128: 10 rounds</b></span>
+  </div>
+</header>
+
+<!-- ============ 5.1 ============ -->
+<section class="unit" id="s51">
+  <h2><span class="sec">5.1</span>Groups</h2>
+  <p class="why">Groups, rings and fields are the basic structures of abstract algebra: sets whose elements can be combined to give another element of the same set, under fixed rules. Each structure in this chapter adds rules to the one before (Figure 5.1).</p>
+
+  <div class="figure" aria-label="Nested algebraic structures">
+    <svg viewBox="0 0 720 300" role="img" aria-labelledby="nest-t">
+      <title id="nest-t">Nested sets: groups contain abelian groups, which contain rings, which contain commutative rings, integral domains, fields and finally finite fields</title>
+      <g font-size="12">
+        <rect x="6" y="6" width="708" height="288" rx="16" fill="var(--paper)" stroke="var(--line)"/>
+        <text x="22" y="28" fill="var(--ink)" font-weight="600">Groups</text><text x="78" y="28" fill="var(--muted)" font-size="10.5">A1–A4</text>
+        <rect x="26" y="40" width="668" height="244" rx="14" fill="var(--bg)" stroke="var(--line)"/>
+        <text x="42" y="61" fill="var(--ink)" font-weight="600">Abelian groups</text><text x="148" y="61" fill="var(--muted)" font-size="10.5">+ A5 commutative</text>
+        <rect x="46" y="74" width="628" height="200" rx="12" fill="var(--accent-soft)" stroke="var(--accent)" stroke-opacity=".35"/>
+        <text x="62" y="95" fill="var(--ink)" font-weight="600">Rings</text><text x="104" y="95" fill="var(--muted)" font-size="10.5">+ second operation: M1 closure, M2 associative, M3 distributive</text>
+        <rect x="66" y="108" width="588" height="156" rx="10" fill="var(--paper)" stroke="var(--accent)" stroke-opacity=".5"/>
+        <text x="82" y="129" fill="var(--ink)" font-weight="600">Commutative rings</text><text x="212" y="129" fill="var(--muted)" font-size="10.5">+ M4</text>
+        <rect x="86" y="142" width="548" height="112" rx="9" fill="var(--accent-soft)" stroke="var(--accent)" stroke-opacity=".6"/>
+        <text x="102" y="163" fill="var(--ink)" font-weight="600">Integral domains</text><text x="222" y="163" fill="var(--muted)" font-size="10.5">+ M5 identity 1, M6 no zero divisors</text>
+        <rect x="106" y="176" width="508" height="68" rx="8" fill="var(--paper)" stroke="var(--accent)"/>
+        <text x="122" y="197" fill="var(--ink)" font-weight="600">Fields</text><text x="168" y="197" fill="var(--muted)" font-size="10.5">+ M7 multiplicative inverse</text>
+        <rect x="346" y="186" width="250" height="48" rx="8" fill="var(--accent)"/>
+        <text x="471" y="207" fill="var(--paper)" text-anchor="middle" font-weight="600">Finite fields</text>
+        <text x="471" y="223" fill="var(--paper)" text-anchor="middle" font-size="10.5">GF(p), GF(2ⁿ) — used in AES</text>
+      </g>
+    </svg>
+    <div class="cap">Redrawn from Figure 5.1, labelled with the axioms each level adds (Figure 5.2).</div>
+  </div>
+
+  <h3>Group</h3>
+  <div class="def"><b>Binary operation.</b> A rule, written <span class="m">·</span>, that takes an ordered pair (a, b) of elements and gives one element <span class="m">a · b</span>. The symbol is generic: it may be addition, multiplication or some other operation.</div>
+  <div class="def"><b>Group {G, ·}.</b> A set G with a binary operation such that, for all a, b, c in G:
+    <ul class="props">
+      <li><b>(A1) Closure:</b> a · b is in G.</li>
+      <li><b>(A2) Associative:</b> a · (b · c) = (a · b) · c.</li>
+      <li><b>(A3) Identity element:</b> there is an e with a · e = e · a = a.</li>
+      <li><b>(A4) Inverse element:</b> each a has an a′ with a · a′ = a′ · a = e.</li>
+    </ul></div>
+  <div class="ex"><span class="t">Example · the permutation group Sₙ</span>
+    <p style="margin:.3em 0 0">A <b>permutation</b> of n symbols {1, …, n} is a one-to-one mapping of the set onto itself. Sₙ, the set of all of them under composition, is a group: composing two permutations gives a permutation (A1), composition is associative (A2), the “do nothing” permutation {1, 2, …, n} is the identity (A3), and every permutation can be undone (A4). Example: {3, 2, 1} · {1, 3, 2} = {2, 3, 1}.</p></div>
+  <ul class="props">
+    <li><b>Finite group</b>: finitely many elements. Its <b>order</b> is the number of elements. Otherwise it is an <b>infinite group</b>.</li>
+    <li><b>Abelian group</b>: also satisfies <b>(A5) Commutative</b>: a · b = b · a. Examples: the integers under +; nonzero reals under ×. Sₙ is not abelian for n &gt; 2.</li>
+    <li>When the operation is addition, the identity is written 0, the inverse of a is −a, and subtraction means <span class="m">a − b = a + (−b)</span>.</li>
+  </ul>
+
+  <h3>Cyclic group</h3>
+  <div class="def"><b>Exponentiation in a group.</b> Repeated application of the operation: <span class="m">a³ = a · a · a</span>, <span class="m">a⁰ = e</span>, and <span class="m">a⁻ⁿ = (a′)ⁿ</span>.</div>
+  <div class="def"><b>Cyclic group.</b> Every element is a power <span class="m">aᵏ</span> (k an integer) of one fixed element a. That a <b>generates</b> G and is called a <b>generator</b>. A cyclic group is always abelian and may be finite or infinite. Example: the integers under + are generated by 1 (powers are read additively: n is the nth “power” of 1).</div>
+</section>
+
+<!-- ============ 5.2 ============ -->
+<section class="unit" id="s52">
+  <h2><span class="sec">5.2</span>Rings</h2>
+  <p class="why">A ring adds a second operation, multiplication. In a ring you can add, subtract and multiply without leaving the set — but not necessarily divide.</p>
+  <div class="def"><b>Ring {R, +, ×}.</b> A set with two binary operations, addition and multiplication (usually written by juxtaposition, ab), such that for all a, b, c in R:
+    <ul class="props">
+      <li><b>(A1–A5)</b> R is an abelian group under addition (identity 0, inverse −a).</li>
+      <li><b>(M1) Closure under multiplication:</b> ab is in R.</li>
+      <li><b>(M2) Associativity of multiplication:</b> a(bc) = (ab)c.</li>
+      <li><b>(M3) Distributive laws:</b> a(b + c) = ab + ac and (a + b)c = ac + bc.</li>
+    </ul></div>
+  <div class="grid2">
+    <div class="def" style="margin:0"><b>Commutative ring.</b> A ring that also satisfies <b>(M4)</b> ab = ba.<br><span class="src">Examples: even integers; Zₙ = {0, …, n − 1} with arithmetic mod n. Not commutative: n × n real matrices (still a ring).</span></div>
+    <div class="def" style="margin:0"><b>Integral domain.</b> A commutative ring that also has <b>(M5)</b> a multiplicative identity 1 (a1 = 1a = a) and <b>(M6)</b> no zero divisors: if ab = 0 then a = 0 or b = 0.<br><span class="src">Example: the integers.</span></div>
+  </div>
+</section>
+
+<!-- ============ 5.3 ============ -->
+<section class="unit" id="s53">
+  <h2><span class="sec">5.3</span>Fields</h2>
+  <p class="why">A field is a set in which you can add, subtract, multiply <i>and divide</i> without leaving the set. Division is defined as <span class="m">a / b = a(b⁻¹)</span>.</p>
+  <div class="def"><b>Field {F, +, ×}.</b> An integral domain (A1–A5, M1–M6) that also satisfies <b>(M7) Multiplicative inverse:</b> every a except 0 has an <span class="m">a⁻¹</span> in F with <span class="m">aa⁻¹ = a⁻¹a = 1</span>.</div>
+  <p><b>Equivalent view:</b> F is a field if (1) it is an abelian group under addition, (2) its nonzero elements are an abelian group under multiplication, and (3) the distributive law holds.</p>
+  <p>Fields: rational, real and complex numbers. <b>Not</b> a field: the integers — only 1 and −1 have multiplicative inverses.</p>
+
+  <h3>The axiom ladder (Figure 5.2)</h3>
+  <div class="tbl"><table class="ladder">
+    <caption class="cap" style="caption-side:bottom;text-align:left">Which axioms each structure requires; shaded cells are the ones that level adds. Based on Figure 5.2.</caption>
+    <tr><th class="l">Axiom</th><th>Group</th><th>Abelian group</th><th>Ring</th><th>Commutative ring</th><th>Integral domain</th><th>Field</th></tr>
+    <tr><td class="l">A1–A4 closure, assoc., identity, inverse (+)</td><td class="new">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+    <tr><td class="l">A5 commutative (+)</td><td class="n">—</td><td class="new">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+    <tr><td class="l">M1–M3 closure, assoc., distributive (×)</td><td class="n">—</td><td class="n">—</td><td class="new">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+    <tr><td class="l">M4 commutative (×)</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="new">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+    <tr><td class="l">M5 identity 1, M6 no zero divisors</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="new">✓</td><td class="y">✓</td></tr>
+    <tr><td class="l">M7 multiplicative inverse</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="new">✓</td></tr>
+  </table></div>
+
+  <div class="lab" id="lab-zn">
+    <div class="lab-h"><span class="t">Try it · classify Zₙ (integers mod n)</span>
+      <span><button type="button" class="ghost" data-zn="8">n = 8</button> <button type="button" class="ghost" data-zn="7">n = 7</button></span></div>
+    <div class="lab-b">
+      <div class="controls"><label for="zn-n">n (2–16)<input type="number" id="zn-n" min="2" max="16" value="8"></label></div>
+      <div id="zn-out"></div>
+      <div class="grid2" id="zn-tabs"></div>
+      <div class="cap">Every axiom is checked by brute force over all elements. This reproduces Table 5.1: Z₈ is a commutative ring but not a field; Z₇ is a field.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5.4 ============ -->
+<section class="unit" id="s54">
+  <h2><span class="sec">5.4</span>Finite Fields of the Form GF(p)</h2>
+  <p class="why">Infinite fields are of little use in cryptography. The <b>order</b> of a finite field (its number of elements) must be a prime power <span class="m">pⁿ</span>, n a positive integer. The field of order pⁿ is written <b>GF(pⁿ)</b> (GF = Galois field).</p>
+  <div class="figure" aria-label="Types of fields">
+    <svg viewBox="0 0 680 146" role="img" aria-labelledby="tf-t">
+      <title id="tf-t">Fields split into infinite fields and finite fields; finite fields are GF(p) with p elements or GF(p to the n) with p to the n elements</title>
+      <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+      <g stroke="var(--muted)" stroke-width="1.4" fill="none" marker-end="url(#a2)"><path d="M340 38 L160 68"/><path d="M340 38 L500 68"/><path d="M500 94 L410 110"/><path d="M500 94 L590 110"/></g>
+      <g font-size="12" text-anchor="middle">
+        <rect x="290" y="10" width="100" height="28" rx="6" fill="var(--paper)" stroke="var(--ink)"/><text x="340" y="29" fill="var(--ink)">Fields</text>
+        <rect x="40" y="68" width="240" height="28" rx="6" fill="var(--bg)" stroke="var(--line)"/><text x="160" y="87" fill="var(--muted)">Infinite fields (ℚ, ℝ, ℂ)</text>
+        <rect x="425" y="68" width="150" height="26" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="500" y="86" fill="var(--ink)">Finite fields</text>
+        <rect x="320" y="110" width="180" height="28" rx="6" fill="var(--paper)" stroke="var(--accent)"/><text x="410" y="129" fill="var(--ink)">GF(p): p elements</text>
+        <rect x="510" y="110" width="166" height="28" rx="6" fill="var(--paper)" stroke="var(--accent)"/><text x="593" y="129" fill="var(--ink)">GF(pⁿ): pⁿ elements</text>
+      </g>
+    </svg>
+    <div class="cap">Redrawn from Figure 5.3. GF(p) (n = 1) has a different structure from n &gt; 1. Of the GF(pⁿ) fields, GF(2ⁿ) is the one cryptography cares about (5.6).</div>
+  </div>
+
+  <div class="def"><b>GF(p), p prime.</b> The set <span class="m">Zₚ = {0, 1, …, p − 1}</span> with addition and multiplication <b>mod p</b> — ordinary modular arithmetic (Unit 2).</div>
+  <p><b>Why it is a field.</b> Zₙ is always a commutative ring. An integer has a multiplicative inverse in Zₙ only if it is <b>relatively prime</b> to n (its only common positive factor with n is 1). When n = p is prime, every nonzero element is relatively prime to p, so M7 holds. Multiplying all of Zₚ by a nonzero w permutes the residues, so exactly one product is 1 — that partner is <span class="m">w⁻¹</span>. Consequently the cancellation law needs no extra condition:</p>
+  <div class="eq">if (a × b) ≡ (a × c) (mod p)  then  b ≡ c (mod p)      <span class="n">(5.1)</span></div>
+
+  <h3>The simplest finite field: GF(2)</h3>
+  <div class="grid2">
+    <div class="tbl"><table class="gftab"><tr><th>+</th><th>0</th><th>1</th></tr><tr><th>0</th><td>0</td><td>1</td></tr><tr><th>1</th><td>1</td><td>0</td></tr></table><div class="cap">Addition = XOR. 1 + 1 = 0, so each element is its own negative.</div></div>
+    <div class="tbl"><table class="gftab"><tr><th>×</th><th>0</th><th>1</th></tr><tr><th>0</th><td>0</td><td>0</td></tr><tr><th>1</th><td>0</td><td class="one">1</td></tr></table><div class="cap">Multiplication = logical AND. Inverses: −0 = 0, −1 = 1, 1⁻¹ = 1.</div></div>
+  </div>
+
+  <h3>Finding the multiplicative inverse in GF(p)</h3>
+  <p>Small p: read it off the multiplication table (find the 1 in row w). Large p: use the <b>extended Euclidean algorithm</b> (Unit 2), which solves</p>
+  <div class="eq">ax + by = d = gcd(a, b)                                 <span class="n">(2.7)</span></div>
+  <p>If gcd(a, b) = 1, then reducing mod a gives <span class="m">by ≡ 1 (mod a)</span>, so <span class="m">y = b⁻¹ mod a</span>. The same works in any Zₙ: if the algorithm returns d = 1, then y = b⁻¹.</p>
+  <div class="ex"><span class="t">Book example (Table 2.4)</span><div class="eq">a = 1759 (prime), b = 550  →  y = 355,  so 550⁻¹ mod 1759 = 355
+check: 550 × 355 = 195250 = 111 × 1759 + 1</div></div>
+  <div class="def"><b>Summary.</b> GF(p) has p elements; + and × are defined on the set; addition, subtraction, multiplication and division never leave the set; every nonzero element has an inverse, and division is multiplication by it.</div>
+</section>
+
+<!-- ============ 5.5 ============ -->
+<section class="unit" id="s55">
+  <h2><span class="sec">5.5</span>Polynomial Arithmetic</h2>
+  <p class="why">Fields with 2ⁿ elements are built from polynomials, so we first need polynomial arithmetic. There are three classes (Figure 5.4).</p>
+  <div class="figure" aria-label="Treatment of polynomials">
+    <svg viewBox="0 0 780 204" role="img" aria-labelledby="tp-t">
+      <title id="tp-t">A polynomial f of x is either evaluated at a value of x, or treated as an indeterminate. Indeterminate polynomials split into ordinary arithmetic, coefficients mod p, and coefficients mod p with polynomials mod m of x.</title>
+      <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+      <g stroke="var(--muted)" stroke-width="1.4" fill="none" marker-end="url(#a3)"><path d="M390 36 L170 62"/><path d="M390 36 L590 62"/><path d="M590 92 L120 132"/><path d="M590 92 L385 132"/><path d="M590 92 L650 132"/></g>
+      <g font-size="11.5" text-anchor="middle">
+        <rect x="320" y="8" width="140" height="28" rx="6" fill="var(--paper)" stroke="var(--ink)"/><text x="390" y="27" fill="var(--ink)">Polynomial f(x)</text>
+        <rect x="10" y="62" width="320" height="30" rx="6" fill="var(--bg)" stroke="var(--line)"/><text x="170" y="81" fill="var(--muted)">x is a variable, evaluated at a value</text>
+        <rect x="420" y="62" width="340" height="30" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="590" y="81" fill="var(--ink)">x is an <tspan font-weight="700">indeterminate</tspan> (never evaluated)</text>
+        <rect x="10" y="132" width="220" height="56" rx="6" fill="var(--paper)" stroke="var(--accent)"/><text x="120" y="155" fill="var(--ink)">1. Ordinary</text><text x="120" y="173" fill="var(--muted)" font-size="10.5">basic rules of algebra</text>
+        <rect x="260" y="132" width="250" height="56" rx="6" fill="var(--paper)" stroke="var(--accent)"/><text x="385" y="155" fill="var(--ink)">2. Coefficients mod p</text><text x="385" y="173" fill="var(--muted)" font-size="10.5">coefficients in GF(p)</text>
+        <rect x="530" y="132" width="240" height="56" rx="6" fill="var(--accent)"/><text x="650" y="155" fill="var(--paper)">3. Coefficients mod p</text><text x="650" y="173" fill="var(--paper)" font-size="10.5">+ polynomials mod m(x) → GF(pⁿ)</text>
+      </g>
+    </svg>
+    <div class="cap">Redrawn from Figure 5.4. This section covers classes 1 and 2; class 3 is 5.6.</div>
+  </div>
+
+  <h3>Ordinary polynomial arithmetic</h3>
+  <div class="def"><b>Polynomial of degree n</b> (n ≥ 0): <span class="m wr">f(x) = aₙxⁿ + aₙ₋₁xⁿ⁻¹ + … + a₁x + a₀ = Σ aᵢxⁱ</span> with <span class="m">aₙ ≠ 0</span>. The aᵢ come from a set S, the <b>coefficient set</b>; f is “defined over S”.</div>
+  <ul class="props">
+    <li><b>Constant polynomial</b>: degree 0 — just an element of S. <b>Monic polynomial</b>: leading coefficient <span class="m">aₙ = 1</span>.</li>
+    <li><b>Indeterminate</b>: in abstract algebra we never plug a value in for x; x just marks positions.</li>
+    <li><b>Add / subtract</b>: combine corresponding coefficients. <b>Multiply</b>: <span class="m wr">cₖ = a₀bₖ + a₁bₖ₋₁ + … + aₖb₀</span>; degree of product = sum of degrees.</li>
+  </ul>
+  <div class="ex"><span class="t">Example (Figure 5.5), S = integers</span><div class="eq">f(x) = x³ + x² + 2,  g(x) = x² − x + 1
+f + g = x³ + 2x² − x + 3      f − g = x³ + x + 1      f × g = x⁵ + 3x² − 2x + 2</div></div>
+
+  <h3>Polynomial arithmetic with coefficients in Zₚ</h3>
+  <div class="def"><b>Polynomial over a field F.</b> Coefficients are elements of a field. The set of such polynomials is a ring, the <b>polynomial ring</b>.</div>
+  <p><b>Division</b> needs the coefficients to be a field (e.g., (5x²)/(3x) has no solution over the integers, but equals 4x over Z₇). Even then it is not always exact; like integers, it leaves a remainder:</p>
+  <div class="eq">f(x) = q(x)·g(x) + r(x)      deg q = n − m,  deg r ≤ m − 1      <span class="n">(5.2)</span></div>
+  <ul class="props">
+    <li>Write <span class="m">r(x) = f(x) mod g(x)</span>. If r(x) = 0, then g(x) <b>divides</b> f(x), written <span class="m">g(x) | f(x)</span>; g(x) is a <b>factor</b> (divisor) of f(x).</li>
+    <li>Over <b>GF(2)</b>, the case that matters most: + is XOR, × is AND, and <b>addition = subtraction</b> (1 + 1 = 1 − 1 = 0).</li>
+  </ul>
+  <div class="def"><b>Irreducible (prime) polynomial.</b> f(x) over F cannot be written as a product of two polynomials over F, both of lower degree than f(x).<br><span class="src">x⁴ + 1 over GF(2) is reducible: x⁴ + 1 = (x + 1)(x³ + x² + x + 1). x³ + x + 1 is irreducible: neither x nor x + 1 divides it, and any factorization of a cubic would need a degree-1 factor.</span></div>
+
+  <h3>Greatest common divisor</h3>
+  <div class="def"><b>gcd[a(x), b(x)]</b> is the polynomial c(x) that (1) divides both a(x) and b(x), and (2) is divisible by every common divisor — equivalently, the common divisor of maximum degree.</div>
+  <p>The Euclidean algorithm carries over unchanged (it assumes deg a ≥ deg b): repeat <span class="m wr">gcd[a(x), b(x)] = gcd[b(x), a(x) mod b(x)]</span> <span class="src">(5.3)</span> until the remainder is 0. The last nonzero remainder is the gcd.</p>
+
+  <div class="lab" id="lab-poly">
+    <div class="lab-h"><span class="t">Try it · polynomial calculator over GF(2)</span>
+      <span><button type="button" class="ghost" id="pl-fig">Fig 5.6</button> <button type="button" class="ghost" id="pl-gcd">gcd example</button></span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label class="grow" for="pl-a">a(x) — e.g. x^7+x^5+x^4+x^3+x+1, 10111011 or {BB}<input type="text" id="pl-a" value="x^7+x^5+x^4+x^3+x+1"></label>
+        <label class="grow" for="pl-b">b(x)<input type="text" id="pl-b" value="x^3+x+1"></label>
+      </div>
+      <div class="controls"><span class="seg" role="group" aria-label="Operation">
+        <button type="button" data-op="add" aria-pressed="false">a + b</button><button type="button" data-op="mul" aria-pressed="false">a × b</button><button type="button" data-op="div" aria-pressed="true">a ÷ b</button><button type="button" data-op="gcd" aria-pressed="false">gcd</button><button type="button" data-op="irr" aria-pressed="false">irreducible?</button></span></div>
+      <div class="out" id="pl-out"></div>
+      <div class="cap">Coefficients are bits; each row of the division subtracts (XORs) a shifted copy of b(x). Degrees up to 30.</div>
+    </div>
+  </div>
+
+  <div class="ex"><span class="t">Book example · gcd</span><div class="eq">a(x) = x⁶ + x⁵ + x⁴ + x³ + x² + x + 1,  b(x) = x⁴ + x² + x + 1
+a ÷ b:  q₁ = x² + x,  r₁ = x³ + x² + 1
+b ÷ r₁: q₂ = x + 1,   r₂ = 0        →  gcd = x³ + x² + 1</div></div>
+  <div class="def"><b>Summary.</b> Ordinary polynomials: +, −, × by the rules of algebra; no division unless the coefficients form a field. Coefficients in GF(p): all four operations, but division generally leaves a remainder. The Euclidean algorithm finds polynomial gcds over a field.</div>
+</section>
+
+<!-- ============ 5.6 ============ -->
+<section class="unit" id="s56">
+  <h2><span class="sec">5.6</span>Finite Fields of the Form GF(2ⁿ)</h2>
+  <p class="why">For n &gt; 1, arithmetic mod pⁿ does <b>not</b> give a field. This section builds a field with 2ⁿ elements — exactly the n-bit words — from polynomials.</p>
+
+  <h3>Motivation</h3>
+  <p>An algorithm that divides must work in a field. For efficiency we want every n-bit pattern 0 … 2ⁿ − 1 to be usable. But Z₂ₙ (mod 2ⁿ) is not a field — e.g., 2 has no inverse mod 2ⁿ. Using the nearest prime instead (Z₂₅₁ for bytes) wastes the patterns 251–255.</p>
+  <p>Even without division, Z₂ₙ is a poor choice: its multiplication table is <b>uneven</b>, which a cryptanalyst might exploit. GF(2³) is uniform:</p>
+  <div class="tbl"><table class="cnt">
+    <caption class="cap" style="caption-side:bottom;text-align:left">How often each nonzero value appears in the 8 × 8 multiplication table (computed; matches the book).</caption>
+    <tr><th class="l">Integer</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th></tr>
+    <tr><td class="l">Occurrences in Z₈</td><td>4</td><td>8</td><td>4</td><td class="hi">12</td><td>4</td><td>8</td><td>4</td></tr>
+    <tr><td class="l">Occurrences in GF(2³)</td><td>7</td><td>7</td><td>7</td><td>7</td><td>7</td><td>7</td><td>7</td></tr>
+  </table></div>
+
+  <h3>Modular polynomial arithmetic</h3>
+  <p>Let S be the set of all polynomials of degree ≤ n − 1 with binary coefficients — there are exactly 2ⁿ of them, one per n-bit string <span class="m">(aₙ₋₁ … a₁a₀)</span>. With these rules, S is a finite field:</p>
+  <ol>
+    <li>Use ordinary polynomial arithmetic, with two refinements:</li>
+    <li>coefficient arithmetic is <b>mod 2</b> (XOR);</li>
+    <li>if a product has degree &gt; n − 1, reduce it <b>mod an irreducible polynomial m(x) of degree n</b> — divide by m(x), keep the remainder.</li>
+  </ol>
+  <ul class="props">
+    <li>The set of <b>residues</b> modulo an nth-degree m(x) has pⁿ elements, one per polynomial of degree &lt; n. The residue class [x + 1] is every a(x) with <span class="m">a(x) mod m(x) = x + 1</span>.</li>
+    <li>All finite fields of the same order are <b>isomorphic</b>: same structure, possibly different labels for the elements.</li>
+    <li>GF(2³) has two possible m(x): <span class="m">x³ + x² + 1</span> and <span class="m">x³ + x + 1</span>.</li>
+  </ul>
+  <div class="ex"><span class="t">Book example in GF(2⁸), m(x) = x⁸ + x⁴ + x³ + x + 1</span><div class="eq">f(x) = x⁶ + x⁴ + x² + x + 1,   g(x) = x⁷ + x + 1
+f + g = x⁷ + x⁶ + x⁴ + x²
+f × g = x¹³ + x¹¹ + x⁹ + x⁸ + x⁶ + x⁵ + x⁴ + x³ + 1
+      mod m(x)  =  x⁷ + x⁶ + 1</div></div>
+
+  <div class="lab" id="lab-gf3">
+    <div class="lab-h"><span class="t">Try it · GF(2³) tables (Tables 5.2, 5.3, 5.6)</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label for="g3-m">m(x)<select id="g3-m"><option value="11">x³ + x + 1</option><option value="13">x³ + x² + 1</option></select></label>
+        <label for="g3-r">labels<select id="g3-r"><option value="bin">binary</option><option value="int">integer</option><option value="poly">polynomial</option><option value="pow">power of g</option></select></label>
+      </div>
+      <div class="grid2" id="g3-tabs"></div>
+      <div class="cap">The 1s in the multiplication table (highlighted) show every nonzero element has exactly one inverse. Changing m(x) gives a differently labelled but isomorphic field.</div>
+    </div>
+  </div>
+
+  <h3>Finding the multiplicative inverse</h3>
+  <p>The extended Euclidean algorithm adapts to polynomials. If deg b(x) &lt; deg a(x) and gcd[a(x), b(x)] = 1, it solves</p>
+  <div class="eq">a(x)v(x) + b(x)w(x) = d(x) = gcd[a(x), b(x)]</div>
+  <p>and when d(x) = 1, <span class="m">w(x) = b(x)⁻¹ mod a(x)</span>. If a(x) is irreducible, its only factors are itself and 1, so the gcd is always 1. Each step: <span class="m wr">rᵢ = rᵢ₋₂ mod rᵢ₋₁</span>, <span class="m wr">vᵢ = vᵢ₋₂ − qᵢvᵢ₋₁</span>, <span class="m wr">wᵢ = wᵢ₋₂ − qᵢwᵢ₋₁</span> (over GF(2), − is ⊕).</p>
+  <div class="tbl"><table>
+    <caption class="cap" style="caption-side:bottom;text-align:left">Table 5.4: (x⁷ + x + 1)⁻¹ mod (x⁸ + x⁴ + x³ + x + 1) = x⁷. Recomputed by the lab below; it matches the book.</caption>
+    <tr><th>Iteration</th><th>qᵢ(x)</th><th>rᵢ(x)</th><th>vᵢ(x)</th><th>wᵢ(x)</th></tr>
+    <tr><td>init</td><td class="dim">—</td><td>a = x⁸+x⁴+x³+x+1;  b = x⁷+x+1</td><td>1, 0</td><td>0, 1</td></tr>
+    <tr><td>1</td><td>x</td><td>x⁴ + x³ + x² + 1</td><td>1</td><td>x</td></tr>
+    <tr><td>2</td><td>x³ + x² + 1</td><td>x</td><td>x³ + x² + 1</td><td>x⁴ + x³ + x + 1</td></tr>
+    <tr><td>3</td><td>x³ + x² + x</td><td class="hi">1</td><td>x⁶ + x² + x + 1</td><td class="hi">x⁷</td></tr>
+    <tr><td>4</td><td>x</td><td>0</td><td>x⁷ + x + 1</td><td>x⁸ + x⁴ + x³ + x + 1</td></tr>
+  </table></div>
+
+  <h3>Computational considerations</h3>
+  <p>Each element of GF(2ⁿ) is an n-bit number. For GF(2⁸) that is one byte, written in hex as {..} (two 4-bit groups).</p>
+  <div class="def"><b>Addition = bitwise XOR.</b> <span class="m wr">(x⁶+x⁴+x²+x+1) + (x⁷+x+1) = x⁷+x⁶+x⁴+x²</span>, i.e. <span class="m">01010111 ⊕ 10000011 = 11010100</span>, i.e. <span class="m">{57} ⊕ {83} = {D4}</span>.</div>
+  <p><b>Multiplication</b> has no single XOR, but it is cheap. Key observation for <span class="m">m(x) = x⁸ + x⁴ + x³ + x + 1</span>:</p>
+  <div class="eq">x⁸ mod m(x) = m(x) − x⁸ = x⁴ + x³ + x + 1   = {1B}          <span class="n">(5.4)</span></div>
+  <p>Multiplying <span class="m wr">f(x) = b₇x⁷ + … + b₀</span> by x shifts every coefficient up one place. If b₇ = 0 nothing overflows; if b₇ = 1 the x⁸ term is replaced by {1B}:</p>
+  <div class="eq">x · f(x) = (b₆b₅b₄b₃b₂b₁b₀0)              if b₇ = 0
+x · f(x) = (b₆b₅b₄b₃b₂b₁b₀0) ⊕ (00011011)   if b₇ = 1           <span class="n">(5.6)</span></div>
+  <p>So <b>×{02} = 1-bit left shift + conditional XOR with {1B}</b>. Repeating it gives ×x², ×x³, …; XOR the ones you need to multiply by any constant.</p>
+
+  <div class="lab" id="lab-mul">
+    <div class="lab-h"><span class="t">Try it · multiply and invert in GF(2⁸)</span><span><button type="button" class="ghost" id="mu-book">{57}·{83}</button> <button type="button" id="mu-play">▶ Animate</button></span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label for="mu-a">a (hex)<input type="text" class="byte" id="mu-a" value="57" maxlength="2"></label>
+        <label for="mu-b">b (hex)<input type="text" class="byte" id="mu-b" value="83" maxlength="2"></label>
+      </div>
+      <div class="tbl" id="mu-tab"></div>
+      <div class="out" id="mu-out"></div>
+      <h3 style="margin-top:18px;font-size:1rem">Inverse of a by the extended Euclidean algorithm</h3>
+      <div class="tbl" id="mu-inv"></div>
+    </div>
+  </div>
+
+  <h3>Using a generator</h3>
+  <div class="def"><b>Generator.</b> An element g of a finite field F of order q whose first q − 1 powers produce every nonzero element: <span class="m">F = {0, g⁰, g¹, …, g^(q−2)}</span>.</div>
+  <div class="def"><b>Root.</b> For a field defined by polynomial f(x), an element b of F with f(b) = 0. A root g of an irreducible polynomial is a generator of the field defined on that polynomial.</div>
+  <p>For GF(2³) with x³ + x + 1: g³ + g + 1 = 0, so <span class="m">g³ = g + 1</span> (− = + mod 2). Then g⁴ = g² + g, g⁵ = g² + g + 1, g⁶ = g² + 1, g⁷ = 1 = g⁰ (Table 5.5; switch the lab above to “power of g”). Multiplication becomes adding exponents: <span class="m">gᵏ = g^(k mod 7)</span>; in general <span class="m">gᵏ = g^(k mod (2ⁿ−1))</span>.</p>
+  <div class="ex"><span class="t">Book example</span><div class="eq">g⁴ · g⁶ = g¹⁰ = g³ = g + 1        (power form)
+(g² + g)(g² + 1) = g⁴ + g³ + g² + g,  mod (g³ + g + 1) = g + 1   (polynomial form, same answer)</div></div>
+  <div class="def"><b>Summary.</b> GF(2ⁿ) has 2ⁿ elements: all polynomials of degree ≤ n − 1 with binary coefficients, each a unique n-bit value. +, −, ×, ÷ never leave the set; every nonzero element has an inverse. Addition is XOR; multiplication is polynomial multiplication mod an irreducible m(x).</div>
+</section>
+
+<!-- ============ 6.1 ============ -->
+<section class="unit" id="s61">
+  <h2><span class="sec">6.1</span>Finite Field Arithmetic in AES</h2>
+  <p class="why">The Advanced Encryption Standard (AES) is a symmetric block cipher, published by NIST, intended to replace DES. Every AES operation works on 8-bit bytes in GF(2⁸).</p>
+  <div class="cmp">
+    <div><h4>Addition of two bytes</h4><p>Bitwise XOR: <span class="m">cᵢ = aᵢ ⊕ bᵢ</span>.</p></div>
+    <div><h4>Multiplication of two bytes</h4><p>Multiplication in GF(2⁸) with the irreducible polynomial <span class="m">m(x) = x⁸ + x⁴ + x³ + x + 1</span>. It is the first of the 30 irreducible degree-8 polynomials in the list the designers used.</p></div>
+    <div><h4>Multiplication by {02}</h4><p><span class="m">{02}·A = (a₆…a₀0)</span> if a₇ = 0, else <span class="m">(a₆…a₀0) ⊕ {1B}</span>. Larger constants: repeat and XOR.</p></div>
+  </div>
+  <p class="src">Notation (from FIPS PUB 197): hex bytes in curly brackets, <span class="m">·</span> = multiplication in GF(2⁸), <span class="m">⊕</span> = XOR = addition in GF(2⁸). The book’s Appendix I describes a hand-computable Simplified AES (S-AES) worth working through alongside this chapter.</p>
+</section>
+
+<!-- ============ 6.2 ============ -->
+<section class="unit" id="s62">
+  <h2><span class="sec">6.2</span>AES Structure</h2>
+  <p class="why">Block size is always 128 bits (16 bytes). The key is 16, 24 or 32 bytes, giving AES-128, AES-192 or AES-256.</p>
+  <div class="tbl"><table>
+    <caption class="cap" style="caption-side:bottom;text-align:left">Table 6.1: AES parameters (words / bytes / bits; one word = 4 bytes).</caption>
+    <tr><th class="l"></th><th>AES-128</th><th>AES-192</th><th>AES-256</th></tr>
+    <tr><td class="l">Key size</td><td>4 / 16 / 128</td><td>6 / 24 / 192</td><td>8 / 32 / 256</td></tr>
+    <tr><td class="l">Plaintext block size</td><td>4 / 16 / 128</td><td>4 / 16 / 128</td><td>4 / 16 / 128</td></tr>
+    <tr><td class="l">Number of rounds N</td><td class="hi">10</td><td class="hi">12</td><td class="hi">14</td></tr>
+    <tr><td class="l">Round key size</td><td>4 / 16 / 128</td><td>4 / 16 / 128</td><td>4 / 16 / 128</td></tr>
+    <tr><td class="l">Expanded key size (words / bytes)</td><td>44 / 176</td><td>52 / 208</td><td>60 / 240</td></tr>
+  </table></div>
+
+  <h3>General structure</h3>
+  <ul class="props">
+    <li>The 128-bit input block is copied into the <b>State</b>, a 4 × 4 matrix of bytes that every stage modifies; after the final stage State is copied to the output.</li>
+    <li>Bytes fill the matrix <b>by column</b>: the first 4 input bytes form the first column, and so on. The key is arranged the same way, then expanded into <b>words</b> (columns); 44 words for a 128-bit key.</li>
+    <li>N rounds. Rounds 1 … N − 1 use four transformations — <b>SubBytes, ShiftRows, MixColumns, AddRoundKey</b>. The final round has three (no MixColumns). One AddRoundKey comes before round 1 (“round 0”).</li>
+    <li>Key expansion produces <b>N + 1 round keys</b>, each a 4 × 4 matrix, one per AddRoundKey.</li>
+  </ul>
+
+  <div class="lab" id="lab-fill">
+    <div class="lab-h"><span class="t">Watch it · how 16 input bytes fill State (Figure 6.2)</span><button type="button" id="fill-go">▶ Replay</button></div>
+    <div class="lab-b">
+      <div class="stwrap">
+        <div class="stbox"><div class="h">input bytes in₀ … in₁₅</div><div class="bits mono" id="fill-in" style="max-width:22em"></div></div>
+        <div class="stbox"><div class="h">State sᵣ,꜀ (row r, column c)</div><div class="fillgrid" id="fill-grid"></div></div>
+      </div>
+      <div class="cap">in<sub>k</sub> lands in row k mod 4, column ⌊k / 4⌋. Each column is one 32-bit word.</div>
+    </div>
+  </div>
+
+  <h3>Detailed structure (Figure 6.3)</h3>
+  <div class="figure" aria-label="AES encryption and decryption">
+    <svg viewBox="0 0 720 440" role="img" aria-labelledby="aes-t">
+      <title id="aes-t">AES-128 encryption runs down the left and decryption runs up the right. Each add-round-key box on both sides takes the same round key from the expanded key in the middle, so State is the same at every horizontal level.</title>
+      <defs><marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker><marker id="a4k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--mark)"/></marker></defs>
+      <g stroke="var(--mark)" stroke-width="1.2" stroke-dasharray="4 3" fill="none">
+      <path d="M360 44.0 V362.0"/>
+      </g><g stroke="var(--mark)" stroke-width="1.2" fill="none" marker-end="url(#a4k)">
+      <path d="M318 60 H246.0"/><path d="M402 60 H474.0"/>
+      <path d="M318 164 H246.0"/><path d="M402 164 H474.0"/>
+      <path d="M318 294 H246.0"/><path d="M402 294 H474.0"/>
+      <path d="M318 372 H246.0"/><path d="M402 372 H474.0"/>
+      </g>
+      <text x="368" y="190" fill="var(--mark)" font-size="10" text-anchor="start" transform="rotate(90 368 190)">expanded key</text>
+      <g font-size="11" text-anchor="middle">
+      <text x="170" y="14" fill="var(--ink)" font-weight="700">(a) Encryption ↓</text><text x="550" y="14" fill="var(--ink)" font-weight="700">(b) Decryption ↑</text>
+      <rect x="95.0" y="24.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--ink)"/><text x="170" y="38" fill="var(--ink)">Plaintext (16 bytes)</text>
+      <rect x="475.0" y="24.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--ink)"/><text x="550" y="38" fill="var(--ink)">Plaintext (16 bytes)</text>
+      <rect x="95.0" y="50.0" width="150" height="20" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="170" y="64" fill="var(--ink)">Add round key</text>
+      <rect x="475.0" y="50.0" width="150" height="20" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="550" y="64" fill="var(--ink)">Add round key</text>
+      <rect x="95.0" y="76.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--line)"/><text x="170" y="90" fill="var(--ink)">Substitute bytes</text>
+      <rect x="475.0" y="76.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--line)"/><text x="550" y="90" fill="var(--ink)">Inverse sub bytes</text>
+      <rect x="95.0" y="102.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--line)"/><text x="170" y="116" fill="var(--ink)">Shift rows</text>
+      <rect x="475.0" y="102.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--line)"/><text x="550" y="116" fill="var(--ink)">Inverse shift rows</text>
+      <rect x="95.0" y="128.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--line)"/><text x="170" y="142" fill="var(--ink)">Mix columns</text>
+      <rect x="475.0" y="128.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--line)"/><text x="550" y="142" fill="var(--ink)">Inverse mix cols</text>
+      <rect x="95.0" y="154.0" width="150" height="20" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="170" y="168" fill="var(--ink)">Add round key</text>
+      <rect x="475.0" y="154.0" width="150" height="20" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="550" y="168" fill="var(--ink)">Add round key</text>
+      <text x="170" y="194" fill="var(--muted)">⋮ rounds 2 – 8</text>
+      <text x="550" y="194" fill="var(--muted)">⋮ rounds 2 – 8</text>
+      <rect x="95.0" y="206.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--line)"/><text x="170" y="220" fill="var(--ink)">Substitute bytes</text>
+      <rect x="475.0" y="206.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--line)"/><text x="550" y="220" fill="var(--ink)">Inverse sub bytes</text>
+      <rect x="95.0" y="232.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--line)"/><text x="170" y="246" fill="var(--ink)">Shift rows</text>
+      <rect x="475.0" y="232.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--line)"/><text x="550" y="246" fill="var(--ink)">Inverse shift rows</text>
+      <rect x="95.0" y="258.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--line)"/><text x="170" y="272" fill="var(--ink)">Mix columns</text>
+      <rect x="475.0" y="258.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--line)"/><text x="550" y="272" fill="var(--ink)">Inverse mix cols</text>
+      <rect x="95.0" y="284.0" width="150" height="20" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="170" y="298" fill="var(--ink)">Add round key</text>
+      <rect x="475.0" y="284.0" width="150" height="20" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="550" y="298" fill="var(--ink)">Add round key</text>
+      <rect x="95.0" y="310.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--line)"/><text x="170" y="324" fill="var(--ink)">Substitute bytes</text>
+      <rect x="475.0" y="310.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--line)"/><text x="550" y="324" fill="var(--ink)">Inverse sub bytes</text>
+      <rect x="95.0" y="336.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--line)"/><text x="170" y="350" fill="var(--ink)">Shift rows</text>
+      <rect x="475.0" y="336.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--line)"/><text x="550" y="350" fill="var(--ink)">Inverse shift rows</text>
+      <rect x="95.0" y="362.0" width="150" height="20" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="170" y="376" fill="var(--ink)">Add round key</text>
+      <rect x="475.0" y="362.0" width="150" height="20" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="550" y="376" fill="var(--ink)">Add round key</text>
+      <rect x="95.0" y="388.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--ink)"/><text x="170" y="402" fill="var(--ink)">Ciphertext (16 bytes)</text>
+      <rect x="475.0" y="388.0" width="150" height="20" rx="4" fill="var(--paper)" stroke="var(--ink)"/><text x="550" y="402" fill="var(--ink)">Ciphertext (16 bytes)</text>
+      <rect x="300" y="24.0" width="120" height="20" rx="4" fill="var(--mark-soft)" stroke="var(--mark)"/><text x="360" y="38" fill="var(--ink)">Key (16 bytes)</text>
+      
+      <rect x="318" y="50.0" width="84" height="20" rx="4" fill="var(--paper)" stroke="var(--mark)"/><text x="360" y="64" fill="var(--mark)">w[0, 3]</text>
+      <rect x="318" y="154.0" width="84" height="20" rx="4" fill="var(--paper)" stroke="var(--mark)"/><text x="360" y="168" fill="var(--mark)">w[4, 7]</text>
+      <rect x="318" y="284.0" width="84" height="20" rx="4" fill="var(--paper)" stroke="var(--mark)"/><text x="360" y="298" fill="var(--mark)">w[36, 39]</text>
+      <rect x="318" y="362.0" width="84" height="20" rx="4" fill="var(--paper)" stroke="var(--mark)"/><text x="360" y="376" fill="var(--mark)">w[40, 43]</text>
+      <text x="360" y="428" fill="var(--muted)" font-size="10.5">At each horizontal level, State is the same in encryption and decryption.</text>
+      <path d="M89.0 73.0 h-8 V177.0 h8" fill="none" stroke="var(--muted)"/><text x="77.0" y="129.0" text-anchor="end" fill="var(--muted)">Round 1</text>
+      <path d="M89.0 203.0 h-8 V307.0 h8" fill="none" stroke="var(--muted)"/><text x="77.0" y="259.0" text-anchor="end" fill="var(--muted)">Round 9</text>
+      <path d="M89.0 307.0 h-8 V385.0 h8" fill="none" stroke="var(--muted)"/><text x="77.0" y="350.0" text-anchor="end" fill="var(--muted)">Round 10</text>
+      <path d="M631.0 255.0 h8 V359.0 h-8" fill="none" stroke="var(--muted)"/><text x="643.0" y="311.0" text-anchor="start" fill="var(--muted)">Round 1</text>
+      <path d="M631.0 125.0 h8 V203.0 h-8" fill="none" stroke="var(--muted)"/><text x="643.0" y="168.0" text-anchor="start" fill="var(--muted)">Round 9</text>
+      <path d="M631.0 47.0 h8 V125.0 h-8" fill="none" stroke="var(--muted)"/><text x="643.0" y="90.0" text-anchor="start" fill="var(--muted)">Round 10</text>
+      </g>
+      <g stroke="var(--muted)" stroke-width="1.2" fill="none" marker-end="url(#a4)">
+      <path d="M170 44.0 V49.0"/>
+      <path d="M550 50.0 V45.0"/>
+      <path d="M170 70.0 V75.0"/>
+      <path d="M550 76.0 V71.0"/>
+      <path d="M170 96.0 V101.0"/>
+      <path d="M550 102.0 V97.0"/>
+      <path d="M170 122.0 V127.0"/>
+      <path d="M550 128.0 V123.0"/>
+      <path d="M170 148.0 V153.0"/>
+      <path d="M550 154.0 V149.0"/>
+      <path d="M170 174.0 V180"/>
+      <path d="M550 180 V175.0"/>
+      <path d="M170 198 V205.0"/>
+      <path d="M550 206.0 V198"/>
+      <path d="M170 226.0 V231.0"/>
+      <path d="M550 232.0 V227.0"/>
+      <path d="M170 252.0 V257.0"/>
+      <path d="M550 258.0 V253.0"/>
+      <path d="M170 278.0 V283.0"/>
+      <path d="M550 284.0 V279.0"/>
+      <path d="M170 304.0 V309.0"/>
+      <path d="M550 310.0 V305.0"/>
+      <path d="M170 330.0 V335.0"/>
+      <path d="M550 336.0 V331.0"/>
+      <path d="M170 356.0 V361.0"/>
+      <path d="M550 362.0 V357.0"/>
+      <path d="M170 382.0 V387.0"/>
+      <path d="M550 388.0 V383.0"/>
+      </g>
+      </svg>
+    <div class="cap">Redrawn from Figure 6.3 for AES-128. Decryption reads bottom-up and uses the expanded key in reverse order; its step order differs from encryption (6.6 fixes that).</div>
+  </div>
+  <div class="tbl"><table>
+    <caption class="cap" style="caption-side:bottom;text-align:left">The book’s ten observations on the structure, condensed.</caption>
+    <tr><th class="l">#</th><th class="l">Observation</th></tr>
+    <tr><td>1</td><td class="l"><b>Not a Feistel structure.</b> Feistel modifies half the block with the other half, then swaps. AES processes the whole block as one matrix each round, with substitutions and permutation.</td></tr>
+    <tr><td>2</td><td class="l">The key expands to 44 32-bit words w[i]; four distinct words (128 bits) form each round key.</td></tr>
+    <tr><td>3</td><td class="l">Four stages: one permutation (ShiftRows) and three substitutions (SubBytes via an S-box; MixColumns via GF(2⁸) arithmetic; AddRoundKey, an XOR with part of the expanded key).</td></tr>
+    <tr><td>4</td><td class="l">Simple: AddRoundKey, then nine 4-stage rounds, then a 3-stage tenth round.</td></tr>
+    <tr><td>5</td><td class="l"><b>Only AddRoundKey uses the key</b>, so the cipher begins and ends with it; any other stage at either end could be undone without the key and would add no security.</td></tr>
+    <tr><td>6</td><td class="l">AddRoundKey alone is a Vernam cipher; the other three stages alone use no key. Alternating them — XOR, scramble, XOR, … — is efficient and highly secure. The other three give confusion, diffusion and nonlinearity.</td></tr>
+    <tr><td>7</td><td class="l">Each stage is reversible: inverse functions for SubBytes, ShiftRows, MixColumns; AddRoundKey is undone by XORing the same round key (<span class="m">A ⊕ B ⊕ B = A</span>).</td></tr>
+    <tr><td>8</td><td class="l">Decryption uses the expanded key in reverse order but is <b>not identical</b> to encryption.</td></tr>
+    <tr><td>9</td><td class="l">Because every stage is reversible, decryption recovers the plaintext: State matches at each horizontal level of Figure 6.3.</td></tr>
+    <tr><td>10</td><td class="l">The final round has only three stages; this is needed to make the cipher reversible, given AES’s structure.</td></tr>
+  </table></div>
+</section>
+
+<!-- ============ 6.3 ============ -->
+<section class="unit" id="s63">
+  <h2><span class="sec">6.3</span>AES Transformation Functions</h2>
+  <p class="why">For each stage: the forward (encryption) step, its inverse (decryption) step, and the design rationale.</p>
+  <div class="figure" aria-label="One AES encryption round">
+    <svg viewBox="0 0 720 300" role="img" aria-labelledby="rd-t">
+      <title id="rd-t">One round: each of 16 State bytes goes through an S-box, rows are shifted, each column is multiplied by matrix M, then the round key is XORed in</title>
+      <g font-size="10.5" text-anchor="middle" font-family="var(--mono)">
+        <g id="rd-bytes"></g>
+      </g>
+    </svg>
+    <div class="cap">Redrawn from Figure 6.4. Colours mark the column each byte starts in: after ShiftRows the four bytes of every column feed four different columns of MixColumns.</div>
+  </div>
+
+  <h3>Substitute bytes (SubBytes)</h3>
+  <div class="def"><b>S-box.</b> A 16 × 16 table of bytes containing a permutation of all 256 byte values (Table 6.2a). <b>SubBytes</b> replaces each State byte independently: its left 4 bits select the row, its right 4 bits the column. Example: {95} → row 9, column 5 → {2A}.</div>
+  <p><b>Construction</b> (Figure 6.6a):</p>
+  <ol>
+    <li>Initialize the table in ascending order: row y, column x holds {yx}.</li>
+    <li>Replace each byte by its <b>multiplicative inverse in GF(2⁸)</b>; {00} maps to itself.</li>
+    <li>Apply an <b>affine transformation</b> to each bit, with c = {63} = 01100011:</li>
+  </ol>
+  <div class="eq">bᵢ′ = bᵢ ⊕ b₍ᵢ₊₄₎ mod 8 ⊕ b₍ᵢ₊₅₎ mod 8 ⊕ b₍ᵢ₊₆₎ mod 8 ⊕ b₍ᵢ₊₇₎ mod 8 ⊕ cᵢ      <span class="n">(6.1)</span></div>
+  <p>In matrix form (Eq. 6.2) this is an 8 × 8 bit matrix times the bit vector, plus {63}, where “multiply” is AND and “add” is XOR. <b>InvSubBytes</b> uses the inverse S-box (Table 6.2b), built by applying the inverse affine map <span class="m wr">bᵢ′ = b₍ᵢ₊₂₎ ⊕ b₍ᵢ₊₅₎ ⊕ b₍ᵢ₊₇₎ ⊕ dᵢ</span> (indices mod 8, d = {05}) and then the GF(2⁸) inverse.</p>
+
+  <div class="lab" id="lab-sbox">
+    <div class="lab-h"><span class="t">Try it · S-box explorer — click any cell</span>
+      <span class="seg" role="group" aria-label="Table"><button type="button" id="sb-s" aria-pressed="true">S-box</button><button type="button" id="sb-is" aria-pressed="false">Inverse S-box</button></span></div>
+    <div class="lab-b">
+      <div class="tbl" id="sb-tab"></div>
+      <div id="sb-why"></div>
+      <div class="cap">The table is generated in your browser from the construction above (not copied); it equals Table 6.2 entry for entry.</div>
+    </div>
+  </div>
+  <div class="def"><b>Rationale.</b> Designed to resist known cryptanalytic attacks: low correlation between input and output bits, and an output that is not a linear function of the input — the nonlinearity comes from the multiplicative inverse. The constant {63} was chosen so there are no <b>fixed points</b> (S(a) = a) and no <b>opposite fixed points</b> (S(a) = ā, the bitwise complement). The S-box is invertible but <b>not self-inverse</b>: S({95}) = {2A} while IS({95}) = {AD}.</div>
+
+  <h3>ShiftRows</h3>
+  <p><b>ShiftRows</b>: row 0 unchanged; row 1 circular left shift by 1 byte; row 2 by 2; row 3 by 3. <b>InvShiftRows</b> shifts rows 1–3 right by the same amounts.</p>
+  <div class="lab" id="lab-shift">
+    <div class="lab-h"><span class="t">Watch it · ShiftRows (Figure 6.7a)</span><span><button type="button" id="sr-go">▶ ShiftRows</button> <button type="button" class="ghost" id="sr-back">◀ InvShiftRows</button></span></div>
+    <div class="lab-b">
+      <div class="stwrap"><div class="sr-stage" id="sr-stage"></div>
+      <div class="stbox" style="max-width:34ch"><p style="margin:0" class="src">Book example: rows <span class="m">87 F2 4D 97 / EC 6E 4C 90 / 4A C3 46 E7 / 8C D8 95 A6</span>. Colours = original column. After the shift, every column holds one byte from each original column.</p></div></div>
+    </div>
+  </div>
+  <div class="def"><b>Rationale.</b> More substantial than it looks: State, the input/output and the round key are all handled <b>column by column</b>, so moving a byte along its row moves it to another column (a linear distance of a multiple of 4 bytes). The 4 bytes of one column end up in 4 different columns.</div>
+
+  <h3>MixColumns</h3>
+  <p><b>MixColumns</b> works on each column separately: every output byte depends on all four bytes of the column. Matrix form, with + = XOR and · = GF(2⁸) multiplication:</p>
+  <div class="eq">┌02 03 01 01┐ ┌s₀,ⱼ┐     s₀,ⱼ′ = (2·s₀,ⱼ) ⊕ (3·s₁,ⱼ) ⊕ s₂,ⱼ ⊕ s₃,ⱼ
+│01 02 03 01│ │s₁,ⱼ│     s₁,ⱼ′ = s₀,ⱼ ⊕ (2·s₁,ⱼ) ⊕ (3·s₂,ⱼ) ⊕ s₃,ⱼ
+│01 01 02 03│ │s₂,ⱼ│     s₂,ⱼ′ = s₀,ⱼ ⊕ s₁,ⱼ ⊕ (2·s₂,ⱼ) ⊕ (3·s₃,ⱼ)
+└03 01 01 02┘ └s₃,ⱼ┘     s₃,ⱼ′ = (3·s₀,ⱼ) ⊕ s₁,ⱼ ⊕ s₂,ⱼ ⊕ (2·s₃,ⱼ)       <span class="n">(6.3, 6.4)</span></div>
+  <p>×{03} is computed as <span class="m">{03}·a = ({02}·a) ⊕ a</span>. <b>InvMixColumns</b> multiplies by the matrix with rows <span class="m wr">0E 0B 0D 09 / 09 0E 0B 0D / 0D 09 0E 0B / 0B 0D 09 0E</span> (Eq. 6.5); the product of the two matrices is the identity (Eq. 6.6).</p>
+  <div class="lab" id="lab-mix">
+    <div class="lab-h"><span class="t">Try it · MixColumns on one column</span><button type="button" class="ghost" id="mx-book">Book column 87 6E 46 A6</button></div>
+    <div class="lab-b">
+      <div class="controls"><label class="grow" for="mx-in">column (4 hex bytes, top to bottom)<input type="text" id="mx-in" value="87 6E 46 A6"></label></div>
+      <div class="tbl" id="mx-out"></div>
+      <div class="out" id="mx-chk"></div>
+    </div>
+  </div>
+  <p><b>Polynomial view</b> (used by FIPS 197): each column is a four-term polynomial with coefficients in GF(2⁸), multiplied modulo <span class="m">x⁴ + 1</span> by the fixed polynomial</p>
+  <div class="eq">a(x) = {03}x³ + {01}x² + {01}x + {02}           <span class="n">(6.7)</span>
+b(x) = {0B}x³ + {0D}x² + {09}x + {0E} = a⁻¹(x) mod (x⁴ + 1)   <span class="n">(6.8)</span></div>
+  <div class="def"><b>Rationale.</b> The coefficients come from a linear code with maximal distance between code words, giving good mixing within each column. MixColumns plus ShiftRows make every output bit depend on every input bit after a few rounds. Coefficients {01}, {02}, {03} cost at most a shift and an XOR. InvMixColumns is costlier, but encryption was considered more important: CFB and OFB modes (Unit 5) and block-cipher MACs (Unit 7) use only encryption.</div>
+
+  <h3>AddRoundKey</h3>
+  <div class="def"><b>AddRoundKey.</b> XOR the 128 bits of State with the 128 bits of the round key — column by column (one State column with one key word), or equivalently byte by byte. It is its own inverse, since XOR is.</div>
+  <div class="ex"><span class="t">Book example (first column)</span><div class="eq">{47} ⊕ {AC} = {EB}    {37} ⊕ {77} = {40}    {94} ⊕ {66} = {F2}    {ED} ⊕ {F3} = {1E}</div></div>
+  <div class="def"><b>Rationale.</b> As simple as possible, and it affects every bit of State. Security comes from the complexity of the key expansion together with the other stages.</div>
+  <p class="src">Inputs to a single round (Figure 6.8): the constant inputs are the S-box and the MixColumns matrix; the variable inputs are State and the round key.</p>
+</section>
+
+<!-- ============ 6.4 ============ -->
+<section class="unit" id="s64">
+  <h2><span class="sec">6.4</span>AES Key Expansion</h2>
+  <p class="why">AES-128 takes a 4-word (16-byte) key and produces a linear array of 44 words (176 bytes): one 4-word round key for the initial AddRoundKey and for each of the 10 rounds.</p>
+  <div class="pseudo"><span class="kw">KeyExpansion</span> (byte key[16], word w[44])
+{
+  word temp
+  <span class="kw">for</span> (i = 0; i &lt; 4; i++)  w[i] = (key[4*i], key[4*i+1], key[4*i+2], key[4*i+3]);
+  <span class="kw">for</span> (i = 4; i &lt; 44; i++) {
+    temp = w[i − 1];
+    <span class="kw">if</span> (i mod 4 = 0)  temp = SubWord(RotWord(temp)) ⊕ Rcon[i/4];   <span class="cm">// = g(w[i−1])</span>
+    w[i] = w[i − 4] ⊕ temp
+  }
+}</div>
+  <p>The key fills w[0..3]. Each later word depends on the word just before, w[i − 1], and the word four back, w[i − 4]: a plain XOR in three cases out of four, and the function <b>g</b> when i is a multiple of 4.</p>
+  <div class="figure" aria-label="Function g">
+    <svg viewBox="0 0 720 286" role="img" aria-labelledby="g-t">
+      <title id="g-t">Function g: rotate the word one byte left, substitute each byte with the S-box, then XOR the round constant into the leftmost byte</title>
+      <defs><marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+      <g font-family="var(--mono)" font-size="12" text-anchor="middle">
+      </g>
+      <g id="g-art"></g>
+    </svg>
+    <div class="cap">Redrawn from Figure 6.9b, filled with the book’s round-1 values (w₃ = af 7f 67 98).</div>
+  </div>
+  <ol>
+    <li><b>RotWord</b>: one-byte circular left shift, [B₀, B₁, B₂, B₃] → [B₁, B₂, B₃, B₀].</li>
+    <li><b>SubWord</b>: S-box substitution on each of the 4 bytes.</li>
+    <li>XOR with the <b>round constant</b> <span class="m">Rcon[j] = (RC[j], 0, 0, 0)</span>, so only the leftmost byte changes. <span class="m">RC[1] = 1</span>, <span class="m">RC[j] = {02}·RC[j − 1]</span> in GF(2⁸).</li>
+  </ol>
+  <div class="tbl"><table><tr><th>j</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th></tr><tr><th>RC[j]</th><td>01</td><td>02</td><td>04</td><td>08</td><td>10</td><td>20</td><td>40</td><td>80</td><td class="hi">1B</td><td>36</td></tr></table>
+    <div class="cap">{80}·{02} overflows, so RC[9] = {1B} — the reduction of Eq. 5.4.</div></div>
+
+  <div class="lab" id="lab-key">
+    <div class="lab-h"><span class="t">Try it · key expansion (Table 6.3)</span><button type="button" class="ghost" id="kx-book">Book key</button></div>
+    <div class="lab-b">
+      <div class="controls"><label class="grow" for="kx-k">128-bit key (32 hex digits)<input type="text" class="hex" id="kx-k" value="0f1571c947d9e8590cb7add6af7f6798"></label></div>
+      <div class="tbl" id="kx-out" style="max-height:420px;overflow:auto"></div>
+      <div class="cap">Shaded rows are the g computations. Computed live; for the book key it matches Table 6.3 except three printing errors in the book: SubWord(x₃) is 16 66 b4 <b>8e</b>, SubWord(x₇) is 06 d3 <b>df</b> 8a, and w₃₅ is 3c be 0b <b>38</b>.</div>
+    </div>
+  </div>
+
+  <h3>Rationale</h3>
+  <p>The round-dependent constant removes <b>symmetry</b> between how round keys of different rounds are made. Design criteria:</p>
+  <ul class="props">
+    <li>Knowing part of the cipher key or a round key does not reveal many other round-key bits (with fewer than Nk consecutive words known, the rest is hard to reconstruct).</li>
+    <li>An invertible transformation: any Nk consecutive words of the expanded key regenerate all of it (Nk = key size in words).</li>
+    <li>Speed on a wide range of processors; simplicity of description.</li>
+    <li>Round constants to eliminate symmetries.</li>
+    <li>Diffusion of cipher-key differences into the round keys: each key bit affects many round-key bits.</li>
+    <li>Enough nonlinearity that round-key differences cannot be fully determined from cipher-key differences alone.</li>
+  </ul>
+</section>
+
+<!-- ============ 6.5 ============ -->
+<section class="unit" id="s65">
+  <h2><span class="sec">6.5</span>An AES Example</h2>
+  <p class="why">The book’s example — study the hex patterns from step to step rather than repeating it by hand.</p>
+  <div class="eq">Plaintext:  0123456789abcdeffedcba9876543210
+Key:        0f1571c947d9e8590cb7add6af7f6798
+Ciphertext: ff0b844a0853bf7c6934ab4364148fb9</div>
+  <div class="lab" id="lab-aes">
+    <div class="lab-h"><span class="t">Try it · AES-128 round by round (Table 6.4)</span>
+      <span><button type="button" class="ghost" id="ae-book">Book example</button> <button type="button" class="ghost" id="ae-fips">FIPS 197 test vector</button></span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label class="grow" for="ae-p">plaintext (32 hex digits)<input type="text" class="hex" id="ae-p" value="0123456789abcdeffedcba9876543210"></label>
+        <label class="grow" for="ae-k">key (32 hex digits)<input type="text" class="hex" id="ae-k" value="0f1571c947d9e8590cb7add6af7f6798"></label>
+      </div>
+      <div class="controls">
+        <label for="ae-r">round: <span id="ae-rv">1</span><input type="range" id="ae-r" min="0" max="10" value="1"></label>
+        <button type="button" class="ghost" id="ae-prev">◀</button><button type="button" class="ghost" id="ae-next">▶</button>
+      </div>
+      <div class="stwrap" id="ae-st"></div>
+      <div class="out" id="ae-out" style="margin-top:10px"></div>
+      <div class="cap">Highlighted bytes changed in that step. Round 0 is the initial AddRoundKey; round 10 skips MixColumns. Decryption is run on the result to confirm it returns the plaintext.</div>
+    </div>
+  </div>
+
+  <h3>Avalanche effect</h3>
+  <div class="def"><b>Avalanche effect.</b> A small change in plaintext or key produces a large change in ciphertext. If it were small, it could be used to reduce the plaintext or key space to be searched. The ideal is about <b>half</b> the bits changing — almost all bits changing would be as informative as almost none.</div>
+  <div class="lab" id="lab-av">
+    <div class="lab-h"><span class="t">Try it · flip one bit, count differing State bits per round (Tables 6.5–6.6)</span>
+      <span><button type="button" class="ghost" data-av="p,8">Table 6.5: plaintext bit 8</button> <button type="button" class="ghost" data-av="k,8">Table 6.6: key bit 8</button></span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label for="av-w">flip a bit in<select id="av-w"><option value="p">plaintext</option><option value="k">key</option></select></label>
+        <label for="av-b">bit position (1 = leftmost)<input type="number" id="av-b" min="1" max="128" value="8"></label>
+      </div>
+      <div class="out" id="av-out"></div>
+      <div class="figure" id="av-fig"></div>
+      <div class="cap">Uses the plaintext and key from the lab above. Book results: about 20 bits differ after one round and close to half after two — faster than DES, which needs three rounds (Unit 3).</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6.6 ============ -->
+<section class="unit" id="s66">
+  <h2><span class="sec">6.6</span>AES Implementation</h2>
+  <h3>Equivalent inverse cipher</h3>
+  <p>Standard decryption orders its steps differently from encryption, so software needing both requires two modules. The <b>equivalent inverse cipher</b> has the same step order as encryption (with each step replaced by its inverse) at the cost of a changed key schedule. Two swaps are needed:</p>
+  <div class="cmp">
+    <div><h4>Encryption round</h4><p class="mono" style="font-size:.88rem">SubBytes → ShiftRows → MixColumns → AddRoundKey</p></div>
+    <div><h4>Standard decryption round</h4><p class="mono" style="font-size:.88rem">InvShiftRows → InvSubBytes → AddRoundKey → InvMixColumns</p></div>
+    <div><h4>Equivalent inverse round</h4><p class="mono" style="font-size:.88rem">InvSubBytes → InvShiftRows → InvMixColumns → AddRoundKey(InvMixColumns(key))</p></div>
+  </div>
+  <ol>
+    <li><b>InvShiftRows ↔ InvSubBytes.</b> InvShiftRows changes byte order but not byte contents; InvSubBytes changes contents but not order, and neither depends on what the other changes. So they commute: <span class="m wr">InvShiftRows[InvSubBytes(Sᵢ)] = InvSubBytes[InvShiftRows(Sᵢ)]</span>.</li>
+    <li><b>AddRoundKey ↔ InvMixColumns.</b> Both act on State one column at a time, and InvMixColumns is linear over XOR: <span class="m wr">InvMixColumns(Sᵢ ⊕ wⱼ) = InvMixColumns(Sᵢ) ⊕ InvMixColumns(wⱼ)</span>. So they can be swapped if InvMixColumns is first applied to the round key — except for the first and last AddRoundKey, which are not swapped (Figure 6.10).</li>
+  </ol>
+  <p class="src">The AES lab above also runs the equivalent inverse cipher in your browser; both decryptions return the same plaintext.</p>
+
+  <h3>8-bit processors (e.g., smart cards)</h3>
+  <p>AddRoundKey is a byte XOR, ShiftRows a byte shift, SubBytes a 256-byte table. MixColumns needs only ×{02} and ×{03}; using <span class="m">{03}·x = ({02}·x) ⊕ x</span>, Eq. 6.4 becomes</p>
+  <div class="eq">Tmp   = s₀,ⱼ ⊕ s₁,ⱼ ⊕ s₂,ⱼ ⊕ s₃,ⱼ
+s₀,ⱼ′ = s₀,ⱼ ⊕ Tmp ⊕ [2·(s₀,ⱼ ⊕ s₁,ⱼ)]
+s₁,ⱼ′ = s₁,ⱼ ⊕ Tmp ⊕ [2·(s₁,ⱼ ⊕ s₂,ⱼ)]
+s₂,ⱼ′ = s₂,ⱼ ⊕ Tmp ⊕ [2·(s₂,ⱼ ⊕ s₃,ⱼ)]
+s₃,ⱼ′ = s₃,ⱼ ⊕ Tmp ⊕ [2·(s₃,ⱼ ⊕ s₀,ⱼ)]                     <span class="n">(6.9)</span></div>
+  <div class="warn"><b>Timing attacks.</b> The shift-and-conditional-XOR for ×{02} may take data-dependent time, exposing it to a timing attack (Unit 3, Section 4.4). Replacing it with a 256-byte lookup table X2[i] = {02}·i both counters this and is faster, at some storage cost.</div>
+
+  <h3>32-bit processors (e.g., PCs)</h3>
+  <p>Combine all four stages of a round on column j into one equation (ShiftRows column indices mod 4):</p>
+  <div class="eq">sⱼ′ = T₀[s₀,ⱼ] ⊕ T₁[s₁,ⱼ₋₁] ⊕ T₂[s₂,ⱼ₋₂] ⊕ T₃[s₃,ⱼ₋₃] ⊕ kⱼ
+T₀[x] = (02, 01, 01, 03)·S[x]    T₁[x] = (03, 02, 01, 01)·S[x]
+T₂[x] = (01, 03, 02, 01)·S[x]    T₃[x] = (01, 01, 03, 02)·S[x]</div>
+  <p>Each <b>T-table</b> maps a byte to a 32-bit column word and can be precomputed: 4 tables × 256 words = 4 KB. A round costs only <b>4 table lookups and 4 XORs per column</b>. Rijndael’s developers believe this compact, efficient implementation was probably one of the most important reasons it was selected as AES.</p>
+</section>
+
+<!-- ============ 6A ============ -->
+<section class="unit" id="s6a">
+  <h2><span class="sec">App. 6A</span>Polynomials with Coefficients in GF(2⁸)</h2>
+  <p class="why">A second polynomial layer: <b>words</b> are polynomials of degree ≤ 3 whose four coefficients are bytes (elements of GF(2⁸)). This is how FIPS 197 defines MixColumns.</p>
+  <ul class="props">
+    <li>Do not mix the layers up: a <b>byte</b> is a degree ≤ 7 polynomial with bit coefficients, multiplied mod a degree-8 polynomial; a <b>word</b> is a degree ≤ 3 polynomial with byte coefficients, multiplied mod the degree-4 polynomial <span class="m">x⁴ + 1</span>.</li>
+    <li><b>Addition</b>: add corresponding coefficients in GF(2⁸), i.e., XOR byte by byte.</li>
+    <li><b>Multiplication</b>: ordinary polynomial multiplication with coefficients multiplied in GF(2⁸), then reduce mod x⁴ + 1. The result is a polynomial ring, not a field (x⁴ + 1 is reducible).</li>
+  </ul>
+  <div class="eq">xⁱ mod (x⁴ + 1) = x^(i mod 4)                                 <span class="n">(6.13)</span></div>
+  <p>So reducing just folds the high coefficients back: <span class="m wr">d(x) = c₃x³ + (c₂ ⊕ c₆)x² + (c₁ ⊕ c₅)x + (c₀ ⊕ c₄)</span>, which is the circulant matrix product</p>
+  <div class="eq">┌d₀┐   ┌a₀ a₃ a₂ a₁┐ ┌b₀┐
+│d₁│ = │a₁ a₀ a₃ a₂│ │b₁│
+│d₂│   │a₂ a₁ a₀ a₃│ │b₂│
+└d₃┘   └a₃ a₂ a₁ a₀┘ └b₃┘                                     <span class="n">(6.14)</span></div>
+  <p>With <span class="m">a(x) = {03}x³ + {01}x² + {01}x + {02}</span> (a₃ = 03, a₂ = 01, a₁ = 01, a₀ = 02) this is exactly the MixColumns matrix of Eq. 6.3.</p>
+</section>
+
+<!-- ============ Key terms ============ -->
+<section class="unit" id="terms">
+  <h2><span class="sec">5.7 · 6.7</span>Key Terms</h2>
+  <p class="why">The key-term lists from both chapters, one line each.</p>
+  <dl class="gloss">
+    <dt>Group</dt><dd>Set + one binary operation with closure, associativity, identity and inverses (A1–A4).</dd>
+    <dt>Abelian group</dt><dd>Group whose operation is also commutative (A5).</dd>
+    <dt>Finite / infinite group</dt><dd>Finitely / infinitely many elements.</dd>
+    <dt>Order</dt><dd>Number of elements of a finite group or field.</dd>
+    <dt>Identity element</dt><dd>e with a · e = e · a = a (0 for +, 1 for ×).</dd>
+    <dt>Inverse element</dt><dd>a′ with a · a′ = a′ · a = e (−a for +, a⁻¹ for ×).</dd>
+    <dt>Associative / commutative</dt><dd>a(bc) = (ab)c / ab = ba.</dd>
+    <dt>Cyclic group / generator</dt><dd>Every element is a power of one element g, the generator. In a finite field, the first q − 1 powers of g give every nonzero element.</dd>
+    <dt>Ring</dt><dd>Abelian group under +, plus closed, associative, distributive × (A1–A5, M1–M3).</dd>
+    <dt>Commutative ring</dt><dd>Ring with commutative × (M4).</dd>
+    <dt>Integral domain</dt><dd>Commutative ring with a multiplicative identity and no zero divisors (M5–M6).</dd>
+    <dt>Field</dt><dd>Integral domain where every nonzero element has a multiplicative inverse (M7): +, −, ×, ÷ stay in the set.</dd>
+    <dt>Finite / infinite field</dt><dd>Finitely / infinitely many elements; a finite field has order pⁿ.</dd>
+    <dt>GF(p), GF(2ⁿ)</dt><dd>Zₚ with arithmetic mod p; n-bit polynomials with arithmetic mod an irreducible m(x) of degree n.</dd>
+    <dt>Modular arithmetic / residue</dt><dd>Arithmetic on remainders mod n; a residue is such a remainder.</dd>
+    <dt>Relatively prime</dt><dd>Only common positive factor is 1; needed for a multiplicative inverse in Zₙ.</dd>
+    <dt>Prime number</dt><dd>Integer p &gt; 1 whose only divisors are ±1 and ±p.</dd>
+    <dt>Divisor</dt><dd>b divides a if a = mb (for polynomials: zero remainder).</dd>
+    <dt>Greatest common divisor</dt><dd>Largest common divisor of two integers; highest-degree common divisor of two polynomials.</dd>
+    <dt>Euclidean algorithm</dt><dd>Repeat gcd(a, b) = gcd(b, a mod b); the extended version also yields inverses.</dd>
+    <dt>Polynomial / coefficient set</dt><dd>Σ aᵢxⁱ with coefficients from a set S.</dd>
+    <dt>Monic polynomial</dt><dd>Leading coefficient 1.</dd>
+    <dt>Polynomial arithmetic</dt><dd>+, −, × (and ÷ with remainder, over a field) treating x as an indeterminate.</dd>
+    <dt>Polynomial ring</dt><dd>The set of polynomials over a field (or commutative ring), which forms a ring.</dd>
+    <dt>Irreducible (prime) polynomial</dt><dd>Not a product of two lower-degree polynomials over the field.</dd>
+    <dt>Modular polynomial arithmetic</dt><dd>Polynomial arithmetic with results reduced mod a polynomial m(x).</dd>
+    <dt>Advanced Encryption Standard (AES)</dt><dd>128-bit block cipher with 128/192/256-bit keys and 10/12/14 rounds, standardized by NIST in FIPS 197.</dd>
+    <dt>Rijndael</dt><dd>The cipher selected as AES; AES is Rijndael restricted to a 128-bit block and three key sizes.</dd>
+    <dt>National Institute of Standards and Technology (NIST)</dt><dd>U.S. standards agency that published AES.</dd>
+    <dt>S-box</dt><dd>16 × 16 byte table used by SubBytes and SubWord: GF(2⁸) inverse followed by an affine map.</dd>
+    <dt>Key expansion</dt><dd>Generates 44 words (11 round keys) from a 128-bit key using RotWord, SubWord and Rcon.</dd>
+    <dt>Avalanche effect</dt><dd>One changed plaintext or key bit changes about half the ciphertext bits.</dd>
+  </dl>
+</section>
+
+<!-- ============ Review ============ -->
+<section class="unit" id="review">
+  <h2><span class="sec">5.7 · 6.7</span>Review Questions</h2>
+  <p class="why">Review questions 5.1–5.4 and 6.1–6.14 from the book. Answer first, then open to check.</p>
+  <h3>Chapter 5</h3>
+  <details><summary>5.1 Briefly define a group.</summary><p>A set of elements with a binary operation that is closed, associative, has an identity element, and gives every element an inverse (A1–A4).</p></details>
+  <details><summary>5.2 Briefly define a ring.</summary><p>A set with two operations, addition and multiplication, that is an abelian group under addition, and whose multiplication is closed and associative and distributes over addition (A1–A5, M1–M3). You can add, subtract and multiply without leaving the set.</p></details>
+  <details><summary>5.3 Briefly define a field.</summary><p>An integral domain in which every nonzero element has a multiplicative inverse (A1–M7): addition, subtraction, multiplication and division all stay inside the set.</p></details>
+  <details><summary>5.4 List three classes of polynomial arithmetic.</summary><p>(1) Ordinary polynomial arithmetic; (2) arithmetic with coefficients mod p (in GF(p)); (3) coefficients in GF(p) and polynomials reduced modulo a polynomial m(x) of degree n.</p></details>
+  <h3>Chapter 6</h3>
+  <p class="src">6.1–6.2 are answered in the book’s online Appendix H; the answers below follow NIST’s own report on the AES selection (see Sources).</p>
+  <details><summary>6.1 What was the original set of criteria used by NIST to evaluate candidate AES ciphers?</summary><p>Security (resistance to cryptanalysis, soundness of the mathematics, randomness of output, relative security); cost (licensing, computational efficiency, memory requirements); and algorithm and implementation characteristics (flexibility, hardware and software suitability, simplicity).</p></details>
+  <details><summary>6.2 What was the final set of criteria used by NIST to evaluate candidate AES ciphers?</summary><p>General security; software implementations; restricted-space environments; hardware implementations; attacks on implementations; encryption vs. decryption; key agility; other versatility and flexibility; potential for instruction-level parallelism.</p></details>
+  <details><summary>6.3 What is the difference between Rijndael and AES?</summary><p>AES is one instantiation of Rijndael. Rijndael supports additional block sizes and key lengths; AES fixes the block at 128 bits and allows only 128-, 192- and 256-bit keys (FIPS 197).</p></details>
+  <details><summary>6.4 What is the purpose of the State array?</summary><p>It holds the 128-bit block as a 4 × 4 byte matrix (filled by column) that every stage of encryption or decryption modifies; at the end it is copied to the output.</p></details>
+  <details><summary>6.5 How is the S-box constructed?</summary><p>Fill row y, column x with {yx}; replace each byte with its multiplicative inverse in GF(2⁸) ({00} stays {00}); then apply the affine transformation of Eq. 6.1 with constant {63}.</p></details>
+  <details><summary>6.6 Briefly describe SubBytes.</summary><p>Each State byte is replaced by an S-box lookup: the left 4 bits pick the row, the right 4 bits the column.</p></details>
+  <details><summary>6.7 Briefly describe ShiftRows.</summary><p>Row 0 is unchanged; rows 1, 2 and 3 are circularly shifted left by 1, 2 and 3 bytes.</p></details>
+  <details><summary>6.8 How many bytes in State are affected by ShiftRows?</summary><p>12 — the bytes of rows 1–3. Row 0’s 4 bytes stay put.</p></details>
+  <details><summary>6.9 Briefly describe MixColumns.</summary><p>Each column is multiplied by a fixed 4 × 4 matrix (entries {01}, {02}, {03}) over GF(2⁸), so each output byte is a function of all four bytes of its column.</p></details>
+  <details><summary>6.10 Briefly describe AddRoundKey.</summary><p>The 128 bits of State are XORed with the 128 bits of the round key, column by column; it is its own inverse.</p></details>
+  <details><summary>6.11 Briefly describe the key expansion algorithm.</summary><p>The 4-word key becomes w[0..3]. For i = 4 … 43, w[i] = w[i − 4] ⊕ w[i − 1], except when i is a multiple of 4, when w[i − 1] is first passed through g: RotWord, SubWord, then XOR with Rcon[i/4]. Result: 44 words, 11 round keys.</p></details>
+  <details><summary>6.12 What is the difference between SubBytes and SubWord?</summary><p>Both use the same S-box. SubBytes acts on all 16 State bytes in each round; SubWord acts on the 4 bytes of one word inside the key expansion.</p></details>
+  <details><summary>6.13 What is the difference between ShiftRows and RotWord?</summary><p>ShiftRows shifts the rows of State by 0–3 bytes during encryption; RotWord rotates one 4-byte word left by one byte during key expansion.</p></details>
+  <details><summary>6.14 What is the difference between the AES decryption algorithm and the equivalent inverse cipher?</summary><p>Standard decryption orders each round InvShiftRows, InvSubBytes, AddRoundKey, InvMixColumns — different from encryption. The equivalent inverse cipher swaps the first two and the last two steps so the order matches encryption, which requires applying InvMixColumns to round keys 1–9.</p></details>
+  <h3>Practice problems worth doing</h3>
+  <p class="src">Chapter 5: 5.4 (GF(5) tables — compare with the Zₙ lab), 5.8 (which polynomials are reducible over GF(2)), 5.9a (polynomial gcd), 5.11 (an inverse in GF(2³)). Chapter 6: 6.2 ({02}⁻¹ and the S-box entry for {02}), 6.3 (key expansion for an all-ones key), 6.4 (one round by hand), 6.9 (MixColumns and its inverse on A1 B2 C3 D4). The labs on this page check every one of these.</p>
+</section>
+
+<!-- ============ Resources ============ -->
+<section class="unit" id="res">
+  <h2><span class="sec">References</span>Sources</h2>
+  <ul>
+    <li>W. Stallings, <i>Cryptography and Network Security: Principles and Practice</i>, 7th ed., Global Edition, Pearson, 2017. Chapters 5–6 and Appendix 6A, pp. 141–206. All content not marked otherwise.</li>
+    <li><b>In the book:</b> Appendix B.5 (Sage examples: Euclid and extended Euclid for integers and polynomials, finite fields) and B.6 (AES). Online appendices: I (Simplified AES — hand-computable, recommended alongside the chapter) and H (AES evaluation criteria).</li>
+    <li><a href="https://csrc.nist.gov/pubs/fips/197/final" target="_blank" rel="noopener">NIST FIPS 197, Advanced Encryption Standard (AES)</a> (updated May 2023) — the standard itself; source of the Appendix C test vector used by the AES lab and of the answer to review question 6.3. The lab also reproduces the book’s Tables 6.3–6.6.</li>
+    <li><a href="https://nvlpubs.nist.gov/nistpubs/jres/106/3/j63nec.pdf" target="_blank" rel="noopener">J. Nechvatal et al., “Report on the Development of the Advanced Encryption Standard (AES),” <i>J. Res. NIST</i> 106(3), 2001</a> — NIST’s evaluation criteria; source of the answers to review questions 6.1–6.2.</li>
+    <li><a href="https://doc.sagemath.org/html/en/reference/finite_rings/sage/rings/finite_rings/finite_field_constructor.html" target="_blank" rel="noopener">SageMath · Finite field constructor</a> — <code>GF(p)</code>, <code>GF(2^8, modulus=…)</code> and polynomial rings for checking homework.</li>
+    <li><a href="https://www.cryptool.org/" target="_blank" rel="noopener">CrypTool</a> — free e-learning tools that animate AES and other block ciphers.</li>
+  </ul>
+  <footer>Content follows W. Stallings, <i>Cryptography and Network Security: Principles and Practice</i>, 7th ed., Global Edition, Chapters 5–6. Interactive tools compute results live in your browser; the S-box is generated from the book’s construction, and the AES implementation is checked against both the book’s example and the FIPS 197 test vector.</footer>
+</section>
+</main>
+</div>
+<script>
+/* ===== Unit 4 engine: GF(2)[x], GF(2^8), AES-128 (FIPS 197) ===== */
+const GF=(function(){
+  /* polynomials over GF(2) as non-negative integers (bit i = coefficient of x^i); degree kept <= 30 */
+  const deg=a=>a===0?-1:31-Math.clz32(a);
+  const pmul=(a,b)=>{let r=0;while(b){if(b&1)r^=a;a<<=1;b>>>=1}return r>>>0};
+  function pdivmod(a,b){if(b===0)throw new Error('division by zero');let q=0;const db=deg(b);
+    while(deg(a)>=db){const s=deg(a)-db;q|=1<<s;a^=b<<s}return [q>>>0,a>>>0]}
+  function pgcdSteps(a,b){const steps=[];if(deg(a)<deg(b))[a,b]=[b,a];
+    while(b!==0){const [q,r]=pdivmod(a,b);steps.push({a,b,q,r});a=b;b=r}return {g:a,steps}}
+  function irreducible(f){const d=deg(f);if(d<1)return false;if(d===1)return true;
+    for(let g=2;deg(g)<=Math.floor(d/2);g++){if(deg(g)<1)continue;if(pdivmod(f,g)[1]===0)return false}return true}
+  function factor(f){for(let g=2;deg(g)<=Math.floor(deg(f)/2);g++){if(deg(g)>=1&&pdivmod(f,g)[1]===0)return [g,pdivmod(f,g)[0]]}return null}
+  function ptoStr(a,v='x'){if(a===0)return '0';const t=[];for(let i=deg(a);i>=0;i--)if((a>>i)&1)t.push(i===0?'1':i===1?v:v+sup(i));return t.join(' + ')}
+  const SUP={'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+  const sup=n=>String(n).split('').map(c=>SUP[c]).join('');
+  /* parse "x^7+x+1", "x7 + x + 1", binary "10000011", or hex "{83}" / "0x83" */
+  function parse(s){s=String(s).trim().toLowerCase().replace(/\s+/g,'');if(s==='')throw new Error('empty');
+    let m;
+    if((m=s.match(/^\{([0-9a-f]+)\}$/))||(m=s.match(/^0x([0-9a-f]+)$/)))return check(parseInt(m[1],16));
+    if(/^[01]+$/.test(s)&&s.length>1)return check(parseInt(s,2));
+    if(s==='0')return 0; if(s==='1')return 1;
+    s=s.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]+/g,x=>'^'+x.split('').map(c=>'⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(c)).join(''));
+    let r=0;for(const t of s.split('+')){
+      if(t==='1')r^=1;else if(t==='x')r^=2;
+      else if((m=t.match(/^x\^?(\d+)$/))){const e=+m[1];if(e>30)throw new Error('degree too large (max 30)');r^=(1<<e)}
+      else throw new Error('cannot read term “'+t+'”')}
+    return r>>>0}
+  function check(v){if(v>0x7fffffff)throw new Error('too large');return v}
+  /* GF(2^8) with m(x) = x^8+x^4+x^3+x+1 = 0x11B */
+  const xtime=a=>((a<<1)^((a&0x80)?0x1b:0))&0xff;
+  function mul(a,b){let r=0;while(b){if(b&1)r^=a;a=xtime(a);b>>=1}return r}
+  function mulSteps(a,b){const rows=[];let p=a;for(let i=0;i<8;i++){rows.push({pow:1<<i,val:p,hi:(p&0x80)!==0,used:((b>>i)&1)===1});p=xtime(p)}
+    return {rows,prod:mul(a,b)}}
+  /* extended Euclid for polynomials: inverse of b mod a (Table 5.4 layout) */
+  function extEuclid(a,b){const it=[];let [r0,r1]=[a,b],[v0,v1]=[1,0],[w0,w1]=[0,1];
+    while(r1!==0){const [q,r]=pdivmod(r0,r1);const v=v0^pmul(q,v1),w=w0^pmul(q,w1);it.push({q,r,v,w});[r0,r1]=[r1,r];[v0,v1]=[v1,v];[w0,w1]=[w1,w]}
+    return {d:r0,v:v0,w:w0,it}}
+  function inv8(a){if(a===0)return 0;const e=extEuclid(0x11b,a);return pdivmod(e.w,0x11b)[1]&0xff}
+  return {deg,pmul,pdivmod,pgcdSteps,irreducible,factor,ptoStr,sup,parse,xtime,mul,mulSteps,extEuclid,inv8}
+})();
+
+const AES=(function(){
+  const h2=v=>v.toString(16).padStart(2,'0');
+  /* S-box built from the book's construction (Section 6.3): inverse in GF(2^8), then affine map with c = {63} */
+  function affine(b){let r=0;for(let i=0;i<8;i++){const bit=((b>>i)^(b>>((i+4)%8))^(b>>((i+5)%8))^(b>>((i+6)%8))^(b>>((i+7)%8))^(0x63>>i))&1;r|=bit<<i}return r}
+  function invAffine(b){let r=0;for(let i=0;i<8;i++){const bit=((b>>((i+2)%8))^(b>>((i+5)%8))^(b>>((i+7)%8))^(0x05>>i))&1;r|=bit<<i}return r}
+  const S=new Array(256),IS=new Array(256);
+  for(let i=0;i<256;i++){S[i]=affine(GF.inv8(i))}
+  for(let i=0;i<256;i++)IS[S[i]]=i;
+  const RC=[0,1,2,4,8,0x10,0x20,0x40,0x80,0x1b,0x36];
+  /* state: s[r][c]; input bytes fill column by column (Figure 6.2a) */
+  const toState=bytes=>{const s=[[],[],[],[]];for(let i=0;i<16;i++)s[i%4][Math.floor(i/4)]=bytes[i];return s};
+  const fromState=s=>{const b=[];for(let c=0;c<4;c++)for(let r=0;r<4;r++)b.push(s[r][c]);return b};
+  const hexToBytes=h=>{const b=[];for(let i=0;i<h.length;i+=2)b.push(parseInt(h.substr(i,2),16));return b};
+  const bytesToHex=b=>b.map(h2).join('');
+  const cp=s=>s.map(r=>r.slice());
+  const subBytes=s=>s.map(r=>r.map(v=>S[v]));
+  const invSubBytes=s=>s.map(r=>r.map(v=>IS[v]));
+  const shiftRows=s=>s.map((r,i)=>r.slice(i).concat(r.slice(0,i)));
+  const invShiftRows=s=>s.map((r,i)=>r.slice(4-i).concat(r.slice(0,4-i)));
+  function mixCol(c){const m=GF.mul;return [m(2,c[0])^m(3,c[1])^c[2]^c[3], c[0]^m(2,c[1])^m(3,c[2])^c[3], c[0]^c[1]^m(2,c[2])^m(3,c[3]), m(3,c[0])^c[1]^c[2]^m(2,c[3])]}
+  function invMixCol(c){const m=GF.mul;return [m(14,c[0])^m(11,c[1])^m(13,c[2])^m(9,c[3]), m(9,c[0])^m(14,c[1])^m(11,c[2])^m(13,c[3]), m(13,c[0])^m(9,c[1])^m(14,c[2])^m(11,c[3]), m(11,c[0])^m(13,c[1])^m(9,c[2])^m(14,c[3])]}
+  function colwise(s,f){const o=[[],[],[],[]];for(let c=0;c<4;c++){const v=f([s[0][c],s[1][c],s[2][c],s[3][c]]);for(let r=0;r<4;r++)o[r][c]=v[r]}return o}
+  const mixColumns=s=>colwise(s,mixCol), invMixColumns=s=>colwise(s,invMixCol);
+  const addRoundKey=(s,k)=>s.map((r,i)=>r.map((v,j)=>v^k[i][j]));
+  /* key expansion for 128-bit key: 44 words, with g-function trace (Table 6.3) */
+  function expand(keyBytes){const w=[],aux=[];
+    for(let i=0;i<4;i++)w.push(keyBytes.slice(4*i,4*i+4));
+    for(let i=4;i<44;i++){let t=w[i-1].slice();
+      if(i%4===0){const x=t.slice(1).concat(t[0]);const y=x.map(v=>S[v]);const rc=[RC[i/4],0,0,0];const z=y.map((v,j)=>v^rc[j]);aux.push({i,prev:t,x,y,rc,z});t=z}
+      w.push(w[i-4].map((v,j)=>v^t[j]))}
+    return {w,aux}}
+  const roundKey=(w,r)=>{const s=[[],[],[],[]];for(let c=0;c<4;c++)for(let j=0;j<4;j++)s[j][c]=w[4*r+c][j];return s};
+  function encrypt(ptHex,keyHex){const pt=hexToBytes(ptHex),k=hexToBytes(keyHex);const {w,aux}=expand(k);
+    let s=toState(pt);const rounds=[];const input=cp(s);
+    s=addRoundKey(s,roundKey(w,0));rounds.push({r:0,start:input,key:roundKey(w,0),end:cp(s)});
+    for(let r=1;r<=10;r++){const st=cp(s);const a=subBytes(s),b=shiftRows(a),c=r<10?mixColumns(b):null;const key=roundKey(w,r);
+      s=addRoundKey(c||b,key);rounds.push({r,start:st,sub:a,shift:b,mix:c,key,end:cp(s)})}
+    return {rounds,w,aux,out:bytesToHex(fromState(s))}}
+  function decrypt(ctHex,keyHex){const k=hexToBytes(keyHex);const {w}=expand(k);let s=toState(hexToBytes(ctHex));
+    s=addRoundKey(s,roundKey(w,10));
+    for(let r=9;r>=0;r--){s=invShiftRows(s);s=invSubBytes(s);s=addRoundKey(s,roundKey(w,r));if(r>0)s=invMixColumns(s)}
+    return bytesToHex(fromState(s))}
+  /* equivalent inverse cipher (Figure 6.10): same order of steps as encryption, InvMixColumns applied to round keys 1..9 */
+  function decryptEquivalent(ctHex,keyHex){const {w}=expand(hexToBytes(keyHex));let s=toState(hexToBytes(ctHex));
+    s=addRoundKey(s,roundKey(w,10));
+    for(let r=9;r>=1;r--){s=invSubBytes(s);s=invShiftRows(s);s=invMixColumns(s);s=addRoundKey(s,invMixColumns(roundKey(w,r)))}
+    s=invSubBytes(s);s=invShiftRows(s);s=addRoundKey(s,roundKey(w,0));return bytesToHex(fromState(s))}
+  return {S,IS,RC,affine,invAffine,toState,fromState,hexToBytes,bytesToHex,subBytes,shiftRows,mixCol,invMixCol,mixColumns,invMixColumns,addRoundKey,expand,roundKey,encrypt,decrypt,decryptEquivalent,h2}
+})();
+
+(function(){
+  const $=id=>document.getElementById(id);
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const h2=AES.h2, H=v=>h2(v).toUpperCase();
+  const bin=(v,n)=>v.toString(2).padStart(n,'0');
+  const P=(v)=>GF.ptoStr(v);
+  const on=(ids,f)=>ids.forEach(id=>{const e=$(id);e.addEventListener('input',f);e.addEventListener('change',f)});
+  const segInit=(root,attr,f)=>{const bs=[...root.querySelectorAll('button['+attr+']')];bs.forEach(b=>b.addEventListener('click',()=>{bs.forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));f(b.getAttribute(attr))}));return ()=>{const b=bs.find(x=>x.getAttribute('aria-pressed')==='true');return b&&b.getAttribute(attr)}};
+  const COLS=['#0b7a5f','#2f6fb5','#b5652f','#8a4fb0'];
+
+  /* ---------- Z_n classifier ---------- */
+  function zn(){
+    const n=parseInt($('zn-n').value),out=$('zn-out'),tabs=$('zn-tabs');
+    if(!(n>=2&&n<=16)){out.innerHTML='<span class="err">Choose n from 2 to 16.</span>';tabs.innerHTML='';return}
+    const R=[...Array(n).keys()],add=(a,b)=>(a+b)%n,mul=(a,b)=>(a*b)%n;
+    const all3=f=>R.every(a=>R.every(b=>R.every(c=>f(a,b,c))));
+    const chk={
+      'A1–A2':all3((a,b,c)=>add(a,add(b,c))===add(add(a,b),c)),
+      'A3–A4':R.every(a=>add(a,0)===a&&R.some(b=>add(a,b)===0)),
+      'A5':R.every(a=>R.every(b=>add(a,b)===add(b,a))),
+      'M1–M2':all3((a,b,c)=>mul(a,mul(b,c))===mul(mul(a,b),c)),
+      'M3':all3((a,b,c)=>mul(a,add(b,c))===add(mul(a,b),mul(a,c))),
+      'M4':R.every(a=>R.every(b=>mul(a,b)===mul(b,a))),
+      'M5':R.every(a=>mul(a,1)===a)};
+    const zd=[];for(let a=1;a<n;a++)for(let b=a;b<n;b++)if(mul(a,b)===0)zd.push(a+' × '+b);
+    const noinv=R.filter(a=>a>0&&!R.some(b=>mul(a,b)===1));
+    let chips=Object.entries(chk).map(([k,v])=>`<span class="chip ${v?'ok':'no'}">${k} ${v?'✓':'✗'}</span>`).join('');
+    chips+=`<span class="chip ${zd.length?'no':'ok'}">M6 ${zd.length?'✗':'✓'}</span><span class="chip ${noinv.length?'no':'ok'}">M7 ${noinv.length?'✗':'✓'}</span>`;
+    const verdict=noinv.length?`<span class="res no">commutative ring with identity — not a field</span>`:`<span class="res ok">a field: GF(${n})</span>`;
+    let why='';
+    if(zd.length)why+=`<br>Zero divisors (M6 fails): ${zd.slice(0,6).map(s=>s+' ≡ 0').join(', ')}${zd.length>6?', …':''}.`;
+    if(noinv.length)why+=`<br>No multiplicative inverse (M7 fails): ${noinv.join(', ')} — exactly the values sharing a factor with ${n}.`;
+    out.innerHTML=`<div style="margin-bottom:8px">${chips}</div><div class="out">Z<sub>${n}</sub> is ${verdict}${why}</div>`;
+    const tab=(op,f,mark)=>{let h=`<table class="gftab"><tr><th>${op}</th>${R.map(b=>`<th>${b}</th>`).join('')}</tr>`;
+      R.forEach(a=>{h+=`<tr><th>${a}</th>${R.map(b=>{const v=f(a,b);return `<td class="${mark&&v===1?'one':''}">${v}</td>`}).join('')}</tr>`});return h+'</table>'};
+    let inv=`<table class="gftab"><tr><th>w</th>${R.map(w=>`<td>${w}</td>`).join('')}</tr><tr><th>−w</th>${R.map(w=>`<td>${(n-w)%n}</td>`).join('')}</tr><tr><th>w⁻¹</th>${R.map(w=>{const b=R.find(b=>w>0&&mul(w,b)===1);return `<td class="${b===undefined?'dim':''}">${b===undefined?'—':b}</td>`}).join('')}</tr></table>`;
+    tabs.innerHTML=`<div class="tbl">${tab('+',add)}<div class="cap">Addition mod ${n}</div></div><div class="tbl">${tab('×',mul,true)}<div class="cap">Multiplication mod ${n} (1s marked)</div></div><div class="tbl" style="grid-column:1/-1">${inv}<div class="cap">Additive and multiplicative inverses</div></div>`}
+  on(['zn-n'],zn);
+  document.querySelectorAll('#lab-zn [data-zn]').forEach(b=>b.addEventListener('click',()=>{$('zn-n').value=b.dataset.zn;zn()}));
+
+  /* ---------- GF(2) polynomial calculator ---------- */
+  const plOp=segInit($('lab-poly'),'data-op',()=>pl());
+  function pl(){
+    const out=$('pl-out');let a,b;
+    try{a=GF.parse($('pl-a').value)}catch(e){out.innerHTML=`<span class="err">a(x): ${esc(e.message)}</span>`;return}
+    const op=plOp()||'div';
+    if(op!=='irr'){try{b=GF.parse($('pl-b').value)}catch(e){out.innerHTML=`<span class="err">b(x): ${esc(e.message)}</span>`;return}}
+    const show=v=>`<span class="mono">${esc(P(v))}</span> <span class="src">(${v===0?'0':bin(v,GF.deg(v)+1)})</span>`;
+    if(op==='add'){out.innerHTML=`a + b = a − b = ${show(a^b)}<div class="cap">Coefficient-wise XOR: ${bin(a,Math.max(GF.deg(a),GF.deg(b))+1)} ⊕ ${bin(b,Math.max(GF.deg(a),GF.deg(b))+1)}.</div>`;return}
+    if(op==='mul'){if(GF.deg(a)+GF.deg(b)>30){out.innerHTML='<span class="err">Product degree too large (max 30).</span>';return}
+      const rows=[];for(let i=0;i<=GF.deg(b);i++)if((b>>i)&1)rows.push(a<<i);
+      const W=GF.deg(GF.pmul(a,b))+1||1;
+      out.innerHTML=`<div class="pseudo">${rows.map((r,i)=>(i?'⊕ ':'  ')+bin(r,W)+'   '+esc(P(r))).join('\n')}\n= ${bin(GF.pmul(a,b),W)}</div>a × b = ${show(GF.pmul(a,b))}<div class="cap">One shifted copy of a(x) for each term of b(x), added with XOR.</div>`;return}
+    if(op==='div'){if(b===0){out.innerHTML='<span class="err">Cannot divide by 0.</span>';return}
+      let r=a,q=0;const W=Math.max(GF.deg(a),GF.deg(b))+1;const lines=['  '+bin(a,W)+'   a(x)'];const db=GF.deg(b);
+      while(GF.deg(r)>=db){const s=GF.deg(r)-db;q|=1<<s;lines.push('⊕ '+bin(b<<s,W)+'   x'+(s?GF.sup(s):'⁰')+'·b(x)');r^=b<<s;lines.push('= '+bin(r,W))}
+      out.innerHTML=`<div class="pseudo">${lines.join('\n')}</div>quotient q(x) = ${show(q>>>0)}<br>remainder r(x) = ${show(r)}${r===0?' &nbsp;<span class="res ok">b(x) | a(x)</span>':''}<div class="cap">Check: q(x)·b(x) + r(x) = ${esc(P(GF.pmul(q>>>0,b)^r))} = a(x) ✓</div>`;return}
+    if(op==='gcd'){if(a===0&&b===0){out.innerHTML='<span class="err">gcd(0, 0) is not useful here.</span>';return}
+      const g=GF.pgcdSteps(a,b);let h='<table><tr><th>dividend</th><th>divisor</th><th>quotient</th><th>remainder</th></tr>';
+      g.steps.forEach(s=>{h+=`<tr><td class="mono">${esc(P(s.a))}</td><td class="mono">${esc(P(s.b))}</td><td class="mono">${esc(P(s.q))}</td><td class="mono ${s.r===0?'dim':''}">${esc(P(s.r))}</td></tr>`});
+      out.innerHTML=`<div class="tbl">${h}</table></div>gcd[a(x), b(x)] = ${show(g.g)}${g.g===1?' — relatively prime':''}`;return}
+    if(op==='irr'){if(GF.deg(a)>20){out.innerHTML='<span class="err">Irreducibility check limited to degree ≤ 20.</span>';return}
+      const irr=GF.irreducible(a);const f=irr?null:GF.factor(a);
+      out.innerHTML=`a(x) = ${show(a)} is <span class="res ${irr?'ok':'no'}">${irr?'irreducible over GF(2)':'reducible'}</span>${f?`<br>${esc(P(a))} = (${esc(P(f[0]))})(${esc(P(f[1]))})`:''}<div class="cap">Tries every polynomial of degree 1 … ⌊deg/2⌋ as a factor.</div>`}
+  }
+  on(['pl-a','pl-b'],pl);
+  $('pl-fig').addEventListener('click',()=>{$('pl-a').value='x^7+x^5+x^4+x^3+x+1';$('pl-b').value='x^3+x+1';pl()});
+  $('pl-gcd').addEventListener('click',()=>{$('pl-a').value='x^6+x^5+x^4+x^3+x^2+x+1';$('pl-b').value='x^4+x^2+x+1';const g=$('lab-poly').querySelector('[data-op=gcd]');g.click()});
+
+  /* ---------- GF(2^3) tables ---------- */
+  function gf3(){
+    const m=parseInt($('g3-m').value),lab=$('g3-r').value;
+    const mul=(a,b)=>{let r=0;for(let i=0;i<3;i++)if((b>>i)&1)r^=a<<i;return GF.pdivmod(r,m)[1]};
+    const pw=[1];for(let i=1;i<7;i++)pw.push(mul(pw[i-1],2));const lg={};pw.forEach((v,i)=>lg[v]=i);
+    const gs=v=>GF.ptoStr(v,'g');
+    const L=v=>lab==='bin'?bin(v,3):lab==='int'?String(v):lab==='poly'?P(v):(v===0?'0':v===1?'1':'g'+(lg[v]>1?GF.sup(lg[v]):''));
+    const order=lab==='pow'?[0].concat(pw):[0,1,2,3,4,5,6,7];
+    const tab=(op,f,mark)=>{let h=`<table class="gftab"><tr><th>${op}</th>${order.map(b=>`<th>${esc(L(b))}</th>`).join('')}</tr>`;
+      order.forEach(a=>{h+=`<tr><th>${esc(L(a))}</th>${order.map(b=>{const v=f(a,b);return `<td class="${mark&&v===1?'one':''}">${esc(L(v))}</td>`}).join('')}</tr>`});return h+'</table>'};
+    let gen=`<table class="gftab"><tr><th>Power</th><th>Polynomial</th><th>Binary</th><th>Decimal</th></tr><tr><td>0</td><td>0</td><td>000</td><td>0</td></tr>`;
+    pw.forEach((v,i)=>{gen+=`<tr><td>g${GF.sup(i)}${i===0?' (= g⁷)':''}</td><td>${esc(gs(v))}</td><td>${bin(v,3)}</td><td>${v}</td></tr>`});
+    $('g3-tabs').innerHTML=`<div class="tbl">${tab('+',(a,b)=>a^b)}<div class="cap">Addition (XOR)</div></div><div class="tbl">${tab('×',mul,true)}<div class="cap">Multiplication mod ${esc(P(m))}</div></div><div class="tbl" style="grid-column:1/-1">${gen}</table><div class="cap">Generator table (Table 5.5 for x³ + x + 1): g is a root of m(x), so g³ = ${esc(gs(m^8))}.</div></div>`}
+  on(['g3-m','g3-r'],gf3);
+
+  /* ---------- GF(2^8) multiply + inverse ---------- */
+  let muTimer=null;
+  function mu(anim){
+    const a=parseInt($('mu-a').value,16),b=parseInt($('mu-b').value,16),tab=$('mu-tab'),out=$('mu-out');
+    if(!/^[0-9a-f]{1,2}$/i.test($('mu-a').value.trim())||!/^[0-9a-f]{1,2}$/i.test($('mu-b').value.trim())){out.innerHTML='<span class="err">Enter two hex bytes, 00–FF.</span>';tab.innerHTML='';$('mu-inv').innerHTML='';return}
+    const r=GF.mulSteps(a,b);
+    let h=`<table class="xt"><tr><th>×</th><th>a · xⁱ (binary)</th><th>hex</th><th>next step</th><th>bit i of b</th></tr>`;
+    r.rows.forEach((w,i)=>{h+=`<tr data-i="${i}"><td>{${H(w.pow)}}</td><td class="mono ${w.used?'used':''}">${bin(w.val,8)}</td><td class="${w.used?'used':''}">{${H(w.val)}}</td><td class="${w.hi?'red':'dim'}">${i<7?(w.hi?'b₇ = 1: shift, ⊕ 1B':'b₇ = 0: shift'):''}</td><td>${w.used?'<b>1 ✓</b>':'0'}</td></tr>`});
+    tab.innerHTML=h+'</table>';
+    const used=r.rows.filter(w=>w.used);
+    out.innerHTML=`{${H(a)}} · {${H(b)}} = ${used.length?used.map(w=>'{'+H(w.val)+'}').join(' ⊕ '):'0'} = <span class="res ok">{${H(r.prod)}}</span> &nbsp; <span class="src">(${esc(P(r.prod))})</span>`;
+    const rows=[...tab.querySelectorAll('tr[data-i]')];
+    if(muTimer){clearInterval(muTimer);muTimer=null}
+    if(anim&&!reduce){rows.forEach(x=>x.classList.add('hide'));out.style.opacity='.15';let k=0;muTimer=setInterval(()=>{if(k<rows.length){rows[k++].classList.remove('hide')}else{out.style.opacity='1';clearInterval(muTimer);muTimer=null}},450)}else out.style.opacity='1';
+    // inverse
+    const inv=$('mu-inv');
+    if(a===0){inv.innerHTML='<p class="src">{00} has no multiplicative inverse (the S-box maps it to itself by convention).</p>';return}
+    const e=GF.extEuclid(0x11b,a);
+    let t=`<table><tr><th>i</th><th>qᵢ(x)</th><th>rᵢ(x)</th><th>vᵢ(x)</th><th>wᵢ(x)</th></tr><tr><td>init</td><td class="dim">—</td><td class="mono">a = m(x); b = ${esc(P(a))}</td><td>1, 0</td><td>0, 1</td></tr>`;
+    e.it.forEach((s,i)=>{const fin=s.r===1;t+=`<tr><td>${i+1}</td><td class="mono">${esc(P(s.q))}</td><td class="mono ${fin?'hi':''}">${esc(P(s.r))}</td><td class="mono">${esc(P(s.v))}</td><td class="mono ${fin?'hi':''}">${esc(P(s.w))}</td></tr>`});
+    const iv=GF.inv8(a);
+    inv.innerHTML=t+`</table><div class="out" style="margin-top:6px">{${H(a)}}⁻¹ = <span class="res ok">{${H(iv)}}</span> = ${esc(P(iv))} &nbsp; check: {${H(a)}} · {${H(iv)}} = {${H(GF.mul(a,iv))}}</div>`}
+  on(['mu-a','mu-b'],()=>mu(false));
+  $('mu-book').addEventListener('click',()=>{$('mu-a').value='57';$('mu-b').value='83';mu(true)});
+  $('mu-play').addEventListener('click',()=>mu(true));
+
+  /* ---------- State fill (Figure 6.2) ---------- */
+  const fillBytes=AES.hexToBytes('0123456789abcdeffedcba9876543210');
+  $('fill-in').innerHTML=fillBytes.map((v,k)=>`<span class="chip" id="fi-${k}">in<sub>${k}</sub> ${h2(v)}</span>`).join('');
+  {let g='';for(let r=0;r<4;r++)for(let c=0;c<4;c++)g+=`<div id="fg-${r}-${c}">${h2(fillBytes[4*c+r])}</div>`;$('fill-grid').innerHTML=g}
+  let fillT=[];
+  function fill(){fillT.forEach(clearTimeout);fillT=[];
+    for(let k=0;k<16;k++){$('fg-'+(k%4)+'-'+(k>>2)).classList.remove('on');$('fi-'+k).classList.remove('ok')}
+    for(let k=0;k<16;k++){const f=()=>{$('fg-'+(k%4)+'-'+(k>>2)).classList.add('on');$('fi-'+k).classList.add('ok')};if(reduce)f();else fillT.push(setTimeout(f,220*k+150))}}
+  $('fill-go').addEventListener('click',fill);
+  if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){fill();io.disconnect()}},{threshold:.5});io.observe($('lab-fill'))}else fill();
+
+  /* ---------- Figure 6.4 one round (drawn) ---------- */
+  {const g=document.getElementById('rd-bytes');let s='';const X=k=>132+k*37,L=(y,t)=>`<text x="12" y="${y}" text-anchor="start" fill="var(--muted)" font-size="11">${t}</text>`;
+    s+=L(30,'State')+L(66,'SubBytes')+L(114,'ShiftRows')+L(198,'MixColumns')+L(240,'AddRoundKey');
+    for(let k=0;k<16;k++){const c=k>>2,r=k%4,k2=4*((c-r+4)%4)+r;
+      s+=`<rect x="${X(k)-15}" y="16" width="30" height="20" rx="4" fill="${COLS[c]}"/><text x="${X(k)}" y="30" fill="#fff" font-size="10">r${k}</text>`;
+      s+=`<line x1="${X(k)}" y1="36" x2="${X(k)}" y2="52" stroke="var(--muted)"/><rect x="${X(k)-11}" y="52" width="22" height="20" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="${X(k)}" y="66" fill="var(--ink)" font-size="10">S</text>`;
+      s+=`<path d="M${X(k)} 72 C ${X(k)} 104, ${X(k2)} 120, ${X(k2)} 152" fill="none" stroke="${COLS[c]}" stroke-width="1.3" stroke-opacity=".85"/>`;
+      s+=`<rect x="${X(k2)-7}" y="152" width="14" height="10" rx="2" fill="${COLS[c]}"/><line x1="${X(k2)}" y1="162" x2="${X(k2)}" y2="184" stroke="var(--muted)"/>`}
+    for(let c=0;c<4;c++){const x0=X(4*c)-15,w=X(4*c+3)-X(4*c)+30;s+=`<rect x="${x0}" y="184" width="${w}" height="24" rx="5" fill="var(--paper)" stroke="var(--ink)"/><text x="${x0+w/2}" y="200" fill="var(--ink)" font-size="11">M</text>`;
+      for(let r=0;r<4;r++){const k=4*c+r;s+=`<line x1="${X(k)}" y1="208" x2="${X(k)}" y2="228" stroke="var(--muted)"/><circle cx="${X(k)}" cy="236" r="8" fill="var(--paper)" stroke="var(--accent)"/><text x="${X(k)}" y="240" fill="var(--accent)" font-size="11">⊕</text><line x1="${X(k)}" y1="244" x2="${X(k)}" y2="258" stroke="var(--muted)"/>`}}
+    s+=`<text x="${(X(0)+X(15))/2}" y="274" fill="var(--muted)" font-size="10.5">each byte ⊕ the matching round-key byte → State for the next round</text>`;
+    g.innerHTML=s}
+
+  /* ---------- Figure 6.9b g function (drawn) ---------- */
+  {const w=[0xaf,0x7f,0x67,0x98],x=w.slice(1).concat(w[0]),y=x.map(v=>AES.S[v]),rc=[1,0,0,0],z=y.map((v,i)=>v^rc[i]);
+    const art=document.getElementById('g-art');let s='';const X=i=>210+i*96;
+    const row=(vals,y0,fill,stroke)=>vals.map((v,i)=>`<rect x="${X(i)-30}" y="${y0}" width="60" height="26" rx="5" fill="${fill}" stroke="${stroke}"/><text x="${X(i)}" y="${y0+17}" text-anchor="middle" fill="var(--ink)" font-family="var(--mono)" font-size="12">${h2(v)}</text>`).join('');
+    const L=(yy,t)=>`<text x="12" y="${yy}" fill="var(--muted)" font-family="var(--mono)" font-size="11">${t}</text>`,R=(yy,t)=>`<text x="${X(3)+44}" y="${yy}" fill="var(--muted)" font-family="var(--mono)" font-size="11">${t}</text>`;
+    s+=L(37,'input word')+row(w,20,'var(--paper)','var(--line)')+R(37,'w₃');
+    for(let i=0;i<4;i++){const j=(i+3)%4;s+=`<line x1="${X(i)}" y1="46" x2="${X(j)}" y2="80" stroke="var(--muted)" stroke-width="1.3"/>`}
+    s+=L(97,'RotWord')+row(x,80,'var(--paper)','var(--line)')+R(97,'x₁');
+    for(let i=0;i<4;i++)s+=`<line x1="${X(i)}" y1="106" x2="${X(i)}" y2="114" stroke="var(--muted)"/><rect x="${X(i)-10}" y="114" width="20" height="16" rx="3" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="${X(i)}" y="126" text-anchor="middle" fill="var(--accent)" font-family="var(--mono)" font-size="10">S</text><line x1="${X(i)}" y1="130" x2="${X(i)}" y2="140" stroke="var(--muted)"/>`;
+    s+=L(157,'SubWord')+row(y,140,'var(--accent-soft)','var(--accent)')+R(157,'y₁');
+    for(let i=0;i<4;i++)s+=`<text x="${X(i)}" y="186" text-anchor="middle" fill="var(--mark)" font-family="var(--mono)" font-size="15">⊕</text>`;
+    s+=L(213,'Rcon[1]')+row(rc,196,'var(--mark-soft)','var(--mark)')+R(213,'(RC[1], 0, 0, 0)');
+    for(let i=0;i<4;i++)s+=`<text x="${X(i)}" y="242" text-anchor="middle" fill="var(--muted)" font-family="var(--mono)" font-size="15">=</text>`;
+    s+=L(269,'result')+row(z,252,'var(--paper)','var(--ink)')+R(269,'z₁ = g(w₃)');
+    art.innerHTML=s}
+
+  /* ---------- S-box explorer ---------- */
+  let sbInv=false,sbSel=0x95;
+  function sbox(){const T=sbInv?AES.IS:AES.S;const y=sbSel>>4,x=sbSel&15;
+    let h=`<table class="sbox"><tr><th class="ch"></th>${[...Array(16).keys()].map(c=>`<th class="ch ${c===x?'hi':''}">${c.toString(16).toUpperCase()}</th>`).join('')}</tr>`;
+    for(let r=0;r<16;r++){h+=`<tr><th class="rh ${r===y?'hi':''}">${r.toString(16).toUpperCase()}</th>`;for(let c=0;c<16;c++){const v=16*r+c;h+=`<td data-v="${v}" class="${v===sbSel?'sel':''}" title="{${H(v)}} → {${H(T[v])}}">${H(T[v])}</td>`}h+='</tr>'}
+    $('sb-tab').innerHTML=h+'</table>';
+    $('sb-tab').querySelectorAll('td[data-v]').forEach(td=>td.addEventListener('click',()=>{sbSel=+td.dataset.v;sbox()}));
+    const v=sbSel;const bits=n=>[...Array(8).keys()].map(i=>(n>>(7-i))&1);
+    const br=(lab,n)=>`<div class="bitrow"><span class="lb">${lab}</span>${bits(n).map(b=>`<span class="b${b}">${b}</span>`).join('')}</div>`;
+    const head=`<div class="bitrow"><span class="lb"></span>${[7,6,5,4,3,2,1,0].map(i=>`<span class="src">b${i}</span>`).join('')}</div>`;
+    let w='';
+    if(!sbInv){const iv=GF.inv8(v),o=AES.S[v];
+      let rows='';for(let i=7;i>=0;i--){const t=[i,(i+4)%8,(i+5)%8,(i+6)%8,(i+7)%8].map(j=>(iv>>j)&1);const c=(0x63>>i)&1;rows+=`<tr><td>b${i}′</td>${t.map(q=>`<td>${q}</td>`).join('')}<td>${c}</td><td class="hi">${(o>>i)&1}</td></tr>`}
+      w=`<h3 style="font-size:1rem">Building S({${H(v)}}) — row ${H(v>>4)}, column ${H(v&15)}</h3>
+      <ol style="margin:.2em 0"><li>Start with {${H(v)}}.</li><li>Inverse in GF(2⁸): ${v?`{${H(v)}}⁻¹ = <b>{${H(iv)}}</b> (check: {${H(v)}}·{${H(iv)}} = {${H(GF.mul(v,iv))}})`:'{00} maps to itself'}.</li><li>Affine map (Eq. 6.1) on b = {${H(iv)}} with c = {63}:</li></ol>
+      ${head}${br('b = inverse',iv)}${br('c = {63}',0x63)}${br('b′ = S(yx)',o)}
+      <div class="tbl"><table><tr><th>bit</th><th>bᵢ</th><th>bᵢ₊₄</th><th>bᵢ₊₅</th><th>bᵢ₊₆</th><th>bᵢ₊₇</th><th>cᵢ</th><th>XOR</th></tr>${rows}</table></div>
+      <div class="out">S({${H(v)}}) = <span class="res ok">{${H(o)}}</span> &nbsp; IS({${H(o)}}) = {${H(v)}} &nbsp; <span class="src">(IS({${H(v)}}) = {${H(AES.IS[v])}} — not self-inverse)</span></div>`}
+    else{const a=AES.invAffine(v),o=AES.IS[v];
+      w=`<h3 style="font-size:1rem">Building IS({${H(v)}})</h3><ol style="margin:.2em 0"><li>Inverse affine map with d = {05}: bᵢ′ = bᵢ₊₂ ⊕ bᵢ₊₅ ⊕ bᵢ₊₇ ⊕ dᵢ gives <b>{${H(a)}}</b>.</li><li>Inverse in GF(2⁸): ${a?`{${H(a)}}⁻¹ = <b>{${H(o)}}</b>`:'{00} stays {00}'}.</li></ol>${head}${br('input',v)}${br('after inv. affine',a)}${br('IS(yx)',o)}
+      <div class="out">IS({${H(v)}}) = <span class="res ok">{${H(o)}}</span> &nbsp; S({${H(o)}}) = {${H(AES.S[o])}} ✓</div>`}
+    $('sb-why').innerHTML=w}
+  $('sb-s').addEventListener('click',()=>{sbInv=false;$('sb-s').setAttribute('aria-pressed','true');$('sb-is').setAttribute('aria-pressed','false');sbox()});
+  $('sb-is').addEventListener('click',()=>{sbInv=true;$('sb-is').setAttribute('aria-pressed','true');$('sb-s').setAttribute('aria-pressed','false');sbox()});
+
+  /* ---------- ShiftRows animation ---------- */
+  const srRows=[[0x87,0xF2,0x4D,0x97],[0xEC,0x6E,0x4C,0x90],[0x4A,0xC3,0x46,0xE7],[0x8C,0xD8,0x95,0xA6]];
+  const CW=48,CH=38,G=6;let srShifted=false;
+  {const st=$('sr-stage');st.style.width=(4*CW+3*G)+'px';st.style.height=(4*CH+3*G)+'px';let s='';
+    for(let r=0;r<4;r++)for(let c=0;c<4;c++)s+=`<div class="sr-cell c${c}" id="sr-${r}-${c}" style="width:${CW}px;height:${CH}px">${H(srRows[r][c])}</div>`;st.innerHTML=s}
+  function srPlace(){for(let r=0;r<4;r++)for(let c=0;c<4;c++){const nc=srShifted?(c-r+4)%4:c;$('sr-'+r+'-'+c).style.transform=`translate(${nc*(CW+G)}px,${r*(CH+G)}px)`}}
+  srPlace();
+  $('sr-go').addEventListener('click',()=>{srShifted=true;srPlace()});
+  $('sr-back').addEventListener('click',()=>{srShifted=false;srPlace()});
+
+  /* ---------- MixColumns ---------- */
+  function mx(){const s=$('mx-in').value.trim().split(/[\s,]+/).filter(Boolean),out=$('mx-out'),chk=$('mx-chk');
+    if(s.length!==4||!s.every(x=>/^[0-9a-f]{1,2}$/i.test(x))){out.innerHTML='<span class="err">Enter 4 hex bytes, e.g. 87 6E 46 A6.</span>';chk.innerHTML='';return}
+    const c=s.map(x=>parseInt(x,16)),M=[[2,3,1,1],[1,2,3,1],[1,1,2,3],[3,1,1,2]],o=AES.mixCol(c);
+    let h='<table><tr><th>out</th><th class="l">terms (each a GF(2⁸) product)</th><th>XOR</th></tr>';
+    for(let i=0;i<4;i++){const t=M[i].map((k,j)=>{const p=GF.mul(k,c[j]);return k===1?`{${H(c[j])}}`:`{0${k}}·{${H(c[j])}} = {${H(p)}}`});
+      h+=`<tr><td>s${i},ⱼ′</td><td class="l mono">${t.join(' ⊕ ')}</td><td class="hi">{${H(o[i])}}</td></tr>`}
+    out.innerHTML=h+'</table>';
+    const back=AES.invMixCol(o);chk.innerHTML=`Output column: <span class="big">${o.map(H).join(' ')}</span><br>InvMixColumns(output) = ${back.map(H).join(' ')} ${back.every((v,i)=>v===c[i])?'<span class="res ok">= input ✓</span>':'<span class="res no">mismatch</span>'}`}
+  on(['mx-in'],mx);$('mx-book').addEventListener('click',()=>{$('mx-in').value='87 6E 46 A6';mx()});
+
+  /* ---------- Key expansion ---------- */
+  const hexOK=(s,n)=>new RegExp('^[0-9a-f]{'+n+'}$').test(s);
+  const wd=a=>a.map(h2).join(' ');
+  function kx(){const k=$('kx-k').value.trim().toLowerCase(),out=$('kx-out');
+    if(!hexOK(k,32)){out.innerHTML='<span class="err">Enter exactly 32 hex digits.</span>';return}
+    const {w,aux}=AES.expand(AES.hexToBytes(k));
+    let h='<table class="kx"><tr><th>round</th><th class="l">key words</th></tr>';
+    for(let r=0;r<=10;r++){
+      if(r>0){const g=aux.find(x=>x.i===4*r);h+=`<tr class="gr"><td></td><td class="l">g(w${4*r-1}): RotWord = ${wd(g.x)} · SubWord = ${wd(g.y)} · Rcon(${r}) = ${wd(g.rc)} · z${r} = <b>${wd(g.z)}</b></td></tr>`}
+      for(let c=0;c<4;c++){const i=4*r+c;const expr=r===0?`w${i}`:c===0?`w${i} = w${i-4} ⊕ z${r}`:`w${i} = w${i-1} ⊕ w${i-4}`;
+        h+=`<tr><td class="rk">${c===0?r:''}</td><td class="l">${expr} = <b>${wd(w[i])}</b></td></tr>`}}
+    out.innerHTML=h+'</table>'}
+  on(['kx-k'],kx);$('kx-book').addEventListener('click',()=>{$('kx-k').value='0f1571c947d9e8590cb7add6af7f6798';kx()});
+
+  /* ---------- AES round-by-round ---------- */
+  function stHTML(s,prev,cls){let h='<div class="st">';for(let r=0;r<4;r++)for(let c=0;c<4;c++){const ch=prev&&prev[r][c]!==s[r][c];h+=`<div class="${cls||''} ${ch?'chg':''}">${h2(s[r][c])}</div>`}return h+'</div>'}
+  const box=(t,inner)=>`<div class="stbox"><div class="h">${t}</div>${inner}</div>`, op=t=>`<div class="stbox op">${t}</div>`;
+  function aes(){const p=$('ae-p').value.trim().toLowerCase(),k=$('ae-k').value.trim().toLowerCase(),R=+$('ae-r').value;$('ae-rv').textContent=R;
+    if(!hexOK(p,32)||!hexOK(k,32)){$('ae-st').innerHTML='<span class="err">Plaintext and key must each be 32 hex digits.</span>';$('ae-out').innerHTML='';av();return}
+    const res=AES.encrypt(p,k),x=res.rounds[R];let h='';
+    if(R===0){h=box('input State',stHTML(x.start))+op('⊕')+box('round key 0 = w0–w3',stHTML(x.key,null,'key'))+op('=')+box('start of round 1',stHTML(x.end,x.start))}
+    else{h=box(`start of round ${R}`,stHTML(x.start))+op('→')+box('after SubBytes',stHTML(x.sub,x.start))+op('→')+box('after ShiftRows',stHTML(x.shift,x.sub))+op('→')+(x.mix?box('after MixColumns',stHTML(x.mix,x.shift))+op('⊕'):op('⊕ (no MixColumns)'))+box(`round key ${R}`,stHTML(x.key,null,'key'))+op('=')+box(R<10?`start of round ${R+1}`:'ciphertext',stHTML(x.end,x.mix||x.shift))}
+    $('ae-st').innerHTML=h;
+    const d1=AES.decrypt(res.out,k),d2=AES.decryptEquivalent(res.out,k);
+    $('ae-out').innerHTML=`Ciphertext: <span class="big">${res.out}</span><br>Decrypt (standard): ${d1} ${d1===p?'<span class="res ok">✓</span>':'<span class="res no">✗</span>'} &nbsp; Equivalent inverse cipher: ${d2===p?'<span class="res ok">✓ same</span>':'<span class="res no">✗</span>'}`;av()}
+  on(['ae-p','ae-k','ae-r'],aes);
+  $('ae-prev').addEventListener('click',()=>{$('ae-r').value=Math.max(0,+$('ae-r').value-1);aes()});
+  $('ae-next').addEventListener('click',()=>{$('ae-r').value=Math.min(10,+$('ae-r').value+1);aes()});
+  $('ae-book').addEventListener('click',()=>{$('ae-p').value='0123456789abcdeffedcba9876543210';$('ae-k').value='0f1571c947d9e8590cb7add6af7f6798';aes()});
+  $('ae-fips').addEventListener('click',()=>{$('ae-p').value='00112233445566778899aabbccddeeff';$('ae-k').value='000102030405060708090a0b0c0d0e0f';aes()});
+
+  /* ---------- Avalanche ---------- */
+  function flip(hex,b){const by=AES.hexToBytes(hex);by[(b-1)>>3]^=0x80>>((b-1)&7);return AES.bytesToHex(by)}
+  const popc=(a,b)=>{let n=0;for(let i=0;i<a.length;i+=2){let x=parseInt(a.substr(i,2),16)^parseInt(b.substr(i,2),16);while(x){n+=x&1;x>>=1}}return n};
+  function av(){const p=$('ae-p').value.trim().toLowerCase(),k=$('ae-k').value.trim().toLowerCase(),wh=$('av-w').value,b=parseInt($('av-b').value);
+    if(!hexOK(p,32)||!hexOK(k,32)){$('av-out').innerHTML='<span class="err">Fix the plaintext and key above.</span>';$('av-fig').innerHTML='';return}
+    if(!(b>=1&&b<=128)){$('av-out').innerHTML='<span class="err">Bit position must be 1–128.</span>';return}
+    const p2=wh==='p'?flip(p,b):p,k2=wh==='k'?flip(k,b):k;
+    const A=AES.encrypt(p,k).rounds,B=AES.encrypt(p2,k2).rounds,st=s=>AES.bytesToHex(AES.fromState(s));
+    const diff=A.map((x,i)=>popc(st(x.end),st(B[i].end)));
+    const show=(s,t)=>s.split('').map((ch,i)=>ch!==t[i]?`<span class="diffbit">${ch}</span>`:ch).join('');
+    const c1=st(A[10].end),c2=st(B[10].end);
+    $('av-out').innerHTML=`${wh==='p'?'Plaintext':'Key'} changed to <span class="mono">${show(wh==='p'?p2:k2,wh==='p'?p:k)}</span><br>Ciphertexts: ${c1} vs <span class="mono">${show(c2,c1)}</span> → <span class="res ok">${diff[10]} of 128 bits differ</span>`;
+    const W=640,Hh=230,px=40,py=16,cw=(W-px-24)/10,y=v=>py+(128-v)/128*(Hh-py-36);
+    let s=`<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="State bits differing after each AES round">`;
+    [0,32,64,96,128].forEach(v=>{s+=`<line x1="${px}" x2="${W-16}" y1="${y(v)}" y2="${y(v)}" stroke="${v===64?'var(--mark)':'var(--line)'}" ${v===64?'stroke-dasharray="4 4"':''}/><text x="${px-6}" y="${y(v)+4}" font-size="10" text-anchor="end" fill="var(--muted)">${v}</text>`});
+    s+=`<text x="${px+4}" y="${y(64)+14}" font-size="10" fill="var(--mark)">half the bits (64)</text>`;
+    const pts=diff.map((v,i)=>[px+8+i*cw,y(v)]);
+    s+=`<polyline points="${pts.map(q=>q.join(',')).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>`;
+    pts.forEach(([X,Y],i)=>{s+=`<circle cx="${X}" cy="${Y}" r="4" fill="var(--accent)"><title>round ${i}: ${diff[i]} bits</title></circle><text x="${X}" y="${Y-8}" font-size="9.5" text-anchor="middle" fill="var(--ink)">${diff[i]}</text><text x="${X}" y="${Hh-18}" font-size="9.5" text-anchor="middle" fill="var(--muted)">${i}</text>`});
+    s+=`<text x="${(W+px)/2}" y="${Hh-3}" font-size="10" text-anchor="middle" fill="var(--muted)">round (0 = after the initial AddRoundKey)</text></svg>`;
+    $('av-fig').innerHTML=s}
+  ['av-w','av-b'].forEach(id=>{$(id).addEventListener('input',av);$(id).addEventListener('change',av)});
+  document.querySelectorAll('#lab-av [data-av]').forEach(bt=>bt.addEventListener('click',()=>{const[a,b]=bt.dataset.av.split(',');$('av-w').value=a;$('av-b').value=b;$('ae-p').value='0123456789abcdeffedcba9876543210';$('ae-k').value='0f1571c947d9e8590cb7add6af7f6798';aes()}));
+
+  zn();pl();gf3();mu(false);sbox();mx();kx();aes();
+
+  /* ---- scroll-following contents ---- */
+  const links=[...document.querySelectorAll('nav.toc a')];
+  const secs=links.map(l=>document.querySelector(l.getAttribute('href'))).filter(Boolean);
+  const list=document.querySelector('nav.toc ol');let current=null,ticking=false;
+  function spy(){
+    ticking=false;const line=window.innerHeight*0.3;let idx=0;
+    secs.forEach((s,i)=>{if(s.getBoundingClientRect().top<=line)idx=i});
+    if((window.innerHeight+window.scrollY)>=document.documentElement.scrollHeight-4)idx=secs.length-1;
+    const l=links[idx];
+    if(l!==current){if(current){current.classList.remove('active');current.removeAttribute('aria-current')}
+      l.classList.add('active');l.setAttribute('aria-current','true');current=l;
+      if(list.scrollWidth>list.clientWidth){list.scrollTo({left:l.parentElement.offsetLeft-list.clientWidth/2+l.parentElement.offsetWidth/2,behavior:reduce?'auto':'smooth'})}}
+    const max=document.documentElement.scrollHeight-window.innerHeight;
+    $('toc-progress').style.width=(max>0?Math.min(100,window.scrollY/max*100):0)+'%'}
+  window.addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(spy)}},{passive:true});
+  window.addEventListener('resize',spy);spy();
+})();
+</script>
+<button class="to-top" id="to-top" type="button" aria-label="Back to top">↑ Top</button>
+
+<script>
+(function(){
+  var btn=document.getElementById('to-top');if(!btn)return;
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches,tick=false;
+  function upd(){tick=false;btn.classList.toggle('show',window.scrollY>600)}
+  window.addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(upd)}},{passive:true});
+  btn.addEventListener('click',function(){window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});var h=document.querySelector('.topbar a.home');if(h)h.focus({preventScroll:true})});
+  upd();
+})();
+</script>
+</body>
+</html>
