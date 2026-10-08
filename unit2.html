@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unit 2 · Number Theory</title>
+<meta name="description" content="Study guide for Stallings, Cryptography and Network Security, Chapter 2: divisibility, Euclidean algorithm, modular arithmetic, primes, Fermat and Euler, Miller-Rabin, CRT, discrete logarithms.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: graph-paper study notebook — sticky contents rail on desktop, single column on phones; each section = one book section */
+:root{
+  --bg:#f3f5f4; --paper:#ffffff; --ink:#17201d; --muted:#56635e; --line:#d8dfdc;
+  --grid:rgba(23,32,29,.045);
+  --accent:#0b7a5f; --accent-soft:#dff1ea; --mark:#c98a00; --mark-soft:#fdf1d2;
+  --bad:#b4372f; --bad-soft:#f9e1de;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101614; --paper:#161e1b; --ink:#e4ece8; --muted:#97a6a0; --line:#2b3733;
+  --grid:rgba(228,236,232,.04);
+  --accent:#4fd1a8; --accent-soft:#173a30; --mark:#f0b93a; --mark-soft:#3a2f12;
+  --bad:#f08c84; --bad-soft:#3c1d1a; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#101614; --paper:#161e1b; --ink:#e4ece8; --muted:#97a6a0; --line:#2b3733;
+  --grid:rgba(228,236,232,.04);
+  --accent:#4fd1a8; --accent-soft:#173a30; --mark:#f0b93a; --mark-soft:#3a2f12;
+  --bad:#f08c84; --bad-soft:#3c1d1a; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16.5px;line-height:1.6;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;padding-inline:16px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;padding-block:32px 80px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr);gap:16px}}
+
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;font-size:.88rem}
+nav.toc .lbl{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+nav.toc a{display:flex;gap:10px;padding:5px 8px;border-radius:6px;color:var(--ink);text-decoration:none}
+nav.toc a span{font-family:var(--mono);color:var(--accent);min-width:2.6em;font-size:.8rem;padding-top:2px}
+nav.toc a{position:relative;transition:background .15s,color .15s}
+nav.toc a:hover,nav.toc a:focus-visible{background:var(--accent-soft);outline:none}
+nav.toc a.active{background:var(--accent);color:var(--paper);font-weight:700}
+nav.toc a.active span{color:var(--paper)}
+nav.toc .bar{height:3px;background:var(--line);border-radius:2px;margin:12px 0 0;overflow:hidden}
+nav.toc .bar i{display:block;height:100%;width:0;background:var(--accent)}
+@media (max-width:900px){
+  nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border:1px solid var(--line);border-radius:0 0 10px 10px;padding:8px 10px;margin-inline:-4px}
+  nav.toc .lbl{display:none}
+  nav.toc ol{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth}
+  nav.toc ol::-webkit-scrollbar{display:none}
+  nav.toc li{flex:0 0 auto}
+  nav.toc a{white-space:nowrap;padding:5px 10px}
+  nav.toc .bar{margin-top:8px}
+  section.unit{scroll-margin-top:72px}}
+
+main{min-width:0}
+header.hero{padding-block:8px 28px;border-bottom:2px solid var(--ink);margin-bottom:28px}
+.eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,6vw,4rem);line-height:1;margin:.25em 0 .3em;letter-spacing:-.02em;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{max-width:65ch;color:var(--muted);margin:0}
+.formula-strip{font-family:var(--mono);font-size:.85rem;color:var(--muted);margin-top:18px;display:flex;flex-wrap:wrap;gap:8px 18px}
+.formula-strip b{color:var(--ink);font-weight:600}
+
+section.unit{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:28px clamp(18px,4vw,40px);margin-bottom:28px;scroll-margin-top:20px}
+h2{font-family:var(--display);font-weight:700;font-size:1.75rem;line-height:1.15;margin:0 0 4px;text-wrap:balance;display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
+h2 .sec{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:600}
+h3{font-family:var(--display);font-weight:700;font-size:1.2rem;margin:28px 0 8px}
+.why{color:var(--muted);font-size:.95rem;margin:0 0 18px;max-width:70ch}
+p,li{max-width:70ch}
+code,.m{font-family:var(--mono);font-size:.9em}
+.m{white-space:nowrap}
+
+.def{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+.def b:first-child{font-family:var(--display);font-weight:700}
+.eq{font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;overflow-x:auto;white-space:pre;line-height:1.7;font-size:.92rem}
+.eq .n{color:var(--muted)}
+.eqrows{display:grid;gap:8px;margin:12px 0}
+.eqrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px 14px;align-items:center;font-family:var(--mono);font-size:.92rem;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.eqrow .ex1{min-width:0;line-height:1.6}
+.eqrow .n{color:var(--muted)}
+.eqrow .tag{font-size:.75rem;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--accent-soft);color:var(--accent)}
+.tag.no{background:var(--bad-soft);color:var(--bad)}
+@media (max-width:560px){.eqrow{grid-template-columns:minmax(0,1fr) auto}.eqrow .ex1{grid-column:1 / -1}}
+.ex{border:1px dashed var(--mark);background:var(--mark-soft);border-radius:8px;padding:10px 16px;margin:12px 0}
+.ex .t{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mark);font-weight:600}
+.ex .eq{background:transparent;border:0;padding:4px 0;margin:2px 0}
+.warn{border-left:3px solid var(--bad);background:var(--bad-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+ul.props{padding-left:1.2em}
+ul.props li{margin:4px 0}
+
+/* tables */
+.tbl{overflow-x:auto;margin:12px 0}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.9rem}
+th,td{border:1px solid var(--line);padding:5px 9px;text-align:center}
+th{background:var(--bg);font-family:var(--mono);font-weight:600;font-size:.8rem}
+td.l,th.l{text-align:left}
+td.hi{background:var(--accent-soft);font-weight:700}
+td.one{background:var(--mark-soft);font-weight:700}
+td.dim{color:var(--muted)}
+
+/* interactive lab */
+.lab{border:1px solid var(--line);border-radius:12px;margin:18px 0;overflow:hidden}
+.lab-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--line)}
+.lab-h .t{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.lab-b{padding:14px}
+.controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:end;margin-bottom:12px}
+.controls label{display:grid;gap:3px;font-size:.78rem;font-family:var(--mono);color:var(--muted)}
+input[type=number]{width:9.5em;font:inherit;font-family:var(--mono);font-size:.95rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+button{font-family:var(--mono);font-size:.82rem;padding:7px 12px;border:1px solid var(--accent);background:var(--accent);color:var(--paper);border-radius:6px;cursor:pointer}
+button.ghost{background:transparent;color:var(--accent)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.out{font-family:var(--mono);font-size:.9rem}
+.out .res{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:600}
+.res.ok{background:var(--accent-soft);color:var(--accent)}
+.res.no{background:var(--bad-soft);color:var(--bad)}
+.err{color:var(--bad);font-family:var(--mono);font-size:.85rem}
+svg text{font-family:var(--mono)}
+.figure{margin:16px 0;overflow-x:auto}
+.figure svg{display:block;max-width:100%;height:auto}
+.cap{font-size:.82rem;color:var(--muted);margin-top:6px}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.grid2>*{min-width:0}
+
+/* totient grid */
+.cells{display:flex;flex-wrap:wrap;gap:4px}
+.cells span{font-family:var(--mono);font-size:.78rem;width:2.6em;text-align:center;padding:4px 0;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.cells span.on{background:var(--accent);border-color:var(--accent);color:var(--paper);font-weight:600}
+
+/* mapping row */
+.maprow{display:grid;grid-template-columns:7.5em repeat(8,minmax(2.2em,1fr));gap:4px;font-family:var(--mono);font-size:.85rem;min-width:420px}
+.maprow div{padding:5px 0;text-align:center;border-radius:4px}
+.maprow .h{text-align:left;color:var(--muted);font-size:.75rem;padding-top:7px}
+.maprow .c{background:var(--bg)}
+.maprow .dup{background:var(--bad-soft);color:var(--bad);font-weight:600}
+.maprow .uni{background:var(--accent-soft);color:var(--accent);font-weight:600}
+
+/* glossary & review */
+dl.gloss{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr);gap:0;margin:0}
+dl.gloss dt,dl.gloss dd{padding:9px 0;border-bottom:1px solid var(--line);margin:0}
+dl.gloss dt{font-family:var(--display);font-weight:700;padding-right:16px}
+@media (max-width:560px){dl.gloss{grid-template-columns:minmax(0,1fr)} dl.gloss dt{border-bottom:0;padding-bottom:0}}
+details{border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:8px 0;background:var(--paper)}
+summary{cursor:pointer;font-weight:700}
+details p{margin:.6em 0 0}
+.src{font-size:.85rem;color:var(--muted)}
+.src a,a{color:var(--accent)}
+footer{font-size:.82rem;color:var(--muted);margin-top:24px}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <div class="lbl">Contents</div>
+  <ol>
+    <li><a href="#s21"><span>2.1</span>Divisibility</a></li>
+    <li><a href="#s22"><span>2.2</span>Euclidean algorithm</a></li>
+    <li><a href="#s23"><span>2.3</span>Modular arithmetic</a></li>
+    <li><a href="#s24"><span>2.4</span>Prime numbers</a></li>
+    <li><a href="#s25"><span>2.5</span>Fermat &amp; Euler</a></li>
+    <li><a href="#s26"><span>2.6</span>Primality testing</a></li>
+    <li><a href="#s27"><span>2.7</span>Chinese remainder thm.</a></li>
+    <li><a href="#s28"><span>2.8</span>Discrete logarithms</a></li>
+    <li><a href="#terms"><span>Key</span>Key terms</a></li>
+    <li><a href="#review"><span>Q&amp;A</span>Review questions</a></li>
+    <li><a href="#res"><span>More</span>Resources</a></li>
+  </ol>
+  <div class="bar" aria-hidden="true"><i id="toc-progress"></i></div>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Unit 2 · Stallings, Chapter 2</div>
+  <h1>Introduction to <em>Number Theory</em></h1>
+  <p class="lede">Sections 2.1–2.3 (divisibility, gcd, modular arithmetic) are the groundwork for finite fields and AES in Unit 4. Sections 2.4–2.8 (primes, Fermat/Euler, primality, CRT, discrete logs) are the groundwork for public-key cryptography in Unit 6.</p>
+  <div class="formula-strip">
+    <span><b>a = qn + r</b>, 0 ≤ r &lt; n</span>
+    <span><b>gcd(a,b) = gcd(b, a mod b)</b></span>
+    <span><b>a<sup>p−1</sup> ≡ 1</b> (mod p)</span>
+    <span><b>a<sup>φ(n)</sup> ≡ 1</b> (mod n)</span>
+  </div>
+</header>
+
+<!-- ============ 2.1 ============ -->
+<section class="unit" id="s21">
+  <h2><span class="sec">2.1</span>Divisibility and the Division Algorithm</h2>
+  <p class="why">The vocabulary every later section uses: “divides”, “divisor”, “remainder/residue”.</p>
+
+  <div class="def"><b>Divides.</b> A nonzero integer <i>b</i> divides <i>a</i>, written <span class="m">b | a</span>, if <span class="m">a = mb</span> for some integer <i>m</i> — i.e., dividing leaves no remainder. Then <i>b</i> is a <b>divisor</b> of <i>a</i>.</div>
+  <div class="ex"><span class="t">Example</span><div class="eq">Positive divisors of 24: 1, 2, 3, 4, 6, 8, 12, 24
+13 | 182    −5 | 30    17 | 289    −3 | 33    17 | 0</div></div>
+
+  <h3>Properties of divisibility</h3>
+  <ul class="props">
+    <li>If <span class="m">a | 1</span>, then <span class="m">a = ±1</span>.</li>
+    <li>If <span class="m">a | b</span> and <span class="m">b | a</span>, then <span class="m">a = ±b</span>.</li>
+    <li>Any <span class="m">b ≠ 0</span> divides 0.</li>
+    <li>If <span class="m">a | b</span> and <span class="m">b | c</span>, then <span class="m">a | c</span> (e.g., 11 | 66 and 66 | 198 ⇒ 11 | 198).</li>
+    <li>If <span class="m">b | g</span> and <span class="m">b | h</span>, then <span class="m">b | (mg + nh)</span> for any integers <i>m</i>, <i>n</i>. <br><span class="src">Why: g = b·g₁ and h = b·h₁, so mg + nh = b(mg₁ + nh₁).</span></li>
+  </ul>
+
+  <h3>The division algorithm</h3>
+  <p>For any positive integer <i>n</i> and any integer <i>a</i>, dividing <i>a</i> by <i>n</i> gives a unique quotient <i>q</i> and remainder <i>r</i>:</p>
+  <div class="eq">a = qn + r,   0 ≤ r &lt; n,   q = ⌊a / n⌋        <span class="n">(2.1)</span></div>
+  <p><span class="m">⌊x⌋</span> is the largest integer ≤ <i>x</i>. The remainder <i>r</i> is also called the <b>residue</b>. (Despite the name, Eq. 2.1 is a theorem, not an algorithm.) Because <i>q</i> uses the floor, <i>r</i> is never negative, even when <i>a</i> is: <span class="m">−11 = (−2)·7 + 3</span>, so <i>r</i> = 3.</p>
+
+  <div class="lab" id="lab-div">
+    <div class="lab-h"><span class="t">Try it · Figure 2.1 on a number line</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label for="div-a">a (any integer)<input type="number" id="div-a" value="70"></label>
+        <label for="div-n">n (positive)<input type="number" id="div-n" value="15" min="1"></label>
+      </div>
+      <div class="figure" id="div-fig"></div>
+      <div class="out" id="div-out"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2.2 ============ -->
+<section class="unit" id="s22">
+  <h2><span class="sec">2.2</span>The Euclidean Algorithm</h2>
+  <p class="why">A fast way to find the greatest common divisor without factoring — used constantly in cryptography.</p>
+
+  <div class="def"><b>Greatest common divisor.</b> <span class="m">gcd(a, b)</span> is the largest integer that divides both <i>a</i> and <i>b</i>. Formally, a positive integer <i>c</i> is the gcd if (1) <i>c</i> divides <i>a</i> and <i>b</i>, and (2) every divisor of <i>a</i> and <i>b</i> divides <i>c</i>.<br>Equivalently: <span class="m">gcd(a, b) = max[k such that k | a and k | b]</span>.</div>
+  <ul class="props">
+    <li>The gcd is positive, so <span class="m">gcd(a, b) = gcd(|a|, |b|)</span>; e.g., gcd(60, −24) = 12.</li>
+    <li>All nonzero integers divide 0, so <span class="m">gcd(a, 0) = |a|</span>. By definition <span class="m">gcd(0, 0) = 0</span>.</li>
+  </ul>
+  <div class="def"><b>Relatively prime.</b> Two integers are relatively prime if their only common positive divisor is 1, i.e., <span class="m">gcd(a, b) = 1</span>. Example: 8 (divisors 1, 2, 4, 8) and 15 (divisors 1, 3, 5, 15).</div>
+
+  <h3>How it works</h3>
+  <p>The key fact (Eq. 2.6, Section 2.3): for integers <span class="m">a ≥ b ≥ 0</span>,</p>
+  <div class="eq">gcd(a, b) = gcd(b, a mod b)                    <span class="n">(2.6)</span></div>
+  <p>Why: any common divisor <i>d</i> of <i>a</i> and <i>b</i> also divides <span class="m">a − kb = a mod b</span>; conversely, a common divisor of <i>b</i> and <span class="m">a mod b</span> divides <span class="m">kb + (a mod b) = a</span>. Both pairs share the same set of common divisors, so they share the same gcd. Repeat until the remainder is 0; the last nonzero remainder is the gcd. The remainders strictly decrease, so the process always ends.</p>
+
+  <div class="grid2">
+    <div class="figure" aria-label="Euclidean algorithm flowchart">
+      <svg viewBox="0 0 330 360" role="img" aria-labelledby="flow-t">
+        <title id="flow-t">Flowchart of the Euclidean algorithm (after Figure 2.2)</title>
+        <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+        <g stroke="var(--muted)" stroke-width="1.4" fill="none" marker-end="url(#ar)">
+          <path d="M120 38 V58"/><path d="M120 108 V128"/><path d="M120 170 V190"/><path d="M120 240 V262"/>
+          <path d="M175 83 H230 V118"/><path d="M230 152 V170 H160"/>
+          <path d="M55 285 H20 V160 H70"/>
+          <path d="M185 285 H260 V316"/>
+        </g>
+        <g font-size="11" fill="var(--ink)" text-anchor="middle">
+          <rect x="80" y="10" width="80" height="28" rx="14" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="120" y="28">START</text>
+          <polygon points="120,58 175,83 120,108 65,83" fill="var(--paper)" stroke="var(--ink)"/><text x="120" y="87">a ≥ b?</text>
+          <rect x="195" y="118" width="70" height="34" rx="4" fill="var(--paper)" stroke="var(--ink)"/><text x="230" y="139">swap a, b</text>
+          <rect x="70" y="128" width="100" height="42" rx="4" fill="var(--paper)" stroke="var(--ink)"/><text x="120" y="146">divide a by b;</text><text x="120" y="161">r = remainder</text>
+          <rect x="70" y="190" width="100" height="50" rx="4" fill="var(--paper)" stroke="var(--ink)"/><text x="120" y="210">a ← b</text><text x="120" y="227">b ← r</text>
+          <polygon points="120,262 185,285 120,308 55,285" fill="var(--paper)" stroke="var(--ink)"/><text x="120" y="289">b &gt; 0?</text>
+          <rect x="210" y="316" width="100" height="34" rx="17" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="260" y="337">gcd = a</text>
+        </g>
+        <g font-size="10" fill="var(--muted)"><text x="185" y="78">no</text><text x="125" y="122">yes</text><text x="28" y="278">yes</text><text x="200" y="279">no</text></g>
+      </svg>
+      <div class="cap">Flow of the algorithm (adapted from Fig. 2.2). Recursive form: <code>Euclid(a,b): if b = 0 return a; else return Euclid(b, a mod b)</code>.</div>
+    </div>
+    <div class="ex"><span class="t">Example · gcd(710, 310) (Fig. 2.3)</span>
+      <div class="eq">710 = 2 × 310 + 90
+310 = 3 × 90  + 40
+ 90 = 2 × 40  + 10
+ 40 = 4 × 10  + 0      ⇒ gcd = 10</div>
+      <p style="margin:0">Each line has the same gcd as the line above it. The book also works <span class="m">gcd(1160718174, 316258250) = 1078</span> in 10 steps (Table 2.1) — try it below.</p>
+    </div>
+  </div>
+  <p>The interactive table for both the plain and extended versions is in Section 2.3, right after the extended algorithm is introduced.</p>
+</section>
+
+<!-- ============ 2.3 ============ -->
+<section class="unit" id="s23">
+  <h2><span class="sec">2.3</span>Modular Arithmetic</h2>
+  <p class="why">Arithmetic that “wraps around” inside the finite set {0, 1, …, n−1}. Nearly every algorithm in the book works this way.</p>
+
+  <div class="def"><b>Modulus and a mod n.</b> For integer <i>a</i> and positive integer <i>n</i>, <span class="m">a mod n</span> is the remainder when <i>a</i> is divided by <i>n</i>; <i>n</i> is the <b>modulus</b>. So <span class="m">a = ⌊a/n⌋ × n + (a mod n)</span>.<br>Examples: 11 mod 7 = 4; −11 mod 7 = 3.</div>
+  <div class="def"><b>Congruent modulo n.</b> <span class="m">a ≡ b (mod n)</span> if <span class="m">(a mod n) = (b mod n)</span>. Examples: 73 ≡ 4 (mod 23); 21 ≡ −9 (mod 10). If <span class="m">a ≡ 0 (mod n)</span>, then <span class="m">n | a</span>.</div>
+
+  <div class="lab" id="lab-clock">
+    <div class="lab-h"><span class="t">Try it · the mod-n clock</span><button class="ghost" id="clk-go" type="button">Animate</button></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label for="clk-a">a<input type="number" id="clk-a" value="-11"></label>
+        <label for="clk-n">n (2–24)<input type="number" id="clk-n" value="7" min="2" max="24"></label>
+      </div>
+      <div class="grid2" style="align-items:center">
+        <div class="figure" id="clk-fig" style="max-width:280px"></div>
+        <div class="out" id="clk-out"></div>
+      </div>
+      <div class="cap">Starting at 0, take |a| steps (clockwise if a &gt; 0, counter-clockwise if a &lt; 0). Where you land is a mod n. All integers that land on the same mark are congruent mod n.</div>
+    </div>
+  </div>
+
+  <h3>Two meanings of “mod” (Appendix 2A)</h3>
+  <div class="grid2">
+    <div class="def" style="margin:0"><b>Binary operator.</b> <span class="m">a mod n = a − ⌊a/n⌋ × n</span> returns a number: 7 mod 3 = 1. Written without parentheses around “mod”.</div>
+    <div class="def" style="margin:0"><b>Congruence relation.</b> <span class="m">7 ≡ 4 (mod 3)</span> is a true/false statement: 7 and 4 leave the same remainder, i.e. 3 | (7 − 4). Written with ≡ and “(mod n)” in parentheses.</div>
+  </div>
+
+  <h3>Properties of congruences</h3>
+  <ol>
+    <li><span class="m">a ≡ b (mod n)</span> if <span class="m">n | (a − b)</span>. &nbsp;e.g. 23 ≡ 8 (mod 5) because 23 − 8 = 15 = 5 × 3; −11 ≡ 5 (mod 8) because −16 = 8 × (−2).</li>
+    <li><span class="m">a ≡ b (mod n)</span> implies <span class="m">b ≡ a (mod n)</span>.</li>
+    <li><span class="m">a ≡ b</span> and <span class="m">b ≡ c (mod n)</span> imply <span class="m">a ≡ c (mod n)</span>.</li>
+  </ol>
+
+  <h3>Modular arithmetic operations</h3>
+  <p>You may reduce before or after adding, subtracting, or multiplying — the result is the same:</p>
+  <div class="eq">[(a mod n) + (b mod n)] mod n = (a + b) mod n
+[(a mod n) − (b mod n)] mod n = (a − b) mod n
+[(a mod n) × (b mod n)] mod n = (a × b) mod n</div>
+  <div class="ex"><span class="t">Example · exponentiation by repeated multiplication</span><div class="eq">Find 11⁷ mod 13:
+11² = 121 ≡ 4          (mod 13)
+11⁴ = (11²)² ≡ 4² ≡ 3  (mod 13)
+11⁷ = 11 × 11² × 11⁴ ≡ 11 × 4 × 3 = 132 ≡ 2  (mod 13)</div></div>
+
+  <h3>Z<sub>n</sub> and residue classes</h3>
+  <div class="def"><b>Z<sub>n</sub></b> is the set of nonnegative integers less than <i>n</i>: <span class="m">Z<sub>n</sub> = {0, 1, …, n − 1}</span>, the <b>set of residues</b> mod <i>n</i>. Each element <i>r</i> stands for a <b>residue class</b> <span class="m">[r] = {a : a ≡ r (mod n)}</span>.<br><b>Reducing k modulo n</b> means finding the smallest nonnegative integer congruent to <i>k</i>, which is the class representative.</div>
+  <div class="ex"><span class="t">Residue classes mod 4</span><div class="eq">[0] = {…, −8, −4, 0, 4, 8, …}
+[1] = {…, −7, −3, 1, 5, 9, …}
+[2] = {…, −6, −2, 2, 6, 10, …}
+[3] = {…, −5, −1, 3, 7, 11, …}</div></div>
+
+  <p>Within Z<sub>n</sub> the usual laws hold (Table 2.3): commutative, associative and distributive laws, identities <span class="m">(0 + w) mod n = w mod n</span> and <span class="m">(1 × w) mod n = w mod n</span>, and every <i>w</i> has an additive inverse. (Section 5 calls such a structure a commutative ring with a multiplicative identity.)</p>
+
+  <div class="def"><b>Additive inverse</b> of <i>x</i>: the <i>y</i> with <span class="m">(x + y) mod n = 0</span>; always exists. <br><b>Multiplicative inverse</b> of <i>x</i>, written <span class="m">x⁻¹</span>: the <i>y</i> with <span class="m">(x × y) mod n = 1</span>; does <em>not</em> always exist.</div>
+
+  <div class="tbl"><table aria-label="Table 2.2c inverses mod 8">
+    <caption class="cap" style="caption-side:bottom;text-align:left">Table 2.2(c): inverses modulo 8. Only 1, 3, 5, 7 (the integers relatively prime to 8) have multiplicative inverses.</caption>
+    <tr><th class="l">w</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>
+    <tr><th class="l">−w</th><td>0</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td></tr>
+    <tr><th class="l">w⁻¹</th><td class="dim">—</td><td class="hi">1</td><td class="dim">—</td><td class="hi">3</td><td class="dim">—</td><td class="hi">5</td><td class="dim">—</td><td class="hi">7</td></tr>
+  </table></div>
+
+  <h3>The one big difference from ordinary arithmetic</h3>
+  <div class="eqrows">
+    <div class="eqrow"><span class="ex1">if (a + b) ≡ (a + c) (mod n),<br>then b ≡ c (mod n)</span><span class="tag ok">always</span><span class="n">(2.4)</span></div>
+    <div class="eqrow"><span class="ex1">if (a × b) ≡ (a × c) (mod n),<br>then b ≡ c (mod n)</span><span class="tag no">only if gcd(a, n) = 1</span><span class="n">(2.5)</span></div>
+  </div>
+  <p>Counterexample: <span class="m">6 × 3 = 18 ≡ 2</span> and <span class="m">6 × 7 = 42 ≡ 2 (mod 8)</span>, yet <span class="m">3 ≢ 7 (mod 8)</span>. Multiplying Z<sub>n</sub> by an <i>a</i> that shares a factor with <i>n</i> is many-to-one, so it cannot be undone.</p>
+
+  <div class="lab" id="lab-map">
+    <div class="lab-h"><span class="t">Try it · multiply every element of Z₈ by a</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label for="map-a">a (0–7)<input type="number" id="map-a" value="6" min="0" max="7"></label>
+        <button type="button" class="ghost" data-a="6">a = 6</button>
+        <button type="button" class="ghost" data-a="5">a = 5</button>
+      </div>
+      <div class="tbl" id="map-out"></div>
+      <div class="out" id="map-msg"></div>
+    </div>
+  </div>
+  <div class="def"><b>Rule.</b> An integer has a multiplicative inverse in Z<sub>n</sub> <b>if and only if</b> it is relatively prime to <i>n</i>.</div>
+
+  <h3>The extended Euclidean algorithm</h3>
+  <p>Besides <span class="m">d = gcd(a, b)</span>, it finds integers <i>x</i>, <i>y</i> (opposite signs) with</p>
+  <div class="eq">ax + by = d = gcd(a, b)                                <span class="n">(2.7)</span></div>
+  <p>The smallest positive value of <span class="m">ax + by</span> equals gcd(a, b). Track each remainder as <span class="m">rᵢ = a·xᵢ + b·yᵢ</span>. Start with <span class="m">r₋₁ = a (x=1, y=0)</span> and <span class="m">r₀ = b (x=0, y=1)</span>, then for each row:</p>
+  <div class="eq">qᵢ = ⌊rᵢ₋₂ / rᵢ₋₁⌋      rᵢ = rᵢ₋₂ mod rᵢ₋₁
+xᵢ = xᵢ₋₂ − qᵢ·xᵢ₋₁     yᵢ = yᵢ₋₂ − qᵢ·yᵢ₋₁
+Stop when rᵢ = 0. The previous row gives d, x, y.</div>
+  <p><b>Why it matters:</b> when <span class="m">gcd(a, n) = 1</span>, the result <span class="m">ax + ny = 1</span> means <span class="m">ax ≡ 1 (mod n)</span>, so <span class="m">x mod n</span> is the multiplicative inverse of <i>a</i>. This is how inverses are computed for finite fields and RSA.</p>
+
+  <div class="lab" id="lab-euc">
+    <div class="lab-h"><span class="t">Try it · extended Euclidean table (Table 2.4)</span>
+      <span><button type="button" class="ghost" data-ab="1759,550">1759, 550</button> <button type="button" class="ghost" data-ab="710,310">710, 310</button> <button type="button" class="ghost" data-ab="1160718174,316258250">Table 2.1</button></span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label for="euc-a">a<input type="number" id="euc-a" value="1759" min="1"></label>
+        <label for="euc-b">b<input type="number" id="euc-b" value="550" min="1"></label>
+      </div>
+      <div class="tbl" id="euc-out"></div>
+      <div class="out" id="euc-msg"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2.4 ============ -->
+<section class="unit" id="s24">
+  <h2><span class="sec">2.4</span>Prime Numbers</h2>
+  <p class="why">Primes are the building blocks of all integers, and the hardness of working backwards from a product of primes underlies public-key cryptography.</p>
+  <div class="def"><b>Prime.</b> An integer <span class="m">p &gt; 1</span> whose only divisors are ±1 and ±p. <b>Composite:</b> an integer &gt; 1 that is not prime.</div>
+
+  <h3>Fundamental theorem of arithmetic</h3>
+  <p>Every integer <span class="m">a &gt; 1</span> factors <b>uniquely</b> as</p>
+  <div class="eq">a = p₁^a₁ × p₂^a₂ × … × pₜ^aₜ,   p₁ &lt; p₂ &lt; … &lt; pₜ prime, each aᵢ ≥ 1     <span class="n">(2.9)</span></div>
+  <div class="ex"><span class="t">Examples</span><div class="eq">91 = 7 × 13      3600 = 2⁴ × 3² × 5²      11011 = 7 × 11² × 13</div></div>
+  <p>Equivalently, write <span class="m">a = ∏ p^(aₚ)</span> over all primes, where most exponents <span class="m">aₚ</span> are 0. A number is then just its list of nonzero exponents — 12 is {a₂ = 2, a₃ = 1}; 18 is {a₂ = 1, a₃ = 2}. This turns three operations into exponent arithmetic:</p>
+  <div class="tbl"><table>
+    <tr><th class="l">Operation</th><th class="l">In exponents</th><th class="l">Example</th></tr>
+    <tr><td class="l">Multiply: k = ab</td><td class="l">kₚ = aₚ + bₚ</td><td class="l">12 × 18 = (2²·3)(2·3²) = 2³·3³ = 216</td></tr>
+    <tr><td class="l">Divide: a | b</td><td class="l">aₚ ≤ bₚ for every p</td><td class="l">12 = 2²·3 divides 36 = 2²·3²</td></tr>
+    <tr><td class="l">gcd: k = gcd(a, b)</td><td class="l">kₚ = min(aₚ, bₚ)</td><td class="l">gcd(18, 300) = gcd(2·3², 2²·3·5²) = 2·3 = 6</td></tr>
+  </table></div>
+  <div class="warn">Factoring a large number is hard, so the min-exponent rule is not a practical way to compute a gcd. Use the Euclidean algorithm instead.</div>
+</section>
+
+<!-- ============ 2.5 ============ -->
+<section class="unit" id="s25">
+  <h2><span class="sec">2.5</span>Fermat’s and Euler’s Theorems</h2>
+  <p class="why">Both theorems play important roles in public-key cryptography (RSA relies directly on Euler’s theorem).</p>
+
+  <h3>Fermat’s theorem</h3>
+  <div class="def"><b>Fermat.</b> If <i>p</i> is prime and <i>a</i> is a positive integer not divisible by <i>p</i>:</div>
+  <div class="eq">a^(p−1) ≡ 1 (mod p)                       <span class="n">(2.10)</span>
+a^p ≡ a (mod p)          (any positive a)   <span class="n">(2.11)</span></div>
+  <p><b>Proof idea.</b> Multiplying each of {1, 2, …, p − 1} by <i>a</i> mod <i>p</i> gives the same set reordered (no zeros, because p ∤ a; no repeats, by Eq. 2.5). Multiply all elements of both sets: <span class="m">a^(p−1)·(p−1)! ≡ (p−1)! (mod p)</span>. Cancel <span class="m">(p−1)!</span>, which is relatively prime to <i>p</i>.</p>
+  <div class="ex"><span class="t">Examples</span><div class="eq">a = 7, p = 19:  7² ≡ 11,  7⁴ ≡ 7,  7⁸ ≡ 11,  7¹⁶ ≡ 7
+                7¹⁸ = 7¹⁶ × 7² ≡ 7 × 11 = 77 ≡ 1 (mod 19) ✓
+p = 5, a = 3:   3⁵ = 243 ≡ 3 (mod 5)
+p = 5, a = 10:  10⁵ ≡ 10 ≡ 0 (mod 5)   ← form (2.11) works even when p | a</div></div>
+
+  <h3>Euler’s totient function φ(n)</h3>
+  <div class="def"><b>φ(n)</b> = the number of positive integers less than <i>n</i> that are relatively prime to <i>n</i>. By convention φ(1) = 1.</div>
+  <ul class="props">
+    <li>For prime <i>p</i>: <span class="m">φ(p) = p − 1</span> (every number below <i>p</i> qualifies).</li>
+    <li>For distinct primes <i>p</i>, <i>q</i>: <span class="m">φ(pq) = φ(p) × φ(q) = (p − 1)(q − 1)</span>. <br><span class="src">Why: of the pq − 1 numbers below pq, the ones sharing a factor are the (q − 1) multiples of p and the (p − 1) multiples of q, and these sets don’t overlap. So φ = (pq − 1) − (q − 1) − (p − 1) = (p − 1)(q − 1).</span></li>
+    <li>From the end-of-chapter problems: <span class="m">φ(pⁱ) = pⁱ − pⁱ⁻¹</span> for prime <i>p</i> (Prob. 2.26), and <span class="m">φ(mn) = φ(m)φ(n)</span> when gcd(m, n) = 1 (Prob. 2.27).</li>
+  </ul>
+
+  <div class="lab" id="lab-phi">
+    <div class="lab-h"><span class="t">Try it · count φ(n)</span>
+      <span><button type="button" class="ghost" data-n="35">35</button> <button type="button" class="ghost" data-n="37">37</button> <button type="button" class="ghost" data-n="21">21</button></span></div>
+    <div class="lab-b">
+      <div class="controls"><label for="phi-n">n (1–300)<input type="number" id="phi-n" value="35" min="1" max="300"></label></div>
+      <div class="out" id="phi-msg" style="margin-bottom:10px"></div>
+      <div class="cells" id="phi-cells"></div>
+      <div class="cap">Highlighted cells are relatively prime to n. Book examples: φ(37) = 36, φ(35) = 24, φ(21) = φ(3)·φ(7) = 12.</div>
+    </div>
+  </div>
+
+  <h3>Euler’s theorem</h3>
+  <div class="def"><b>Euler.</b> For every <i>a</i> and <i>n</i> that are relatively prime:</div>
+  <div class="eq">a^φ(n) ≡ 1 (mod n)                       <span class="n">(2.12)</span>
+a^(φ(n)+1) ≡ a (mod n)    (gcd not required) <span class="n">(2.13)</span></div>
+  <p>Fermat’s theorem is the special case where <i>n</i> is prime (φ(p) = p − 1). The proof is the same idea: multiplying the φ(n) integers coprime to <i>n</i> by <i>a</i> mod <i>n</i> just reorders them (a <b>permutation</b> — an ordered sequence of all the elements of a set, each appearing exactly once).</p>
+  <div class="ex"><span class="t">Examples</span><div class="eq">a = 3, n = 10:  φ(10) = 4,   3⁴ = 81 ≡ 1 (mod 10)
+a = 2, n = 11:  φ(11) = 10,  2¹⁰ = 1024 ≡ 1 (mod 11)</div></div>
+</section>
+
+<!-- ============ 2.6 ============ -->
+<section class="unit" id="s26">
+  <h2><span class="sec">2.6</span>Testing for Primality</h2>
+  <p class="why">Many algorithms need very large random primes, so we need a fast way to check whether a big number is prime.</p>
+
+  <h3>Setup</h3>
+  <p>Any odd <span class="m">n ≥ 3</span> can be written <span class="m">n − 1 = 2ᵏq</span> with <span class="m">k &gt; 0</span>, <i>q</i> odd: keep halving <i>n</i> − 1 until the result is odd (in binary, shift right until the last bit is 1).</p>
+
+  <h3>Two properties of primes</h3>
+  <ol>
+    <li>If <i>p</i> is prime and <span class="m">a &lt; p</span>: <span class="m">a² mod p = 1</span> ⇔ <span class="m">a mod p = 1</span> or <span class="m">a mod p = p − 1</span> (i.e. −1).</li>
+    <li>If <i>p</i> &gt; 2 is prime, <span class="m">p − 1 = 2ᵏq</span>, and <span class="m">1 &lt; a &lt; p − 1</span>, then either <span class="m">a^q ≡ 1 (mod p)</span>, or one of <span class="m">a^q, a^(2q), a^(4q), …, a^(2^(k−1) q)</span> is ≡ −1 (mod p).</li>
+  </ol>
+  <p class="src">Why (2): by Fermat, the last term of the sequence <span class="m">a^q, a^(2q), …, a^(2^k q) = a^(p−1)</span> is 1, and each term is the square of the one before. So either the first term is already 1, or some term ≠ 1 squares to 1 — and by property (1) that term must be p − 1.</p>
+
+  <h3>The Miller–Rabin TEST(n)</h3>
+  <div class="eq">1. Find k &gt; 0, q odd, with n − 1 = 2ᵏq
+2. Pick a random integer a, 1 &lt; a &lt; n − 1
+3. if a^q mod n = 1 then return "inconclusive"
+4. for j = 0 to k − 1 do
+5.     if a^(2ʲq) mod n = n − 1 then return "inconclusive"
+6. return "composite"</div>
+  <div class="def"><b>Reading the output.</b> “Composite” means <i>n</i> is definitely not prime. “Inconclusive” means <i>n</i> may or may not be prime. Example: 2047 = 23 × 89 passes with a = 2 (2¹⁰²³ mod 2047 = 1), but it is composite.</div>
+
+  <div class="lab" id="lab-mr">
+    <div class="lab-h"><span class="t">Try it · run TEST(n) with a chosen a</span>
+      <span><button type="button" class="ghost" data-mr="29,10">29, a=10</button> <button type="button" class="ghost" data-mr="221,5">221, a=5</button> <button type="button" class="ghost" data-mr="221,21">221, a=21</button> <button type="button" class="ghost" data-mr="2047,2">2047, a=2</button></span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label for="mr-n">n (odd, ≥ 5)<input type="number" id="mr-n" value="221" min="5"></label>
+        <label for="mr-a">a (1 &lt; a &lt; n−1)<input type="number" id="mr-a" value="5" min="2"></label>
+      </div>
+      <div class="out" id="mr-out"></div>
+    </div>
+  </div>
+
+  <h3>Using it repeatedly</h3>
+  <p>For an odd composite <i>n</i> and random <i>a</i>, the chance TEST wrongly returns “inconclusive” is less than 1/4. With <i>t</i> independent choices of <i>a</i>, the chance a composite passes them all is less than <span class="m">(1/4)ᵗ</span> — for t = 10, under 10⁻⁶. <b>Procedure:</b> run TEST with random <i>a</i>; if it ever says composite, reject; if it says inconclusive <i>t</i> times for large enough <i>t</i>, accept <i>n</i> as prime. (For 221, only 4 of the 218 bases 2–219 fool the test: 21, 47, 174, 200.)</p>
+  <p><b>Deterministic option:</b> the AKS algorithm proves primality efficiently and without probability, but it appears less efficient than Miller–Rabin and has not replaced it.</p>
+
+  <h3>Distribution of primes</h3>
+  <p>The <b>prime number theorem</b>: primes near <i>n</i> are spaced on average one every <span class="m">ln(n)</span> integers. Skipping even numbers, expect about <span class="m">0.5 ln(n)</span> candidates before finding a prime — e.g. near 2²⁰⁰, about <span class="m">0.5 ln(2²⁰⁰) ≈ 69</span> trials. This is only an average: 1,000,000,000,061 and …063 are both prime, while 1001! + 2, …, 1001! + 1001 is a run of 1000 composites.</p>
+</section>
+
+<!-- ============ 2.7 ============ -->
+<section class="unit" id="s27">
+  <h2><span class="sec">2.7</span>The Chinese Remainder Theorem (CRT)</h2>
+  <p class="why">Work with one huge number mod M as a tuple of small numbers mod its factors, then convert back.</p>
+  <div class="ex"><span class="t">Intuition</span><p style="margin:.3em 0 0">Any digit 0–9 is pinned down by its remainders mod 2 and mod 5 (relatively prime factors of 10). If x mod 2 = 0 and x mod 5 = 3, the only digit is x = 8.</p></div>
+
+  <div class="def"><b>Pairwise relatively prime.</b> Moduli <span class="m">m₁, …, mₖ</span> with <span class="m">gcd(mᵢ, mⱼ) = 1</span> for every <span class="m">i ≠ j</span>. Let <span class="m">M = m₁ × m₂ × … × mₖ</span>.</div>
+  <p>Represent any <span class="m">A ∈ Z<sub>M</sub></span> by its residues:</p>
+  <div class="eq">A ↔ (a₁, a₂, …, aₖ),   where aᵢ = A mod mᵢ               <span class="n">(2.15)</span></div>
+  <div class="def"><b>Bijection.</b> A one-to-one correspondence: every element on one side matches exactly one element on the other side, and vice versa.</div>
+  <p>The CRT makes two assertions:</p>
+  <ol>
+    <li>The mapping (2.15) is a <b>bijection</b> between Z<sub>M</sub> and <span class="m">Z<sub>m₁</sub> × … × Z<sub>mₖ</sub></span>: each A in [0, M) has exactly one tuple, and each tuple comes from exactly one A.</li>
+    <li>+, −, × on elements of Z<sub>M</sub> can be done <b>independently in each coordinate</b> (each mod its own mᵢ).</li>
+  </ol>
+
+  <h3>Converting back (tuple → A)</h3>
+  <div class="eq">Mᵢ = M / mᵢ                    (Mᵢ ≡ 0 mod mⱼ for j ≠ i)
+cᵢ = Mᵢ × (Mᵢ⁻¹ mod mᵢ)                                  <span class="n">(2.16)</span>
+A  ≡ (a₁c₁ + a₂c₂ + … + aₖcₖ)  (mod M)                   <span class="n">(2.17)</span></div>
+  <p>This works because <span class="m">cᵢ ≡ 1 (mod mᵢ)</span> and <span class="m">cⱼ ≡ 0 (mod mᵢ)</span> for j ≠ i. Mᵢ is relatively prime to mᵢ, so its inverse exists (find it with the extended Euclidean algorithm). <b>Catch:</b> you must already know the factorization of M.</p>
+
+  <div class="lab" id="lab-crt">
+    <div class="lab-h"><span class="t">Try it · two moduli (book example: 973 mod 1813)</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label for="crt-m1">m₁<input type="number" id="crt-m1" value="37" min="2"></label>
+        <label for="crt-m2">m₂<input type="number" id="crt-m2" value="49" min="2"></label>
+        <label for="crt-A">A<input type="number" id="crt-A" value="973" min="0"></label>
+        <label for="crt-B">B (to add)<input type="number" id="crt-B" value="678" min="0"></label>
+      </div>
+      <div class="out" id="crt-out"></div>
+    </div>
+  </div>
+  <div class="ex"><span class="t">Book example, multiply</span><div class="eq">1651 ↔ (23, 34).  Multiply by 73 in each coordinate:
+(23 × 73 mod 37, 34 × 73 mod 49) = (14, 32)
+(14, 32) ↔ [(14)(49)(34) + (32)(37)(4)] mod 1813 = 865 = 1651 × 73 mod 1813 ✓</div></div>
+</section>
+
+<!-- ============ 2.8 ============ -->
+<section class="unit" id="s28">
+  <h2><span class="sec">2.8</span>Discrete Logarithms</h2>
+  <p class="why">The “hard direction” behind Diffie–Hellman key exchange and the Digital Signature Algorithm (DSA).</p>
+
+  <h3>Powers of an integer, modulo n</h3>
+  <p>If gcd(a, n) = 1, Euler guarantees at least one <i>m</i> with <span class="m">a^m ≡ 1 (mod n)</span>, namely m = φ(n).</p>
+  <div class="def"><b>Order.</b> The <b>least</b> positive exponent <i>m</i> with <span class="m">a^m ≡ 1 (mod n)</span>. Also called “the exponent to which a belongs (mod n)” or “the length of the period generated by a”. The powers of <i>a</i> repeat with this period: e.g. 7¹ ≡ 7, 7² ≡ 11, 7³ ≡ 1 (mod 19), then 7, 11, 1, … again.</div>
+  <div class="def"><b>Primitive root.</b> The highest possible order mod <i>n</i> is φ(n). An <i>a</i> with order φ(n) is a primitive root of <i>n</i>: its powers <span class="m">a, a², …, a^φ(n)</span> are all distinct mod n and all relatively prime to n. For prime p, a primitive root <b>generates</b> every nonzero residue 1 … p − 1.</div>
+  <p>Only integers of the form <span class="m">2, 4, pᵃ, 2pᵃ</span> (p an odd prime) have primitive roots. Primitive roots of 19: 2, 3, 10, 13, 14, 15.</p>
+
+  <div class="lab" id="lab-pow">
+    <div class="lab-h"><span class="t">Explore · Table 2.7, powers of a mod 19</span></div>
+    <div class="lab-b">
+      <div class="controls"><label for="pow-p">prime p (3–31)<input type="number" id="pow-p" value="19" min="3" max="31"></label></div>
+      <div class="tbl" id="pow-out"></div>
+      <div class="cap">Gold cells mark the first 1 in each row (the order). Green row labels are primitive roots. Notice: every row ends in 1, and every order divides φ(p) = p − 1.</div>
+    </div>
+  </div>
+
+  <h3>Logarithms for modular arithmetic</h3>
+  <div class="def"><b>Discrete logarithm (index).</b> For a primitive root <i>a</i> of prime <i>p</i> and any integer <i>b</i>, there is a unique exponent <i>i</i> with <span class="m">b ≡ aⁱ (mod p)</span>, 0 ≤ i ≤ p − 1. This <i>i</i> is <span class="m">dlog<sub>a,p</sub>(b)</span>. (“Index” is another name; there is no agreed notation.)</div>
+  <div class="eq">dlog_a,p(1) = 0                              <span class="n">(2.21)</span>
+dlog_a,p(a) = 1                              <span class="n">(2.22)</span>
+dlog_a,p(xy)  ≡ dlog_a,p(x) + dlog_a,p(y)   (mod φ(p))
+dlog_a,p(yʳ)  ≡ r × dlog_a,p(y)             (mod φ(p))</div>
+  <p>These mirror ordinary log rules, except exponents live mod φ(p) (by Euler, <span class="m">a^z ≡ a^q</span> when <span class="m">z ≡ q mod φ(n)</span>). Unique discrete logs mod m to base a exist <b>only if a is a primitive root of m</b>.</p>
+  <div class="ex"><span class="t">Non-prime modulus · n = 9, φ(9) = 6, primitive root a = 2</span><div class="eq">2⁰=1  2¹=2  2²=4  2³=8  2⁴=16≡7  2⁵=32≡5  (mod 9)
+
+Number     1  2  4  5  7  8
+Logarithm  0  1  2  5  4  3</div></div>
+
+  <div class="lab" id="lab-dlog">
+    <div class="lab-h"><span class="t">Explore · Table 2.8, discrete logs mod 19</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <button type="button" class="ghost" data-g="2">base 2</button><button type="button" class="ghost" data-g="3">3</button><button type="button" class="ghost" data-g="10">10</button><button type="button" class="ghost" data-g="13">13</button><button type="button" class="ghost" data-g="14">14</button><button type="button" class="ghost" data-g="15">15</button>
+      </div>
+      <div class="tbl" id="dlog-out"></div>
+      <div class="cap">The book’s Table 2.8 lists log(1) as 18 (= p − 1, since a¹⁸ ≡ 1); by Eq. 2.21 it is equally 0, because exponents are taken mod 18.</div>
+    </div>
+  </div>
+
+  <h3>Why it is useful in cryptography</h3>
+  <div class="grid2">
+    <div class="def" style="margin:0"><b>Easy:</b> given g, x, p, compute <span class="m">y = gˣ mod p</span>. At worst x multiplications; faster methods exist (Ch. 9).</div>
+    <div class="warn" style="margin:0"><b>Hard:</b> given y, g, p, find x. Roughly as hard as factoring for RSA. Fastest known method is on the order of <span class="m">e^((ln p)^(1/3) (ln ln p)^(2/3))</span> — infeasible for large primes.</div>
+  </div>
+</section>
+
+<!-- ============ Key terms ============ -->
+<section class="unit" id="terms">
+  <h2><span class="sec">Key</span>Key Terms</h2>
+  <p class="why">The chapter’s key-term list (Section 2.9), plus terms needed to understand them.</p>
+  <dl class="gloss">
+    <dt>Divisor</dt><dd>Nonzero b is a divisor of a (b | a) if a = mb for some integer m.</dd>
+    <dt>Residue</dt><dd>The remainder r in a = qn + r, 0 ≤ r &lt; n; also a mod n.</dd>
+    <dt>Modulus</dt><dd>The positive integer n in a mod n.</dd>
+    <dt>Congruent mod n</dt><dd>a ≡ b (mod n) when a mod n = b mod n; equivalently n | (a − b).</dd>
+    <dt>Modular arithmetic</dt><dd>Addition, subtraction, multiplication carried out within Z<sub>n</sub> = {0, …, n − 1}, reducing mod n.</dd>
+    <dt>Greatest common divisor</dt><dd>Largest integer dividing both a and b; gcd(a, 0) = |a|.</dd>
+    <dt>Relatively prime</dt><dd>gcd(a, b) = 1.</dd>
+    <dt>Euclidean algorithm</dt><dd>Computes gcd by repeating gcd(a, b) = gcd(b, a mod b) until the remainder is 0.</dd>
+    <dt>Commutative</dt><dd>Order of operands doesn’t matter: (w + x) mod n = (x + w) mod n, likewise for ×.</dd>
+    <dt>Identity element</dt><dd>Leaves values unchanged: 0 for addition, 1 for multiplication.</dd>
+    <dt>Prime number</dt><dd>Integer p &gt; 1 whose only divisors are ±1, ±p.</dd>
+    <dt>Composite number</dt><dd>Integer &gt; 1 that is not prime.</dd>
+    <dt>Fermat’s theorem</dt><dd>a^(p−1) ≡ 1 (mod p) for prime p not dividing a.</dd>
+    <dt>Euler’s totient function</dt><dd>φ(n): count of positive integers &lt; n relatively prime to n.</dd>
+    <dt>Euler’s theorem</dt><dd>a^φ(n) ≡ 1 (mod n) when gcd(a, n) = 1.</dd>
+    <dt>Bijection</dt><dd>One-to-one correspondence between two sets.</dd>
+    <dt>Chinese remainder theorem</dt><dd>With pairwise relatively prime moduli, A ∈ Z<sub>M</sub> ↔ (A mod m₁, …, A mod mₖ) is a bijection that preserves +, −, ×.</dd>
+    <dt>Order</dt><dd>Least m &gt; 0 with a^m ≡ 1 (mod n).</dd>
+    <dt>Primitive root</dt><dd>An a whose order mod n is φ(n).</dd>
+    <dt>Discrete logarithm</dt><dd>The exponent i with b ≡ aⁱ (mod p) for primitive root a; dlog<sub>a,p</sub>(b).</dd>
+    <dt>Index</dt><dd>Another name for the discrete logarithm.</dd>
+  </dl>
+</section>
+
+<!-- ============ Review ============ -->
+<section class="unit" id="review">
+  <h2><span class="sec">Q&amp;A</span>Review Questions</h2>
+  <p class="why">Questions 2.1–2.8 from the book. Answer first, then open to check.</p>
+  <details><summary>2.1 What does it mean to say that b is a divisor of a?</summary><p>b is nonzero and a = mb for some integer m; dividing a by b leaves no remainder.</p></details>
+  <details><summary>2.2 What is the meaning of the expression “a divides b”?</summary><p>a | b: a is nonzero and b = ma for some integer m.</p></details>
+  <details><summary>2.3 What is the difference between modular arithmetic and ordinary arithmetic?</summary><p>Modular arithmetic works within Z<sub>n</sub> = {0, …, n − 1}, reducing results mod n. Addition, subtraction and multiplication rules carry over, but cancellation in multiplication (Eq. 2.5) holds only when the factor is relatively prime to n, and a multiplicative inverse exists only for integers relatively prime to n.</p></details>
+  <details><summary>2.4 What is a prime number?</summary><p>An integer p &gt; 1 whose only divisors are ±1 and ±p.</p></details>
+  <details><summary>2.5 What is Euler’s totient function?</summary><p>φ(n), the number of positive integers less than n and relatively prime to n (φ(1) = 1 by convention). φ(p) = p − 1 for prime p; φ(pq) = (p − 1)(q − 1) for distinct primes.</p></details>
+  <details><summary>2.6 Miller–Rabin can show a number is not prime but cannot prove it is prime. How can it be used to test for primality?</summary><p>Run TEST repeatedly with randomly chosen bases a. Any “composite” result proves n is composite. Each run lets a composite slip through with probability &lt; 1/4, so after t “inconclusive” results the error is &lt; (1/4)ᵗ; for large enough t, accept n as prime.</p></details>
+  <details><summary>2.7 What is a primitive root of a number?</summary><p>An integer a whose order mod n equals φ(n), the highest possible. Its powers a, a², …, a^φ(n) are distinct mod n; for a prime p they produce every integer 1 … p − 1.</p></details>
+  <details><summary>2.8 What is the difference between an index and a discrete logarithm?</summary><p>None. They are two names for the same concept: the exponent i such that b ≡ aⁱ (mod p) for a primitive root a.</p></details>
+
+  <h3>Practice problems worth doing</h3>
+  <p class="src">From Section 2.9: 2.10 (inverses in Z₅), 2.12 (gcds), 2.16 (inverses by extended Euclid), 2.20–2.24 (Fermat/Euler shortcuts), 2.27 (φ values), 2.32 (strong pseudoprime 2047), 2.34 (CRT), 2.37 (discrete log table for primitive root 5 of 23).</p>
+</section>
+
+<!-- ============ Resources ============ -->
+<section class="unit" id="res">
+  <h2><span class="sec">More</span>Resources</h2>
+  <ul>
+    <li><b>In the book:</b> Appendix B.2 has Sage examples for this chapter (Euclid, extended Euclid, totient, Miller–Rabin, modular exponentiation, discrete logs, CRT).</li>
+    <li><a href="https://www.sagemath.org/" target="_blank" rel="noopener">SageMath</a> — the free computer algebra system the book uses; <a href="https://doc.sagemath.org/html/en/tutorial/" target="_blank" rel="noopener">official tutorial</a>. Useful built-ins: <code>gcd</code>, <code>xgcd</code>, <code>euler_phi</code>, <code>power_mod</code>, <code>inverse_mod</code>, <code>is_prime</code>, <code>primitive_root</code>, <code>discrete_log</code>, <code>crt</code>.</li>
+    <li><a href="https://www.khanacademy.org/computing/computer-science/cryptography" target="_blank" rel="noopener">Khan Academy · Cryptography</a> — short practice lessons on modular arithmetic, inverses, and primality tests.</li>
+    <li><a href="https://csrc.nist.gov/pubs/fips/186-5/final" target="_blank" rel="noopener">NIST FIPS 186-5</a> (Digital Signature Standard) — specifies how many Miller–Rabin rounds real systems use when generating primes.</li>
+  </ul>
+  <footer>Content follows W. Stallings, <i>Cryptography and Network Security: Principles and Practice</i>, 7th ed., Global Edition, Chapter 2 and Appendix 2A. Interactive tools compute results live in your browser.</footer>
+</section>
+</main>
+</div>
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const mod=(a,n)=>((a%n)+n)%n;
+  const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a};
+  const bmodpow=(b,e,m)=>{b=BigInt(b);e=BigInt(e);m=BigInt(m);let r=1n;b%=m;while(e>0n){if(e&1n)r=r*b%m;b=b*b%m;e>>=1n}return r};
+  const esc=s=>String(s);
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fmt=n=>Number(n).toLocaleString('en-US');
+
+  /* ---- 2.1 division number line ---- */
+  function drawDiv(){
+    const a=parseInt($('div-a').value),n=parseInt($('div-n').value);
+    if(!Number.isFinite(a)||!Number.isFinite(n)||n<1){$('div-out').innerHTML='<span class="err">Enter an integer a and a positive n.</span>';$('div-fig').innerHTML='';return}
+    const q=Math.floor(a/n),r=a-q*n;
+    const lo=Math.min(0,(q-1)*n),hi=Math.max(0,(q+2)*n);
+    const W=640,H=110,pad=30,sx=x=>pad+(x-lo)/(hi-lo)*(W-2*pad);
+    let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Number line showing a = qn + r">`;
+    s+=`<line x1="${pad-10}" y1="60" x2="${W-pad+10}" y2="60" stroke="var(--muted)"/>`;
+    const step=Math.max(1,Math.ceil(((hi-lo)/n)/14));
+    for(let k=Math.ceil(lo/n);k*n<=hi;k++){const x=sx(k*n);const big=k===q||k===q+1||k===0;
+      s+=`<line x1="${x}" y1="52" x2="${x}" y2="68" stroke="var(--ink)" stroke-width="${big?1.6:1}"/>`;
+      if(big||k%step===0)s+=`<text x="${x}" y="86" font-size="10.5" text-anchor="middle" fill="${k===q?'var(--accent)':'var(--muted)'}">${k===0?'0':k+'n'}</text>`}
+    const xq=sx(q*n),xa=sx(a);
+    s+=`<rect x="${Math.min(xq,xa)}" y="54" width="${Math.max(2,Math.abs(xa-xq))}" height="12" fill="var(--mark)" opacity=".55"/>`;
+    s+=`<text x="${(xq+xa)/2}" y="45" font-size="11" text-anchor="middle" fill="var(--mark)">r = ${r}</text>`;
+    s+=`<circle cx="${xa}" cy="60" r="5" fill="var(--accent)"/><text x="${xa}" y="22" font-size="12" text-anchor="middle" fill="var(--accent)">a = ${a}</text>`;
+    s+=`<line x1="${xa}" y1="27" x2="${xa}" y2="53" stroke="var(--accent)" stroke-dasharray="3 3"/></svg>`;
+    $('div-fig').innerHTML=s;
+    $('div-out').innerHTML=`${a} = (${q}) × ${n} + ${r} &nbsp;→&nbsp; q = ⌊${a}/${n}⌋ = ${q}, &nbsp;r = ${a} mod ${n} = <span class="res ok">${r}</span>`;
+  }
+  ['div-a','div-n'].forEach(id=>$(id).addEventListener('input',drawDiv));drawDiv();
+
+  /* ---- 2.3 clock ---- */
+  let clkTimer=null;
+  function clockSVG(n,pos,trail){
+    const R=100,C=130;let s=`<svg viewBox="0 0 260 260" role="img" aria-label="Clock with ${n} positions">`;
+    s+=`<circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="var(--line)" stroke-width="2"/>`;
+    for(let i=0;i<n;i++){const t=2*Math.PI*i/n-Math.PI/2,x=C+R*Math.cos(t),y=C+R*Math.sin(t);const on=i===pos;
+      s+=`<circle cx="${x}" cy="${y}" r="${on?14:11}" fill="${on?'var(--accent)':'var(--paper)'}" stroke="${on?'var(--accent)':'var(--muted)'}"/>`;
+      s+=`<text x="${x}" y="${y+4}" font-size="${n>16?9:11}" text-anchor="middle" fill="${on?'var(--paper)':'var(--ink)'}">${i}</text>`}
+    const t=2*Math.PI*pos/n-Math.PI/2;
+    s+=`<line x1="${C}" y1="${C}" x2="${C+(R-18)*Math.cos(t)}" y2="${C+(R-18)*Math.sin(t)}" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>`;
+    s+=`<circle cx="${C}" cy="${C}" r="5" fill="var(--accent)"/><text x="${C}" y="${C+26}" font-size="11" text-anchor="middle" fill="var(--muted)">${trail}</text></svg>`;
+    return s}
+  function clockInfo(){
+    const a=parseInt($('clk-a').value),n=parseInt($('clk-n').value);
+    if(!Number.isFinite(a)||!Number.isFinite(n)||n<2||n>24){$('clk-out').innerHTML='<span class="err">Use an integer a and 2 ≤ n ≤ 24.</span>';return null}
+    const r=mod(a,n),cls=[];for(let k=-2;k<=2;k++)cls.push(r+k*n);
+    $('clk-out').innerHTML=`${a} mod ${n} = <span class="res ok">${r}</span><br><br>Same residue class [${r}]:<br>{…, ${cls.join(', ')}, …}<br><br>${a} ≡ ${r} (mod ${n}) because ${n} | (${a} − ${r}) = ${a-r}`;
+    return {a,n,r}}
+  function clockStatic(){if(clkTimer){clearInterval(clkTimer);clkTimer=null}const i=clockInfo();if(i)$('clk-fig').innerHTML=clockSVG(i.n,i.r,`step ${i.a}`)}
+  $('clk-go').addEventListener('click',()=>{const i=clockInfo();if(!i)return;if(clkTimer)clearInterval(clkTimer);
+    if(reduce||Math.abs(i.a)>120){$('clk-fig').innerHTML=clockSVG(i.n,i.r,`step ${i.a}`);return}
+    let k=0,dir=Math.sign(i.a);$('clk-fig').innerHTML=clockSVG(i.n,0,'step 0');
+    clkTimer=setInterval(()=>{k+=dir;$('clk-fig').innerHTML=clockSVG(i.n,mod(k,i.n),`step ${k}`);if(k===i.a){clearInterval(clkTimer);clkTimer=null}},Math.max(60,1200/Math.max(1,Math.abs(i.a))))});
+  ['clk-a','clk-n'].forEach(id=>$(id).addEventListener('input',clockStatic));clockStatic();
+
+  /* ---- 2.3 Z8 mapping ---- */
+  function drawMap(){
+    const a=parseInt($('map-a').value);if(!Number.isFinite(a)||a<0||a>7){$('map-msg').innerHTML='<span class="err">Choose a from 0 to 7.</span>';return}
+    const res=[...Array(8).keys()].map(x=>a*x%8),cnt={};res.forEach(v=>cnt[v]=(cnt[v]||0)+1);
+    const complete=Object.keys(cnt).length===8;
+    let h='<div class="maprow"><div class="h">Z₈</div>'+[...Array(8).keys()].map(x=>`<div class="c">${x}</div>`).join('')+'</div>';
+    h+=`<div class="maprow"><div class="h">× ${a}</div>`+[...Array(8).keys()].map(x=>`<div class="c">${a*x}</div>`).join('')+'</div>';
+    h+='<div class="maprow"><div class="h">mod 8</div>'+res.map(v=>`<div class="${cnt[v]>1?'dup':'uni'}">${v}</div>`).join('')+'</div>';
+    $('map-out').innerHTML=h;
+    const g=gcd(a,8);
+    $('map-msg').innerHTML=complete?`gcd(${a}, 8) = 1 → <span class="res ok">complete set of residues</span> (a reordering of Z₈), so multiplying by ${a} can be undone. ${a}⁻¹ mod 8 = ${[...Array(8).keys()].find(y=>a*y%8===1)}.`
+      :`gcd(${a}, 8) = ${g} → <span class="res no">repeats</span> (red): several inputs map to the same residue, so ${a} has no inverse mod 8.`}
+  $('map-a').addEventListener('input',drawMap);
+  document.querySelectorAll('#lab-map [data-a]').forEach(b=>b.addEventListener('click',()=>{$('map-a').value=b.dataset.a;drawMap()}));drawMap();
+
+  /* ---- 2.3 extended Euclid ---- */
+  function drawEuc(){
+    let a,b;try{a=BigInt($('euc-a').value);b=BigInt($('euc-b').value)}catch(e){$('euc-msg').innerHTML='<span class="err">Enter positive integers.</span>';return}
+    if(a<1n||b<1n){$('euc-msg').innerHTML='<span class="err">Enter positive integers.</span>';return}
+    let swapped=false;if(a<b){[a,b]=[b,a];swapped=true}
+    const rows=[{i:-1,r:a,q:'',x:1n,y:0n},{i:0,r:b,q:'',x:0n,y:1n}];
+    while(rows[rows.length-1].r!==0n&&rows.length<200){const p2=rows[rows.length-2],p1=rows[rows.length-1];const q=p2.r/p1.r;
+      rows.push({i:rows.length-1,r:p2.r%p1.r,q,x:p2.x-q*p1.x,y:p2.y-q*p1.y})}
+    const last=rows[rows.length-2];
+    let h='<table><tr><th>i</th><th>rᵢ</th><th>qᵢ</th><th>xᵢ</th><th>yᵢ</th><th class="l">check: a·xᵢ + b·yᵢ</th></tr>';
+    rows.forEach((w,k)=>{const fin=k===rows.length-1,best=w===last;
+      h+=`<tr><td>${w.i}</td><td class="${best?'hi':''}">${fmt(w.r)}</td><td>${w.q===''?'':fmt(w.q)}</td><td class="${best?'hi':''}">${fin?'':w.x}</td><td class="${best?'hi':''}">${fin?'':w.y}</td><td class="l dim">${fin?'remainder 0 → stop':`${fmt(a)}·(${w.x}) + ${fmt(b)}·(${w.y}) = ${fmt(a*w.x+b*w.y)}`}</td></tr>`});
+    $('euc-out').innerHTML=h+'</table>';
+    let msg=`gcd(${fmt(a)}, ${fmt(b)}) = <span class="res ok">${fmt(last.r)}</span> &nbsp; x = ${last.x}, y = ${last.y}`;
+    if(swapped)msg+=' <span class="src">(inputs swapped so a ≥ b)</span>';
+    if(last.r===1n){const inv=((last.y%a)+a)%a;msg+=`<br>gcd = 1, so ${fmt(b)}⁻¹ mod ${fmt(a)} = ${fmt(inv)} &nbsp;and&nbsp; ${fmt(a)}⁻¹ mod ${fmt(b)} = ${fmt(((last.x%b)+b)%b)}`}
+    $('euc-msg').innerHTML=msg}
+  ['euc-a','euc-b'].forEach(id=>$(id).addEventListener('input',drawEuc));
+  document.querySelectorAll('#lab-euc [data-ab]').forEach(b=>b.addEventListener('click',()=>{const[x,y]=b.dataset.ab.split(',');$('euc-a').value=x;$('euc-b').value=y;drawEuc()}));drawEuc();
+
+  /* ---- 2.5 totient ---- */
+  function drawPhi(){
+    const n=parseInt($('phi-n').value);if(!Number.isFinite(n)||n<1||n>300){$('phi-msg').innerHTML='<span class="err">Choose n from 1 to 300.</span>';$('phi-cells').innerHTML='';return}
+    if(n===1){$('phi-msg').innerHTML='φ(1) = <span class="res ok">1</span> by convention';$('phi-cells').innerHTML='';return}
+    let c=0,h='';for(let i=1;i<n;i++){const on=gcd(i,n)===1;if(on)c++;h+=`<span class="${on?'on':''}">${i}</span>`}
+    let f=[],m=n;for(let p=2;p*p<=m;p++){let e=0;while(m%p===0){m/=p;e++}if(e)f.push(e>1?`${p}^${e}`:`${p}`)}if(m>1)f.push(String(m));
+    $('phi-msg').innerHTML=`n = ${f.join(' × ')}${f.length===1&&!f[0].includes('^')?' (prime)':''} &nbsp;→&nbsp; φ(${n}) = <span class="res ok">${c}</span>`;
+    $('phi-cells').innerHTML=h}
+  $('phi-n').addEventListener('input',drawPhi);
+  document.querySelectorAll('#lab-phi [data-n]').forEach(b=>b.addEventListener('click',()=>{$('phi-n').value=b.dataset.n;drawPhi()}));drawPhi();
+
+  /* ---- 2.6 Miller-Rabin ---- */
+  function drawMR(){
+    let n,a;try{n=BigInt($('mr-n').value);a=BigInt($('mr-a').value)}catch(e){$('mr-out').innerHTML='<span class="err">Enter integers.</span>';return}
+    if(n<5n||n%2n===0n){$('mr-out').innerHTML='<span class="err">n must be odd and at least 5.</span>';return}
+    if(a<=1n||a>=n-1n){$('mr-out').innerHTML=`<span class="err">a must satisfy 1 &lt; a &lt; ${n-1n}.</span>`;return}
+    let k=0,q=n-1n;while(q%2n===0n){q/=2n;k++}
+    let lines=[`Step 1: n − 1 = ${n-1n} = 2^${k} × ${q} &nbsp;(k = ${k}, q = ${q})`];
+    let x=bmodpow(a,q,n);
+    if(x===1n){lines.push(`Step 3: ${a}^${q} mod ${n} = 1`);lines.push(`Result: <span class="res ok">inconclusive</span> (may be prime)`)}
+    else{lines.push(`Step 3: ${a}^${q} mod ${n} = ${x} &nbsp;(not 1, continue)`);let done=false;
+      for(let j=0;j<k;j++){const e=(2n**BigInt(j))*q;const v=j===0?x:(x=x*x%n);
+        lines.push(`Step 5, j = ${j}: ${a}^${e} mod ${n} = ${v}${v===n-1n?' = n − 1':''}`);
+        if(v===n-1n){lines.push(`Result: <span class="res ok">inconclusive</span> (may be prime)`);done=true;break}}
+      if(!done)lines.push(`Result: <span class="res no">composite</span> (definitely not prime)`)}
+    $('mr-out').innerHTML=lines.join('<br>')}
+  ['mr-n','mr-a'].forEach(id=>$(id).addEventListener('input',drawMR));
+  document.querySelectorAll('#lab-mr [data-mr]').forEach(b=>b.addEventListener('click',()=>{const[x,y]=b.dataset.mr.split(',');$('mr-n').value=x;$('mr-a').value=y;drawMR()}));drawMR();
+
+  /* ---- 2.7 CRT ---- */
+  function inv(a,m){let[r0,r1,x0,x1]=[a%m,m,1,0];// find a^-1 mod m
+    let old_r=a,r=m,old_s=1,s=0;while(r){const q=Math.floor(old_r/r);[old_r,r]=[r,old_r-q*r];[old_s,s]=[s,old_s-q*s]}return old_r===1?mod(old_s,m):null}
+  function drawCRT(){
+    const m1=parseInt($('crt-m1').value),m2=parseInt($('crt-m2').value),A=parseInt($('crt-A').value),B=parseInt($('crt-B').value);
+    const o=$('crt-out');
+    if(![m1,m2,A,B].every(Number.isFinite)||m1<2||m2<2){o.innerHTML='<span class="err">Enter moduli ≥ 2 and nonnegative A, B.</span>';return}
+    if(gcd(m1,m2)!==1){o.innerHTML=`<span class="err">gcd(${m1}, ${m2}) = ${gcd(m1,m2)}. The moduli must be relatively prime.</span>`;return}
+    const M=m1*m2;if(A<0||A>=M||B<0||B>=M){o.innerHTML=`<span class="err">A and B must be in Z_M = [0, ${M-1}].</span>`;return}
+    const M1=m2,M2=m1,i1=inv(M1%m1,m1),i2=inv(M2%m2,m2),c1=M1*i1,c2=M2*i2;
+    const a=[A%m1,A%m2],b=[B%m1,B%m2],s=[(a[0]+b[0])%m1,(a[1]+b[1])%m2];
+    const back=t=>mod(t[0]*c1+t[1]*c2,M);
+    o.innerHTML=`M = ${m1} × ${m2} = ${M}; &nbsp;M₁ = ${M1}, M₂ = ${M2}<br>
+M₁⁻¹ mod ${m1} = ${i1}, &nbsp;M₂⁻¹ mod ${m2} = ${i2} &nbsp;→ c₁ = ${c1}, c₂ = ${c2}<br><br>
+A = ${A} ↔ (${A} mod ${m1}, ${A} mod ${m2}) = <b>(${a[0]}, ${a[1]})</b><br>
+B = ${B} ↔ <b>(${b[0]}, ${b[1]})</b><br>
+Add coordinate-wise: ((${a[0]}+${b[0]}) mod ${m1}, (${a[1]}+${b[1]}) mod ${m2}) = <b>(${s[0]}, ${s[1]})</b><br>
+Back to Z_M: [${s[0]}·${c1} + ${s[1]}·${c2}] mod ${M} = <span class="res ok">${back(s)}</span><br>
+Check: (${A} + ${B}) mod ${M} = ${(A+B)%M} ${back(s)===(A+B)%M?'✓':'✗'}`}
+  ['crt-m1','crt-m2','crt-A','crt-B'].forEach(id=>$(id).addEventListener('input',drawCRT));drawCRT();
+
+  /* ---- 2.8 powers table ---- */
+  const isPrime=p=>{if(p<2)return false;for(let i=2;i*i<=p;i++)if(p%i===0)return false;return true};
+  function drawPow(){
+    const p=parseInt($('pow-p').value);if(!Number.isFinite(p)||p<3||p>31||!isPrime(p)){$('pow-out').innerHTML='<span class="err">Choose a prime from 3 to 31.</span>';return}
+    let h='<table><tr><th>a</th>'+[...Array(p-1).keys()].map(i=>`<th>a<sup>${i+1}</sup></th>`).join('')+'<th>order</th></tr>';
+    const roots=[];
+    for(let a=1;a<p;a++){let v=1,ord=0;const cells=[];for(let e=1;e<p;e++){v=v*a%p;if(v===1&&!ord)ord=e;cells.push({v,first:v===1&&ord===e})}
+      const prim=ord===p-1;if(prim)roots.push(a);
+      h+=`<tr><th class="${prim?'hi':''}" style="${prim?'background:var(--accent-soft);color:var(--accent)':''}">${a}</th>`+cells.map(c=>`<td class="${c.first?'one':''}">${c.v}</td>`).join('')+`<td>${ord}</td></tr>`}
+    $('pow-out').innerHTML=h+`</table><p class="out" style="margin:8px 0 0">φ(${p}) = ${p-1}; primitive roots of ${p}: <b>${roots.join(', ')}</b></p>`}
+  $('pow-p').addEventListener('input',drawPow);drawPow();
+
+  /* ---- 2.8 dlog table ---- */
+  function drawDlog(g){
+    const p=19,log={};let v=1;for(let e=0;e<p-1;e++){log[v]=e;v=v*g%p}
+    let h='<table><tr><th>a</th>'+[...Array(p-1).keys()].map(i=>`<th>${i+1}</th>`).join('')+`</tr><tr><th>dlog<sub>${g},19</sub>(a)</th>`+[...Array(p-1).keys()].map(i=>`<td class="${i+1===g?'hi':''}">${log[i+1]}</td>`).join('')+'</tr></table>';
+    $('dlog-out').innerHTML=h;
+    document.querySelectorAll('#lab-dlog [data-g]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.g==g));}
+  document.querySelectorAll('#lab-dlog [data-g]').forEach(b=>b.addEventListener('click',()=>drawDlog(+b.dataset.g)));drawDlog(2);
+
+  /* ---- scroll-following contents ---- */
+  const links=[...document.querySelectorAll('nav.toc a')];
+  const secs=links.map(l=>document.querySelector(l.getAttribute('href'))).filter(Boolean);
+  const list=document.querySelector('nav.toc ol');let current=null,ticking=false;
+  function spy(){
+    ticking=false;
+    const line=window.innerHeight*0.3;let idx=0;
+    secs.forEach((s,i)=>{if(s.getBoundingClientRect().top<=line)idx=i});
+    if((window.innerHeight+window.scrollY)>=document.documentElement.scrollHeight-4)idx=secs.length-1;
+    const l=links[idx];
+    if(l!==current){
+      if(current){current.classList.remove('active');current.removeAttribute('aria-current')}
+      l.classList.add('active');l.setAttribute('aria-current','true');current=l;
+      if(list.scrollWidth>list.clientWidth){list.scrollTo({left:l.parentElement.offsetLeft-list.clientWidth/2+l.parentElement.offsetWidth/2,behavior:reduce?'auto':'smooth'})}
+    }
+    const max=document.documentElement.scrollHeight-window.innerHeight;
+    $('toc-progress').style.width=(max>0?Math.min(100,window.scrollY/max*100):0)+'%';
+  }
+  window.addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(spy)}},{passive:true});
+  window.addEventListener('resize',spy);spy();
+})();
+</script>
+</body>
+</html>
