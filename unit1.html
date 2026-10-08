@@ -171,9 +171,28 @@ img{max-width:100%}
 [hidden]{display:none!important}
 .back{font-family:var(--f-mono);font-size:.8rem;text-decoration:none;color:var(--muted)}
 .back:hover{color:var(--accent)}
+
+/* ---- Sticky "All units" bar + back-to-top (shared across unit pages) ---- */
+:root{--topbar-h:52px}
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.topbar-in{max-width:1180px;margin:0 auto;height:var(--topbar-h);padding-inline:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.topbar a.home{flex:0 0 auto;font-family:var(--f-mono,var(--mono));font-size:.84rem;font-weight:600;color:var(--ink);text-decoration:none;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface,var(--paper))}
+.topbar a.home:hover{border-color:var(--accent);color:var(--accent)}
+.topbar a.home:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.topbar .where{min-width:0;font-family:var(--f-mono,var(--mono));font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.to-top{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono,var(--mono));font-size:.82rem;font-weight:600;padding:10px 14px;border:1px solid var(--accent);border-radius:999px;background:var(--accent);color:var(--surface,var(--paper));cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.18);opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .2s,transform .2s,visibility 0s linear .2s}
+.to-top.show{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .2s}
+.to-top:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.to-top{transition:none}}
+
+nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h) + 20px)}
+nav.toc ol{max-height:calc(100vh - 80px - var(--topbar-h))}
+section{scroll-margin-top:calc(70px + var(--topbar-h))}
+@media (max-width:900px){nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h))}nav.toc ol{max-height:none}}
 </style>
 </head>
 <body>
+<header class="topbar"><div class="topbar-in"><a class="home" href="./">← All units</a><span class="where">Unit 1 · Security Foundations</span></div></header>
 <div class="wrap">
 <nav class="toc" aria-label="Sections">
   <span class="eyebrow">Unit 1 · Chapter 1</span>
@@ -196,7 +215,6 @@ img{max-width:100%}
 <main>
 <!-- ============ OVERVIEW ============ -->
 <section id="overview" class="hero">
-  <a class="back" href="./">← All units</a>
   <span class="eyebrow">Unit 1 · Security Foundations</span>
   <h1>Computer and Network Security Concepts</h1>
   <div class="hero-meta">
@@ -1005,6 +1023,18 @@ img{max-width:100%}
         else if(ol.scrollHeight>ol.clientHeight){ol.scrollTo({top:li.offsetTop-(ol.clientHeight-li.offsetHeight)/2,behavior:b});}}});}})},{rootMargin:'-30% 0px -60% 0px'});
     secs.forEach(s=>s&&io.observe(s));
   }
+})();
+</script>
+<button class="to-top" id="to-top" type="button" aria-label="Back to top">↑ Top</button>
+
+<script>
+(function(){
+  var btn=document.getElementById('to-top');if(!btn)return;
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches,tick=false;
+  function upd(){tick=false;btn.classList.toggle('show',window.scrollY>600)}
+  window.addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(upd)}},{passive:true});
+  btn.addEventListener('click',function(){window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});var h=document.querySelector('.topbar a.home');if(h)h.focus({preventScroll:true})});
+  upd();
 })();
 </script>
 </body>
