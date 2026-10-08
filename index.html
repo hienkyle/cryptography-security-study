@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cryptography &amp; Network Security Study Guides</title>
+<meta name="description" content="Twelve study guides for Stallings, Cryptography and Network Security: Principles and Practice (7th ed., Global Edition).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one column; a header, then the 12 units as a ruled list keyed by chapter numbers. Same tokens as the unit guides. */
+:root{
+  --bg:#F1F3F7; --surface:#FFFFFF; --sunk:#E7EBF2; --ink:#131A2A; --muted:#556079; --line:#D3DAE6;
+  --accent:#2346C8; --accent-soft:#E2E8FB; --guard:#1C7556; --guard-soft:#DDF1E8;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme:light;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D1220; --surface:#151C2D; --sunk:#1B2338; --ink:#E5E9F2; --muted:#9AA4BC; --line:#2A3450;
+  --accent:#8099FF; --accent-soft:#1E2A52; --guard:#55CC9E; --guard-soft:#14352A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D1220; --surface:#151C2D; --sunk:#1B2338; --ink:#E5E9F2; --muted:#9AA4BC; --line:#2A3450;
+  --accent:#8099FF; --accent-soft:#1E2A52; --guard:#55CC9E; --guard-soft:#14352A; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16.5px;line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding-inline:20px;padding-block:48px 64px;display:grid;gap:36px}
+h1,h2{font-family:var(--f-display);margin:0;line-height:1.12;text-wrap:balance}
+h1{font-size:clamp(2rem,6vw,3.2rem);font-weight:800;letter-spacing:-.02em}
+p{margin:0}
+.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+header{display:grid;gap:12px}
+header p{max-width:62ch;color:var(--muted)}
+.book{font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
+.progress{display:flex;align-items:center;gap:12px;font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
+.bar{flex:1;max-width:260px;height:6px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
+ol.units{list-style:none;margin:0;padding:0;border-top:2px solid var(--ink)}
+ol.units li{border-bottom:1px solid var(--line)}
+.unit{display:grid;grid-template-columns:3.2rem minmax(0,1fr) auto;gap:16px;align-items:center;padding:16px 8px;text-decoration:none;color:inherit;border-radius:8px}
+a.unit:hover{background:var(--surface)}
+a.unit:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--f-display);font-weight:800;font-size:1.6rem;color:var(--line);line-height:1}
+a.unit .num{color:var(--accent)}
+.title{display:grid;gap:2px;min-width:0}
+.title h2{font-size:1.15rem;font-weight:700}
+.ch{font-family:var(--f-mono);font-size:.76rem;color:var(--muted)}
+.status{font-family:var(--f-mono);font-size:.72rem;font-weight:600;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.status.ready{background:var(--guard-soft);color:var(--guard)}
+.status.soon{background:var(--sunk);color:var(--muted)}
+.unit.locked h2{color:var(--muted)}
+footer{font-size:.84rem;color:var(--muted);display:grid;gap:4px}
+@media (max-width:520px){.unit{grid-template-columns:2.4rem minmax(0,1fr);row-gap:6px}.status{grid-column:2;justify-self:start}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Study guides</span>
+    <h1>Cryptography &amp; Network Security</h1>
+    <p>Twelve units that follow the printed chapters of the textbook, with definitions, redrawn figures, animations and review questions.</p>
+    <span class="book">Stallings · Cryptography and Network Security: Principles and Practice · 7th ed., Global Edition</span>
+    <div class="progress"><div class="bar"><i id="fill" style="width:8.33%"></i></div><span id="count">1 of 12 ready</span></div>
+  </header>
+
+  <ol class="units" id="units"></ol>
+
+  <footer>
+    <span>Chapters 1–20. Online chapters 21–24 are not covered.</span>
+    <span>Figures are redrawn from the textbook for study purposes.</span>
+  </footer>
+</div>
+<script>
+/* To publish a new unit: add its file (e.g. unit2.html) and set `file` below. */
+const UNITS=[
+  {n:1,  t:"Security Foundations",                 ch:"Ch. 1",       file:"unit1.html"},
+  {n:2,  t:"Number Theory",                        ch:"Ch. 2",       file:null},
+  {n:3,  t:"Classical Ciphers & DES",              ch:"Ch. 3–4",     file:null},
+  {n:4,  t:"Finite Fields & AES",                  ch:"Ch. 5–6",     file:null},
+  {n:5,  t:"Using Symmetric Ciphers",              ch:"Ch. 7–8",     file:null},
+  {n:6,  t:"Public-Key Cryptography",              ch:"Ch. 9–10",    file:null},
+  {n:7,  t:"Hashes & MACs",                        ch:"Ch. 11–12",   file:null},
+  {n:8,  t:"Digital Signatures",                   ch:"Ch. 13",      file:null},
+  {n:9,  t:"Key Management & Authentication",      ch:"Ch. 14–15",   file:null},
+  {n:10, t:"Access Control & Wireless",            ch:"Ch. 16 + 18", file:null},
+  {n:11, t:"Protocol-Layer Security",              ch:"Ch. 17 + 20", file:null},
+  {n:12, t:"Email Security",                       ch:"Ch. 19",      file:null}
+];
+const ol=document.getElementById('units');
+UNITS.forEach(u=>{
+  const li=document.createElement('li');
+  const ready=!!u.file;
+  const tag=ready?'a':'div';
+  li.innerHTML='<'+tag+' class="unit'+(ready?'':' locked')+'"'+(ready?' href="'+u.file+'"':'')+'>'+
+    '<span class="num">'+String(u.n).padStart(2,'0')+'</span>'+
+    '<span class="title"><h2>'+u.t.replace('&','&amp;')+'</h2><span class="ch">'+u.ch+'</span></span>'+
+    '<span class="status '+(ready?'ready':'soon')+'">'+(ready?'Open guide →':'Coming soon')+'</span></'+tag+'>';
+  ol.appendChild(li);
+});
+const done=UNITS.filter(u=>u.file).length;
+document.getElementById('count').textContent=done+' of 12 ready';
+document.getElementById('fill').style.width=(done/12*100)+'%';
+</script>
+<noscript><p style="padding:20px"><a href="unit1.html">Unit 1 · Security Foundations</a></p></noscript>
+</body>
+</html>

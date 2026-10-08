@@ -1,0 +1,1010 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unit 1 · Security Foundations</title>
+<meta name="description" content="Study guide for Stallings, Cryptography and Network Security, Chapter 1: CIA triad, X.800 attacks, services and mechanisms, design principles, attack surfaces and trees.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: sticky section index on the left, single reading column on the right; diagrams sit in framed "figure" panels like a field manual. */
+:root{
+  --bg:#F1F3F7; --surface:#FFFFFF; --sunk:#E7EBF2; --ink:#131A2A; --muted:#556079; --line:#D3DAE6;
+  --accent:#2346C8; --accent-soft:#E2E8FB; --threat:#B0234F; --threat-soft:#F8E1E8; --guard:#1C7556; --guard-soft:#DDF1E8; --warn:#9A6400;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D1220; --surface:#151C2D; --sunk:#1B2338; --ink:#E5E9F2; --muted:#9AA4BC; --line:#2A3450;
+  --accent:#8099FF; --accent-soft:#1E2A52; --threat:#FF7398; --threat-soft:#3A1A27; --guard:#55CC9E; --guard-soft:#14352A; --warn:#E3B04B; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D1220; --surface:#151C2D; --sunk:#1B2338; --ink:#E5E9F2; --muted:#9AA4BC; --line:#2A3450;
+  --accent:#8099FF; --accent-soft:#1E2A52; --threat:#FF7398; --threat-soft:#3A1A27; --guard:#55CC9E; --guard-soft:#14352A; --warn:#E3B04B; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16.5px;line-height:1.62;margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 64px;display:grid;grid-template-columns:210px minmax(0,1fr);gap:44px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr);gap:20px}}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(2rem,5vw,3.1rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.7rem;font-weight:700;letter-spacing:-.01em}
+h3{font-size:1.15rem;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.mono,.eyebrow,.tag{font-family:var(--f-mono)}
+.eyebrow{font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+strong{font-weight:700}
+
+/* nav */
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;font-size:.9rem}
+nav.toc ol{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:2px;position:relative;max-height:calc(100vh - 80px);overflow-y:auto;scrollbar-width:thin}
+nav.toc a{display:flex;gap:10px;text-decoration:none;color:var(--muted);padding:5px 8px;border-radius:6px}
+nav.toc a:hover{background:var(--sunk);color:var(--ink)}
+nav.toc a.on{color:var(--accent);background:var(--accent-soft)}
+nav.toc .n{font-family:var(--f-mono);font-size:.78rem;min-width:2.2em;padding-top:2px}
+@media (max-width:900px){
+  nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:8px;border-bottom:1px solid var(--line);margin-inline:-20px;padding-inline:20px}
+  nav.toc .eyebrow{display:none}
+  nav.toc ol{margin:0;display:flex;overflow-x:auto;gap:4px;scrollbar-width:none}
+  nav.toc a{white-space:nowrap}
+}
+
+main{min-width:0;display:grid;gap:56px}
+section{display:grid;gap:18px;scroll-margin-top:70px}
+.sec-head{display:grid;gap:6px;border-top:2px solid var(--ink);padding-top:14px}
+.lede{max-width:68ch}
+.prose{display:grid;gap:12px;max-width:70ch}
+
+/* hero */
+.hero{display:grid;gap:16px}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-family:var(--f-mono);font-size:.76rem;border:1px solid var(--line);background:var(--surface);padding:3px 9px;border-radius:99px;color:var(--muted)}
+.objectives{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;display:grid;gap:8px}
+.objectives ul{margin:0;padding-left:1.2em;display:grid;gap:4px}
+
+/* definition list */
+.defs{display:grid;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.def{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr);gap:16px;padding:12px 18px;border-top:1px solid var(--line)}
+.def:first-child{border-top:0}
+.def dt{font-weight:700}
+.def dd{margin:0}
+.def .src{display:block;font-size:.8rem;color:var(--muted);margin-top:2px}
+@media (max-width:620px){.def{grid-template-columns:minmax(0,1fr);gap:2px}}
+
+/* callouts */
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:12px 16px;border-radius:0 8px 8px 0;max-width:72ch}
+.note.prereq{border-color:var(--warn);background:var(--sunk)}
+.note .eyebrow{display:block;margin-bottom:4px}
+
+/* figure panels */
+figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:12px;min-width:0}
+figcaption{font-size:.86rem;color:var(--muted)}
+figcaption b{font-family:var(--f-mono);font-weight:600;color:var(--ink);font-size:.8rem}
+.svgbox{overflow-x:auto}
+svg text{font-family:var(--f-body)}
+
+/* grids & tables */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;gap:6px;align-content:start}
+.tablebox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+thead th{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:0}
+.lvl{font-family:var(--f-mono);font-size:.74rem;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.lvl.h{background:var(--threat-soft);color:var(--threat)}
+.lvl.m{background:var(--sunk);color:var(--warn)}
+.lvl.l{background:var(--guard-soft);color:var(--guard)}
+.tag{font-size:.72rem;padding:2px 7px;border-radius:5px;font-weight:600}
+.tag.p{background:var(--accent-soft);color:var(--accent)}
+.tag.a{background:var(--threat-soft);color:var(--threat)}
+
+/* attack theatre */
+.ctrls{display:grid;gap:8px}
+.ctrls .grp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ctrls .grp .tag{min-width:5.6em;text-align:center}
+button.atk{font:inherit;font-size:.86rem;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:5px 11px;border-radius:7px;cursor:pointer}
+button.atk:hover{border-color:var(--muted)}
+button.atk[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.atk-desc{display:grid;gap:4px;min-height:5.5em;max-width:70ch}
+
+/* matrix */
+.matrix td.y{text-align:center;color:var(--guard);font-weight:700}
+.matrix td.n{text-align:center;color:var(--line)}
+.matrix th.rot{white-space:normal;text-align:center;vertical-align:bottom;min-width:88px;max-width:110px;padding:10px 6px;text-transform:none;letter-spacing:0;font-size:.78rem;line-height:1.3}
+.matrix thead th:first-child{vertical-align:bottom}
+.matrix tbody tr:hover td,.matrix tbody tr:hover th{background:var(--accent-soft)}
+.matrix tbody th{font-family:var(--f-body);font-weight:700;white-space:nowrap;text-transform:none;letter-spacing:0;font-size:.9rem;color:var(--ink);background:none}
+
+/* principles */
+.principles{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.pr{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;gap:6px;align-content:start}
+.pr h3{font-size:1.02rem}
+.pr .eg{font-size:.88rem;color:var(--muted)}
+.pr .eg b{color:var(--ink);font-weight:700}
+
+/* attack tree */
+.tree ul{list-style:none;margin:0;padding-left:22px;border-left:1px dashed var(--line)}
+.tree>ul{padding-left:0;border-left:0}
+.tree li{padding:3px 0 3px 0;position:relative}
+.tree .node{display:inline-flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.tree .or{font-family:var(--f-mono);font-size:.68rem;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 5px}
+.tree .leaf{padding:1px 8px;border-radius:5px;font-size:.92rem}
+.tree .code{font-family:var(--f-mono);font-size:.72rem;font-weight:600;margin-right:6px}
+.leaf.ut{background:var(--accent-soft)} .leaf.ut .code{color:var(--accent)}
+.leaf.cc{background:var(--threat-soft)} .leaf.cc .code{color:var(--threat)}
+.leaf.ibs{background:var(--guard-soft)} .leaf.ibs .code{color:var(--guard)}
+.legend{display:flex;flex-wrap:wrap;gap:8px;font-size:.84rem}
+
+/* standards */
+.std{display:grid;gap:4px}
+.std .abbr{font-family:var(--f-display);font-weight:800;font-size:1.6rem;color:var(--accent);line-height:1}
+.std .pub{font-family:var(--f-mono);font-size:.78rem;color:var(--muted)}
+
+/* review */
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+details.q+details.q{margin-top:8px}
+details.q summary{cursor:pointer;font-weight:700;list-style:none;display:flex;gap:10px}
+details.q summary::-webkit-details-marker{display:none}
+details.q summary .mono{color:var(--accent);font-size:.82rem;padding-top:2px;min-width:2.4em}
+details.q[open] summary{margin-bottom:8px}
+details.q .ans{padding-left:calc(2.4em + 10px);display:grid;gap:6px}
+ol.tight,ul.tight{margin:0;padding-left:1.25em;display:grid;gap:3px}
+
+.sources li{margin-bottom:6px}
+footer{font-size:.85rem;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+/* standalone additions */
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+img{max-width:100%}
+[hidden]{display:none!important}
+.back{font-family:var(--f-mono);font-size:.8rem;text-decoration:none;color:var(--muted)}
+.back:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc" aria-label="Sections">
+  <span class="eyebrow">Unit 1 · Chapter 1</span>
+  <ol>
+    <li><a href="#overview"><span class="n">0</span>Overview</a></li>
+    <li><a href="#s1-1"><span class="n">1.1</span>Security concepts</a></li>
+    <li><a href="#s1-2"><span class="n">1.2</span>OSI architecture</a></li>
+    <li><a href="#s1-3"><span class="n">1.3</span>Attacks</a></li>
+    <li><a href="#s1-4"><span class="n">1.4</span>Services</a></li>
+    <li><a href="#s1-5"><span class="n">1.5</span>Mechanisms</a></li>
+    <li><a href="#s1-6"><span class="n">1.6</span>Design principles</a></li>
+    <li><a href="#s1-7"><span class="n">1.7</span>Surfaces &amp; trees</a></li>
+    <li><a href="#s1-8"><span class="n">1.8</span>Security models</a></li>
+    <li><a href="#s1-9"><span class="n">1.9</span>Standards</a></li>
+    <li><a href="#review"><span class="n">1.10</span>Review</a></li>
+    <li><a href="#sources"><span class="n">Ref</span>Sources</a></li>
+  </ol>
+</nav>
+
+<main>
+<!-- ============ OVERVIEW ============ -->
+<section id="overview" class="hero">
+  <a class="back" href="./">← All units</a>
+  <span class="eyebrow">Unit 1 · Security Foundations</span>
+  <h1>Computer and Network Security Concepts</h1>
+  <div class="hero-meta">
+    <span class="chip">Stallings, 7th ed. Global · Ch. 1</span>
+    <span class="chip">pp. 19–45</span>
+    <span class="chip">Sections 1.1 – 1.9</span>
+  </div>
+  <p class="lede">This chapter sets the vocabulary for the whole course: what "secure" means (the CIA triad), how X.800 sorts the field into <strong>attacks</strong>, <strong>services</strong> and <strong>mechanisms</strong>, the design principles that guide protection, and two tools for analyzing threats.</p>
+
+  <div class="objectives">
+    <span class="eyebrow">After this unit you should be able to</span>
+    <ul>
+      <li>Describe the key requirements of confidentiality, integrity and availability.</li>
+      <li>Describe the X.800 security architecture for OSI.</li>
+      <li>Discuss the types of threats and attacks, with examples for different kinds of assets.</li>
+      <li>Explain the fundamental security design principles.</li>
+      <li>Discuss the use of attack surfaces and attack trees.</li>
+      <li>List and briefly describe the key organizations behind cryptography standards.</li>
+    </ul>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <span class="eyebrow">Area 1 · Cryptographic algorithms &amp; protocols</span>
+      <ul class="tight">
+        <li><strong>Symmetric encryption</strong> hides the contents of data of any size: messages, files, keys, passwords.</li>
+        <li><strong>Asymmetric encryption</strong> hides small blocks, such as keys and hash values used in digital signatures.</li>
+        <li><strong>Data integrity algorithms</strong> protect blocks of data from alteration.</li>
+        <li><strong>Authentication protocols</strong> use crypto algorithms to confirm the identity of entities.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="eyebrow">Area 2 · Network &amp; Internet security</span>
+      <p>Measures to <strong>deter, prevent, detect and correct</strong> security violations that involve the transmission of information. This area relies heavily on the cryptographic techniques from Area 1.</p>
+    </div>
+  </div>
+
+  <div class="note prereq">
+    <span class="eyebrow">Terms used before the book defines them</span>
+    <dl class="defs" style="background:transparent;border:0">
+      <div class="def" style="padding-inline:0"><dt>Information vs. data</dt><dd>Information is facts and ideas; data is information in a specific physical form, usually symbols a computer can process. The book (like most security literature) treats them as the same.<span class="src">Stallings Ch. 1, fn. 1, citing RFC 4949</span></dd></div>
+      <div class="def" style="padding-inline:0"><dt>Vulnerability</dt><dd>A weakness in a system, its security procedures, internal controls or implementation that a threat source could exploit or trigger.<span class="src">NIST CSRC Glossary (FIPS 200)</span></dd></div>
+      <div class="def" style="padding-inline:0"><dt>Security policy</dt><dd>The set of rules and practices that say how an organization manages, protects and distributes sensitive information.<span class="src">NIST CSRC Glossary (CNSSI 4009)</span></dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- ============ 1.1 ============ -->
+<section id="s1-1">
+  <div class="sec-head"><span class="eyebrow">Section 1.1</span><h2>Computer Security Concepts</h2></div>
+  <div class="note">
+    <span class="eyebrow">Definition · NIST Computer Security Handbook</span>
+    <strong>Computer security</strong> is the protection given to an automated information system to preserve the <strong>integrity, availability and confidentiality</strong> of its resources: hardware, software, firmware, information/data and telecommunications.
+  </div>
+
+  <figure>
+    <div class="svgbox">
+      <svg viewBox="0 0 640 362" width="100%" style="max-width:640px;min-width:420px;display:block;margin:auto" role="img" aria-labelledby="ciaT">
+        <title id="ciaT">Five security requirements surrounding data and services</title>
+        <defs><style>
+          .ring{fill:none;stroke:var(--line);stroke-width:1.5;stroke-dasharray:4 5}
+          .core{fill:var(--ink)} .coreT{fill:var(--bg);font-weight:700;font-size:15px}
+          .cia circle{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2}
+          .cia text{fill:var(--accent);font-weight:700;font-size:12.5px}
+          .ext circle{fill:var(--surface);stroke:var(--muted);stroke-width:1.5;stroke-dasharray:3 3}
+          .ext text{fill:var(--muted);font-weight:700;font-size:12.5px}
+          .spoke{stroke:var(--line);stroke-width:1.5}
+          .orbit{transform-origin:320px 165px;animation:spin 40s linear infinite}
+          @keyframes spin{to{transform:rotate(360deg)}}
+          .lbl{fill:var(--muted);font-family:var(--f-mono);font-size:11px;letter-spacing:.08em}
+        </style></defs>
+        <g transform="translate(0,26)">
+        <g class="orbit"><circle class="ring" cx="320" cy="165" r="125"/></g>
+        <line class="spoke" x1="320" y1="165" x2="320" y2="40"/>
+        <line class="spoke" x1="320" y1="165" x2="439" y2="126"/>
+        <line class="spoke" x1="320" y1="165" x2="393" y2="266"/>
+        <line class="spoke" x1="320" y1="165" x2="247" y2="266"/>
+        <line class="spoke" x1="320" y1="165" x2="201" y2="126"/>
+        <circle class="core" cx="320" cy="165" r="52"/>
+        <text class="coreT" x="320" y="160" text-anchor="middle">Data and</text>
+        <text class="coreT" x="320" y="179" text-anchor="middle">services</text>
+        <g class="cia"><circle cx="320" cy="40" r="56"/><text x="320" y="45" text-anchor="middle">Integrity</text></g>
+        <g class="cia"><circle cx="447" cy="124" r="56"/><text x="447" y="129" text-anchor="middle">Availability</text></g>
+        <g class="ext"><circle cx="398" cy="272" r="56"/><text x="398" y="277" text-anchor="middle">Accountability</text></g>
+        <g class="ext"><circle cx="242" cy="272" r="56"/><text x="242" y="277" text-anchor="middle">Authenticity</text></g>
+        <g class="cia"><circle cx="193" cy="124" r="56"/><text x="193" y="129" text-anchor="middle">Confidentiality</text></g>
+        <text class="lbl" x="575" y="-6" text-anchor="middle">SOLID = CIA</text>
+        <text class="lbl" x="575" y="12" text-anchor="middle">DASHED = ADDED</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>Fig. 1.1 (redrawn)</b> Essential network and computer security requirements. The three solid circles are the CIA triad; authenticity and accountability are the two most commonly added concepts.</figcaption>
+  </figure>
+
+  <div class="tablebox">
+    <table>
+      <thead><tr><th>Objective</th><th>What it assures</th><th>Loss of security (FIPS 199)</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Confidentiality</strong></td><td><em>Data confidentiality:</em> private information is not disclosed to unauthorized individuals.<br><em>Privacy:</em> individuals control what information about them is collected, stored, and disclosed, and to whom.</td><td>Unauthorized <strong>disclosure</strong> of information.</td></tr>
+        <tr><td><strong>Integrity</strong></td><td><em>Data integrity:</em> information and programs change only in a specified, authorized way.<br><em>System integrity:</em> the system performs its intended function, free from unauthorized manipulation. Includes nonrepudiation and authenticity.</td><td>Unauthorized <strong>modification or destruction</strong> of information.</td></tr>
+        <tr><td><strong>Availability</strong></td><td>Systems work promptly; service is not denied to authorized users. Timely, reliable access.</td><td><strong>Disruption</strong> of access to or use of information or a system.</td></tr>
+        <tr><td><strong>Authenticity</strong></td><td>Being genuine and verifiable: users are who they say they are, and each input came from a trusted source.</td><td class="muted">—</td></tr>
+        <tr><td><strong>Accountability</strong></td><td>Actions of an entity can be traced uniquely to that entity. Supports nonrepudiation, deterrence, fault isolation, intrusion detection and legal action. Systems keep records for later forensic analysis.</td><td class="muted">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Impact levels (FIPS PUB 199)</h3>
+  <p class="prose">A breach is rated by its effect on operations, assets or individuals.</p>
+  <div class="tablebox">
+    <table>
+      <thead><tr><th>Level</th><th>Effect</th><th>Typical result</th></tr></thead>
+      <tbody>
+        <tr><td><span class="lvl l">LOW</span></td><td>Limited adverse effect</td><td>Primary functions still performed but noticeably less effective; minor damage, financial loss or harm.</td></tr>
+        <tr><td><span class="lvl m">MODERATE</span></td><td>Serious adverse effect</td><td>Functions significantly less effective; significant damage or loss; significant harm short of loss of life.</td></tr>
+        <tr><td><span class="lvl h">HIGH</span></td><td>Severe or catastrophic effect</td><td>Organization cannot perform one or more primary functions; major damage or loss; loss of life or life-threatening injuries.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Worked examples from the text</h3>
+  <div class="tablebox">
+    <table>
+      <thead><tr><th>Requirement</th><th><span class="lvl h">HIGH</span></th><th><span class="lvl m">MODERATE</span></th><th><span class="lvl l">LOW</span></th></tr></thead>
+      <tbody>
+        <tr><td><strong>Confidentiality</strong></td><td>Student grade information</td><td>Student enrollment information</td><td>Directory information (public lists)</td></tr>
+        <tr><td><strong>Integrity</strong></td><td>Hospital patient allergy data</td><td>Hobby discussion forum website</td><td>Anonymous online poll</td></tr>
+        <tr><td><strong>Availability</strong></td><td>Authentication service for critical systems</td><td>Public university website</td><td>Online telephone directory lookup</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Why security is hard: the ten challenges</h3>
+  <ol class="tight prose">
+    <li>Requirements sound simple; the mechanisms that meet them are complex and subtle.</li>
+    <li>Designers must anticipate attacks, which often exploit a weakness from an unexpected angle.</li>
+    <li>So procedures are often counterintuitive; they only make sense once the threat is considered.</li>
+    <li>Mechanisms must be placed both physically (where in the network) and logically (which layer, e.g. of TCP/IP).</li>
+    <li>Mechanisms depend on secret information (keys) that must be created, distributed and protected, and on protocols whose delays can break timing assumptions.</li>
+    <li>It is a battle of wits: the attacker needs one weakness; the designer must close all of them.</li>
+    <li>Users and managers see little benefit from security until a failure occurs.</li>
+    <li>Security needs constant monitoring, which is hard in overloaded environments.</li>
+    <li>Security is often an afterthought added after design.</li>
+    <li>Strong security is seen as an obstacle to efficient, user-friendly operation.</li>
+  </ol>
+</section>
+
+<!-- ============ 1.2 ============ -->
+<section id="s1-2">
+  <div class="sec-head"><span class="eyebrow">Section 1.2</span><h2>The OSI Security Architecture</h2></div>
+  <div class="prose">
+    <p>Managers need a systematic way to define security requirements and the approaches that satisfy them. <strong>ITU-T Recommendation X.800, <em>Security Architecture for OSI</em></strong>, provides it. Because it is an international standard, vendors build product security features around its definitions.</p>
+  </div>
+  <dl class="defs">
+    <div class="def"><dt>OSI</dt><dd>Open Systems Interconnection, a layered protocol architecture. You do not need to know its layers for this chapter (covered in Appendix L).</dd></div>
+    <div class="def"><dt>ITU-T</dt><dd>The Telecommunication Standardization Sector of the International Telecommunication Union, a UN-sponsored agency. Its standards are called <em>Recommendations</em>.</dd></div>
+    <div class="def"><dt>Protocol layer</dt><dd>One level of a layered communication architecture, such as TCP or an application-layer protocol. Mechanisms can be placed at a particular layer (§1.5).</dd></div>
+  </dl>
+
+  <figure>
+    <div class="svgbox">
+      <svg viewBox="0 0 640 170" width="100%" style="max-width:640px;min-width:480px;display:block;margin:auto" role="img" aria-labelledby="osiT">
+        <title id="osiT">Attacks are countered by services, which are implemented by mechanisms</title>
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker>
+        </defs>
+        <rect x="10" y="40" width="170" height="80" rx="10" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="95" y="76" text-anchor="middle" font-weight="700" font-size="16" fill="var(--accent)">Security mechanism</text>
+        <text x="95" y="98" text-anchor="middle" font-size="12" fill="var(--muted)">detect · prevent · recover</text>
+        <rect x="235" y="40" width="170" height="80" rx="10" fill="var(--guard-soft)" stroke="var(--guard)" stroke-width="1.5"/>
+        <text x="320" y="76" text-anchor="middle" font-weight="700" font-size="16" fill="var(--guard)">Security service</text>
+        <text x="320" y="98" text-anchor="middle" font-size="12" fill="var(--muted)">enhances security</text>
+        <rect x="460" y="40" width="170" height="80" rx="10" fill="var(--threat-soft)" stroke="var(--threat)" stroke-width="1.5"/>
+        <text x="545" y="76" text-anchor="middle" font-weight="700" font-size="16" fill="var(--threat)">Security attack</text>
+        <text x="545" y="98" text-anchor="middle" font-size="12" fill="var(--muted)">compromises information</text>
+        <line x1="183" y1="80" x2="231" y2="80" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ar)"/>
+        <text x="208" y="32" text-anchor="middle" font-size="12" fill="var(--muted)">implements</text>
+        <line x1="408" y1="80" x2="456" y2="80" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ar)"/>
+        <text x="432" y="32" text-anchor="middle" font-size="12" fill="var(--muted)">counters</text>
+        <text x="320" y="152" text-anchor="middle" font-size="12" fill="var(--muted)">A service uses one or more mechanisms to counter attacks.</text>
+      </svg>
+    </div>
+    <figcaption><b>Summary diagram</b> How the three X.800 concepts relate, read left to right: mechanisms implement services, and services counter attacks.</figcaption>
+  </figure>
+
+  <dl class="defs">
+    <div class="def"><dt>Security attack</dt><dd>Any action that compromises the security of information owned by an organization.</dd></div>
+    <div class="def"><dt>Security mechanism</dt><dd>A process, or a device incorporating one, designed to detect, prevent or recover from a security attack.</dd></div>
+    <div class="def"><dt>Security service</dt><dd>A processing or communication service that enhances the security of data processing systems and information transfers. Services counter attacks using one or more mechanisms.</dd></div>
+    <div class="def"><dt>Threat <span class="muted">(RFC 4949)</span></dt><dd>A <em>potential</em> for violation of security: a circumstance, capability, action or event that could breach security and cause harm. A possible danger that might exploit a vulnerability.</dd></div>
+    <div class="def"><dt>Attack <span class="muted">(RFC 4949)</span></dt><dd>An <em>actual</em> assault on system security from an intelligent threat: a deliberate attempt to evade security services and violate the security policy.</dd></div>
+  </dl>
+</section>
+
+<!-- ============ 1.3 ============ -->
+<section id="s1-3">
+  <div class="sec-head"><span class="eyebrow">Section 1.3</span><h2>Security Attacks</h2></div>
+  <p class="lede">X.800 and RFC 4949 split attacks in two. A <strong>passive attack</strong> tries to learn or use information but does not affect system resources. An <strong>active attack</strong> tries to alter system resources or affect their operation.</p>
+
+  <figure>
+    <div class="ctrls" role="group" aria-label="Choose an attack">
+      <div class="grp"><span class="tag p">PASSIVE</span>
+        <button class="atk" data-k="release" aria-pressed="true">Release of contents</button>
+        <button class="atk" data-k="traffic" aria-pressed="false">Traffic analysis</button>
+      </div>
+      <div class="grp"><span class="tag a">ACTIVE</span>
+        <button class="atk" data-k="masq" aria-pressed="false">Masquerade</button>
+        <button class="atk" data-k="replay" aria-pressed="false">Replay</button>
+        <button class="atk" data-k="modify" aria-pressed="false">Modification</button>
+        <button class="atk" data-k="dos" aria-pressed="false">Denial of service</button>
+      </div>
+    </div>
+    <div class="svgbox">
+      <svg id="theatre" viewBox="0 0 640 300" width="100%" style="max-width:640px;min-width:440px;display:block;margin:auto" role="img" aria-label="Animated diagram of Alice sending a message to Bob while Darth attacks">
+        <defs><style>
+          .actor circle{fill:var(--surface);stroke:var(--ink);stroke-width:2}
+          .actor text{fill:var(--ink);font-weight:700;font-size:15px}
+          .darth circle{stroke:var(--threat)} .darth text{fill:var(--threat)}
+          .cloud{fill:var(--sunk);stroke:var(--line)}
+          .path{stroke:var(--line);stroke-width:2;fill:none}
+          .path.hot{stroke:var(--threat);stroke-dasharray:6 5}
+          .pkt rect{fill:var(--accent);rx:5}
+          .pkt text{fill:var(--bg);font-family:var(--f-mono);font-size:11px;font-weight:600}
+          .pkt.evil rect{fill:var(--threat)}
+          .pkt.lock rect{fill:var(--muted)}
+          .note-t{font-family:var(--f-mono);font-size:11.5px;fill:var(--muted)}
+          .note-t.bad{fill:var(--threat)}
+          .note-t.ok{fill:var(--guard)}
+        </style></defs>
+        <ellipse class="cloud" cx="320" cy="100" rx="150" ry="46"/>
+        <text x="320" y="76" text-anchor="middle" font-size="11" fill="var(--muted)">Internet or other communications facility</text>
+        <line class="path" id="pAB" x1="110" y1="100" x2="530" y2="100"/>
+        <line class="path" id="pAD" x1="150" y1="118" x2="290" y2="222"/>
+        <line class="path" id="pDB" x1="350" y1="222" x2="490" y2="118"/>
+        <g class="actor"><circle cx="70" cy="100" r="38"/><text x="70" y="105" text-anchor="middle">Alice</text></g>
+        <g class="actor"><circle cx="570" cy="100" r="38"/><text x="570" y="105" text-anchor="middle">Bob</text></g>
+        <g class="actor darth"><circle cx="320" cy="240" r="36"/><text x="320" y="245" text-anchor="middle">Darth</text></g>
+        <text id="noteD" class="note-t bad" x="320" y="294" text-anchor="middle"></text>
+        <text id="noteB" class="note-t" x="632" y="160" text-anchor="end"></text>
+        <text id="noteB2" class="note-t" x="632" y="176" text-anchor="end"></text>
+        <g id="layer"></g>
+      </svg>
+    </div>
+    <div class="atk-desc" id="atkDesc" aria-live="polite"></div>
+    <figcaption><b>Fig. 1.2 (animated)</b> Alice sends to Bob; Darth is the opponent. Choose an attack to replay it. Dashed red lines are the paths the attacker uses.</figcaption>
+  </figure>
+
+  <div class="tablebox">
+    <table>
+      <thead><tr><th></th><th><span class="tag p">PASSIVE</span></th><th><span class="tag a">ACTIVE</span></th></tr></thead>
+      <tbody>
+        <tr><td><strong>Nature</strong></td><td>Eavesdropping on or monitoring transmissions</td><td>Modifying the data stream or creating a false stream</td></tr>
+        <tr><td><strong>Types</strong></td><td>Release of message contents; traffic analysis</td><td>Masquerade; replay; modification of messages; denial of service</td></tr>
+        <tr><td><strong>Detection</strong></td><td>Very hard: data is not altered, so sender and receiver are unaware</td><td>Feasible; the goal is to detect</td></tr>
+        <tr><td><strong>Prevention</strong></td><td>Feasible, usually by encryption</td><td>Hard to prevent absolutely, given the variety of physical, software and network vulnerabilities</td></tr>
+        <tr><td><strong>Emphasis</strong></td><td>Prevention</td><td>Detection and recovery (detection may also deter)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note"><span class="eyebrow">Key term · Encryption</span>The common technique for masking message contents so a captured message cannot be read. It defeats release of contents, but not traffic analysis, because the pattern of messages is still visible.</div>
+</section>
+
+<!-- ============ 1.4 ============ -->
+<section id="s1-4">
+  <div class="sec-head"><span class="eyebrow">Section 1.4</span><h2>Security Services</h2></div>
+  <div class="note"><span class="eyebrow">Definition · RFC 4949</span>A <strong>security service</strong> is a processing or communication service provided by a system to give a specific kind of protection to system resources. Services <em>implement</em> security policies and <em>are implemented by</em> security mechanisms.</div>
+  <p class="lede">X.800 groups services into <strong>5 categories and 14 specific services</strong> (Table 1.2). Availability is treated separately.</p>
+
+  <dl class="defs">
+    <div class="def"><dt>Peer entities</dt><dd>Two entities are peers if they implement the same protocol in different systems, e.g. two TCP modules in two communicating systems.</dd></div>
+    <div class="def"><dt>Connection-oriented</dt><dd>Deals with a <em>stream</em> of messages over an established logical connection.</dd></div>
+    <div class="def"><dt>Connectionless</dt><dd>Deals with individual messages (data blocks) without regard to any larger context.</dd></div>
+    <div class="def"><dt>Repudiation</dt><dd>Denying having taken part in a communication. <em>Non</em>repudiation is protection against it.</dd></div>
+  </dl>
+
+  <div class="grid2">
+    <div class="card">
+      <span class="eyebrow">Authentication</span>
+      <p>Assures the communicating entity is the one it claims to be. For an ongoing interaction it checks identities at connection start and guards against a third party masquerading later.</p>
+      <ul class="tight"><li><strong>Peer entity authentication:</strong> confidence in the identities of entities on a logical connection; guards against masquerade and replay of an earlier connection.</li>
+      <li><strong>Data-origin authentication:</strong> in a connectionless transfer, the source of data is as claimed. No protection against duplication or modification. Suits email.</li></ul>
+    </div>
+    <div class="card">
+      <span class="eyebrow">Access control</span>
+      <p>Prevents unauthorized use of a resource: who can access it, under what conditions, and what they may do. Each entity must first be identified or authenticated so rights can be tailored to it.</p>
+    </div>
+    <div class="card">
+      <span class="eyebrow">Data confidentiality</span>
+      <p>Protects transmitted data from passive attacks.</p>
+      <ul class="tight"><li><strong>Connection:</strong> all user data on a connection (the broadest, most useful form).</li>
+      <li><strong>Connectionless:</strong> all user data in a single block.</li>
+      <li><strong>Selective-field:</strong> chosen fields in a connection or block.</li>
+      <li><strong>Traffic-flow:</strong> hides source, destination, frequency, length and other traffic characteristics.</li></ul>
+    </div>
+    <div class="card">
+      <span class="eyebrow">Data integrity</span>
+      <p>Data received are exactly as sent (no modification, insertion, deletion or replay). Relates to active attacks, so the focus is <em>detection</em>.</p>
+      <ul class="tight"><li><strong>Connection integrity with recovery</strong></li>
+      <li><strong>Connection integrity without recovery</strong> (detect only)</li>
+      <li><strong>Selective-field connection integrity</strong></li>
+      <li><strong>Connectionless integrity</strong> (modification; limited replay detection)</li>
+      <li><strong>Selective-field connectionless integrity</strong></li></ul>
+    </div>
+    <div class="card">
+      <span class="eyebrow">Nonrepudiation</span>
+      <p>Prevents sender or receiver from denying a transmitted message.</p>
+      <ul class="tight"><li><strong>Origin:</strong> proof the message was sent by the specified party.</li>
+      <li><strong>Destination:</strong> proof the message was received by the specified party.</li></ul>
+    </div>
+    <div class="card">
+      <span class="eyebrow">Availability service</span>
+      <p>Protects a system so it stays accessible and usable on demand by authorized entities, per its performance specification. Addresses denial-of-service attacks. Depends on access control and other services.</p>
+    </div>
+  </div>
+  <p class="prose muted">Count check: 2 + 1 + 4 + 5 + 2 = 14 specific services (access control is one service with no sub-types).</p>
+</section>
+
+<!-- ============ 1.5 ============ -->
+<section id="s1-5">
+  <div class="sec-head"><span class="eyebrow">Section 1.5</span><h2>Security Mechanisms</h2></div>
+  <p class="lede">X.800 mechanisms (Table 1.3) come in two groups: <strong>specific</strong> ones that can sit in a particular protocol layer, and <strong>pervasive</strong> ones not tied to any layer or service.</p>
+  <div class="grid2">
+    <div class="card">
+      <span class="eyebrow">Specific mechanisms</span>
+      <dl class="defs" style="border:0;background:transparent">
+        <div class="def" style="padding-inline:0;grid-template-columns:minmax(0,1fr);gap:0"><dt>Encipherment</dt><dd>Mathematical algorithms transform data into an unintelligible form; recovery depends on the algorithm and zero or more keys.</dd></div>
+        <div class="def" style="padding-inline:0;grid-template-columns:minmax(0,1fr);gap:0"><dt>Digital signature</dt><dd>Data appended to, or a cryptographic transformation of, a data unit that lets the recipient prove its source and integrity and protects against forgery.</dd></div>
+        <div class="def" style="padding-inline:0;grid-template-columns:minmax(0,1fr);gap:0"><dt>Access control</dt><dd>Mechanisms that enforce access rights to resources.</dd></div>
+        <div class="def" style="padding-inline:0;grid-template-columns:minmax(0,1fr);gap:0"><dt>Data integrity</dt><dd>Mechanisms that assure the integrity of a data unit or stream.</dd></div>
+        <div class="def" style="padding-inline:0;grid-template-columns:minmax(0,1fr);gap:0"><dt>Authentication exchange</dt><dd>Ensures an entity's identity by exchanging information.</dd></div>
+        <div class="def" style="padding-inline:0;grid-template-columns:minmax(0,1fr);gap:0"><dt>Traffic padding</dt><dd>Inserting bits into gaps in a data stream to frustrate traffic analysis.</dd></div>
+        <div class="def" style="padding-inline:0;grid-template-columns:minmax(0,1fr);gap:0"><dt>Routing control</dt><dd>Selecting physically secure routes, and changing routes when a breach is suspected.</dd></div>
+        <div class="def" style="padding-inline:0;grid-template-columns:minmax(0,1fr);gap:0"><dt>Notarization</dt><dd>Using a trusted third party to assure properties of a data exchange.</dd></div>
+      </dl>
+    </div>
+    <div class="card">
+      <span class="eyebrow">Pervasive mechanisms</span>
+      <dl class="defs" style="border:0;background:transparent">
+        <div class="def" style="padding-inline:0;grid-template-columns:minmax(0,1fr);gap:0"><dt>Trusted functionality</dt><dd>That which is perceived to be correct with respect to some criteria, e.g. a security policy.</dd></div>
+        <div class="def" style="padding-inline:0;grid-template-columns:minmax(0,1fr);gap:0"><dt>Security label</dt><dd>A marking bound to a resource that names its security attributes.</dd></div>
+        <div class="def" style="padding-inline:0;grid-template-columns:minmax(0,1fr);gap:0"><dt>Event detection</dt><dd>Detection of security-relevant events.</dd></div>
+        <div class="def" style="padding-inline:0;grid-template-columns:minmax(0,1fr);gap:0"><dt>Security audit trail</dt><dd>Data collected to support a <em>security audit</em>: an independent review and examination of system records and activities.</dd></div>
+        <div class="def" style="padding-inline:0;grid-template-columns:minmax(0,1fr);gap:0"><dt>Security recovery</dt><dd>Handles requests from mechanisms such as event handling and management functions, and takes recovery actions.</dd></div>
+      </dl>
+      <div class="note" style="margin-top:6px"><span class="eyebrow">Encipherment, two kinds</span><strong>Reversible:</strong> an encryption algorithm; data can be encrypted then decrypted.<br><strong>Irreversible:</strong> hash algorithms and message authentication codes, used in digital signatures and message authentication.</div>
+    </div>
+  </div>
+
+  <figure>
+    <div class="tablebox" style="border:0">
+      <table class="matrix">
+        <thead><tr><th>Service ↓ / Mechanism →</th>
+          <th class="rot">Encipherment</th><th class="rot">Digital signature</th><th class="rot">Access control</th><th class="rot">Data integrity</th><th class="rot">Authentication exchange</th><th class="rot">Traffic padding</th><th class="rot">Routing control</th><th class="rot">Notarization</th></tr></thead>
+        <tbody id="mx"></tbody>
+      </table>
+    </div>
+    <figcaption><b>Table 1.4</b> Relationship between security services and mechanisms. ● = the mechanism can provide the service. Hover a row to trace it.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 1.6 ============ -->
+<section id="s1-6">
+  <div class="sec-head"><span class="eyebrow">Section 1.6</span><h2>Fundamental Security Design Principles</h2></div>
+  <p class="lede">No technique can systematically exclude all security flaws, so designers follow widely agreed principles. The National Centers of Academic Excellence in Information Assurance/Cyber Defense (NSA and DHS) list 13.</p>
+  <dl class="defs">
+    <div class="def"><dt>Privilege</dt><dd>A right granted to a user or process to perform an action on a resource (the book's "permission": a permitted access, e.g. read/write a file, connect to a host and port).</dd></div>
+    <div class="def"><dt>Role-based access control</dt><dd>The security policy defines roles for users or processes; each role gets only the permissions needed for its functions.</dd></div>
+    <div class="def"><dt>Multifactor authentication</dt><dd>Requires multiple techniques, such as a password <em>and</em> a smart card, to authorize a user.</dd></div>
+  </dl>
+  <div class="principles">
+    <div class="pr"><h3>Economy of mechanism</h3><p>Keep security design as simple and small as possible: easier to test and verify, fewer exploitable flaws. The hardest principle to honor, given demand for features.</p></div>
+    <div class="pr"><h3>Fail-safe defaults</h3><p>Base access on permission, not exclusion; the default is <em>no access</em>.</p><p class="eg"><b>Why:</b> a mistake fails by refusing access (safe, quickly noticed) instead of allowing it (may go unnoticed).</p></div>
+    <div class="pr"><h3>Complete mediation</h3><p>Check every access against the access control mechanism; don't rely on cached decisions.</p><p class="eg"><b>Note:</b> file systems usually skip re-checks after a file is opened; full mediation is resource-intensive and rare.</p></div>
+    <div class="pr"><h3>Open design</h3><p>The mechanism's design should be public, not secret. Keys stay secret; algorithms are open to scrutiny.</p><p class="eg"><b>Example:</b> NIST's program of standardizing open encryption and hash algorithms.</p></div>
+    <div class="pr"><h3>Separation of privilege</h3><p>Require multiple privilege attributes to reach a restricted resource; also, split a program into parts each limited to the privileges its task needs.</p><p class="eg"><b>Example:</b> multifactor authentication; running high-privilege operations in a separate process.</p></div>
+    <div class="pr"><h3>Least privilege</h3><p>Every process and user operates with the smallest set of privileges needed. Includes time: hold special privileges only while needed.</p><p class="eg"><b>Example:</b> role-based access control.</p></div>
+    <div class="pr"><h3>Least common mechanism</h3><p>Minimize functions shared by different users, reducing unintended communication paths and shared code everyone depends on.</p></div>
+    <div class="pr"><h3>Psychological acceptability</h3><p>Mechanisms should not unduly hinder users and should match their mental model of protection; otherwise users disable them or make errors.</p></div>
+    <div class="pr"><h3>Isolation</h3><p>Three contexts: isolate public access systems from critical resources (physically or logically); isolate users' processes and files from each other; isolate security mechanisms themselves from tampering.</p></div>
+    <div class="pr"><h3>Encapsulation</h3><p>A form of isolation based on object-oriented functionality: a data object's internals are reachable only through the protected subsystem's procedures, called only at designated entry points.</p></div>
+    <div class="pr"><h3>Modularity</h3><p>Build security functions as separate, protected modules (e.g. one common cryptographic module), in an architecture where parts can be upgraded without redesigning the whole system.</p></div>
+    <div class="pr"><h3>Layering</h3><p>Use multiple, overlapping protections across people, technology and operations, so one failure doesn't leave the system exposed. Also called <strong>defense in depth</strong>.</p></div>
+    <div class="pr"><h3>Least astonishment</h3><p>A program or interface should respond in the way least likely to astonish the user; users should intuitively see how security goals map to mechanisms.</p></div>
+  </div>
+</section>
+
+<!-- ============ 1.7 ============ -->
+<section id="s1-7">
+  <div class="sec-head"><span class="eyebrow">Section 1.7</span><h2>Attack Surfaces and Attack Trees</h2></div>
+  <p class="lede">Two tools for evaluating and classifying threats.</p>
+
+  <h3>Attack surface</h3>
+  <p class="prose">The <strong>reachable and exploitable vulnerabilities</strong> in a system. Examples: open ports on outward-facing servers and the code listening on them; services inside a firewall; code that processes incoming data, email, XML and office documents; interfaces, SQL and web forms; an employee with sensitive access who is vulnerable to social engineering.</p>
+  <dl class="defs">
+    <div class="def"><dt>Port</dt><dd>An entry or exit point on a computer for connecting communications or peripheral devices.<span class="src">NIST CSRC Glossary (SP 800-82r3)</span></dd></div>
+    <div class="def"><dt>Firewall</dt><dd>A gateway that limits access between networks according to local security policy.<span class="src">NIST CSRC Glossary (SP 800-12 Rev. 1)</span></dd></div>
+    <div class="def"><dt>Social engineering</dt><dd>Tricking someone into revealing information (e.g. a password) that can be used to attack systems or networks.<span class="src">NIST CSRC Glossary (SP 800-82r3)</span></dd></div>
+  </dl>
+  <div class="grid2">
+    <div class="card"><span class="eyebrow">Network attack surface</span><p>Vulnerabilities over an enterprise network, WAN or the Internet: protocol flaws used for denial of service, disruption of links, intruder attacks.</p></div>
+    <div class="card"><span class="eyebrow">Software attack surface</span><p>Vulnerabilities in application, utility or operating system code, with particular focus on web server software.</p></div>
+    <div class="card"><span class="eyebrow">Human attack surface</span><p>Vulnerabilities created by personnel or outsiders: social engineering, human error, trusted insiders.</p></div>
+  </div>
+  <p class="prose">An <strong>attack surface analysis</strong> shows where mechanisms are needed, lets designers shrink the surface, and sets priorities for testing and strengthening.</p>
+
+  <figure>
+    <div class="svgbox">
+      <svg viewBox="0 0 520 330" width="100%" style="max-width:520px;min-width:380px;display:block;margin:auto" role="img" aria-labelledby="ddT">
+        <title id="ddT">Security risk by layering depth and attack surface size</title>
+        <rect x="90" y="20" width="200" height="130" fill="var(--guard-soft)" stroke="var(--line)"/>
+        <rect x="290" y="20" width="200" height="130" fill="var(--sunk)" stroke="var(--line)"/>
+        <rect x="90" y="150" width="200" height="130" fill="var(--sunk)" stroke="var(--line)"/>
+        <rect x="290" y="150" width="200" height="130" fill="var(--threat-soft)" stroke="var(--line)"/>
+        <text x="190" y="90" text-anchor="middle" font-weight="700" font-size="15" fill="var(--guard)">Low risk</text>
+        <text x="390" y="90" text-anchor="middle" font-weight="700" font-size="15" fill="var(--warn)">Medium risk</text>
+        <text x="190" y="220" text-anchor="middle" font-weight="700" font-size="15" fill="var(--warn)">Medium risk</text>
+        <text x="390" y="220" text-anchor="middle" font-weight="700" font-size="15" fill="var(--threat)">High risk</text>
+        <text x="190" y="305" text-anchor="middle" font-size="12" fill="var(--muted)">Small</text>
+        <text x="390" y="305" text-anchor="middle" font-size="12" fill="var(--muted)">Large</text>
+        <text x="290" y="324" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">Attack surface →</text>
+        <text x="80" y="89" text-anchor="end" font-size="12" fill="var(--muted)">Deep</text>
+        <text x="80" y="219" text-anchor="end" font-size="12" fill="var(--muted)">Shallow</text>
+        <text x="22" y="150" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)" transform="rotate(-90 22 150)">Layering ↑</text>
+      </svg>
+    </div>
+    <figcaption><b>Fig. 1.3 (redrawn)</b> Defense in depth and attack surface reduction complement each other: deep layering plus a small surface gives the lowest risk.</figcaption>
+  </figure>
+
+  <h3>Attack tree</h3>
+  <div class="prose">
+    <p>A branching, hierarchical data structure representing potential techniques for exploiting vulnerabilities.</p>
+    <ul class="tight">
+      <li><strong>Root node:</strong> the attacker's goal (the security incident).</li>
+      <li><strong>Subnodes:</strong> subgoals, each possibly with its own subgoals.</li>
+      <li><strong>Leaf nodes:</strong> the final nodes on each path; the different ways to <em>initiate</em> an attack.</li>
+      <li><strong>AND-node:</strong> <em>all</em> child subgoals must be achieved. <strong>OR-node:</strong> <em>at least one</em> must be.</li>
+      <li>Branches can be labeled with difficulty, cost or other attributes to compare alternatives.</li>
+    </ul>
+    <p>Analysts use trees to document attacks in a structured form that reveals key vulnerabilities, guiding both system design and the choice and strength of countermeasures.</p>
+  </div>
+
+  <figure>
+    <div class="legend">
+      <span class="tree"><span class="leaf ut"><span class="code">UT/U</span>user terminal &amp; user</span></span>
+      <span class="tree"><span class="leaf cc"><span class="code">CC</span>communications channel</span></span>
+      <span class="tree"><span class="leaf ibs"><span class="code">IBS</span>Internet banking server</span></span>
+      <span class="muted">· all non-leaf nodes are OR-nodes</span>
+    </div>
+    <div class="tree" style="overflow-x:auto">
+      <ul>
+        <li><span class="node"><strong>Bank account compromise</strong> <span class="or">OR</span></span>
+          <ul>
+            <li><span class="node"><strong>User credential compromise</strong> <span class="or">OR</span></span>
+              <ul>
+                <li><span class="leaf ut"><span class="code">UT/U1a</span>User surveillance</span></li>
+                <li><span class="leaf ut"><span class="code">UT/U1b</span>Theft of token and handwritten notes</span></li>
+                <li><span class="node">Malicious software installation <span class="or">OR</span></span>
+                  <ul>
+                    <li><span class="leaf ut"><span class="code">UT/U2a</span>Hidden code</span></li>
+                    <li><span class="leaf ut"><span class="code">UT/U2b</span>Worms</span></li>
+                    <li><span class="leaf ut"><span class="code">UT/U2c</span>Emails with malicious code</span></li>
+                  </ul></li>
+                <li><span class="node">Vulnerability exploit <span class="or">OR</span></span>
+                  <ul>
+                    <li><span class="leaf ut"><span class="code">UT/U3a</span>Smartcard analyzers</span></li>
+                    <li><span class="leaf ut"><span class="code">UT/U3b</span>Smartcard reader manipulator</span></li>
+                    <li><span class="leaf ut"><span class="code">UT/U3c</span>Brute force attacks with PIN calculators</span></li>
+                  </ul></li>
+                <li><span class="leaf cc"><span class="code">CC2</span>Sniffing</span></li>
+                <li><span class="node">User communication with attacker <span class="or">OR</span></span>
+                  <ul>
+                    <li><span class="leaf ut"><span class="code">UT/U4a</span>Social engineering</span></li>
+                    <li><span class="leaf ut"><span class="code">UT/U4b</span>Web page obfuscation</span></li>
+                    <li><span class="node">Redirection of communication toward fraudulent site <span class="or">OR</span></span>
+                      <ul>
+                        <li><span class="leaf cc"><span class="code">CC1</span>Pharming</span></li>
+                        <li><span class="leaf ibs"><span class="code">IBS3</span>Web site manipulation</span></li>
+                      </ul></li>
+                  </ul></li>
+              </ul></li>
+            <li><span class="node"><strong>Injection of commands</strong> <span class="or">OR</span></span>
+              <ul><li><span class="leaf cc"><span class="code">CC3</span>Active man-in-the-middle attacks</span></li></ul></li>
+            <li><span class="node"><strong>User credential guessing</strong> <span class="or">OR</span></span>
+              <ul><li><span class="leaf ibs"><span class="code">IBS1</span>Brute force attacks</span></li></ul></li>
+            <li><span class="node"><strong>Security policy violation</strong> <span class="or">OR</span></span>
+              <ul><li><span class="leaf ibs"><span class="code">IBS2</span>Security policy violation</span></li></ul></li>
+            <li><span class="node"><strong>Use of known authenticated session by attacker</strong> <span class="or">OR</span></span>
+              <ul><li><span class="node">Normal user authentication with specified session ID <span class="or">OR</span></span>
+                <ul><li><span class="leaf cc"><span class="code">CC4</span>Pre-defined session IDs (session hijacking)</span></li></ul></li></ul></li>
+          </ul></li>
+      </ul>
+    </div>
+    <figcaption><b>Fig. 1.4 (redrawn as an outline)</b> Attack tree for Internet banking authentication. Leaf codes show which of the three components each attack targets.</figcaption>
+  </figure>
+
+  <div class="tablebox">
+    <table>
+      <thead><tr><th>Strategy (child of root)</th><th>How it works</th></tr></thead>
+      <tbody>
+        <tr><td><strong>User credential compromise</strong></td><td>Watching a user to observe a PIN; stealing tokens or notes; hacking the smartcard or brute-forcing the PIN; malware capturing login and password; sniffing the channel; engaging the user directly.</td></tr>
+        <tr><td><strong>Injection of commands</strong></td><td>Intercepting communication between the user terminal and the server to impersonate the valid user.</td></tr>
+        <tr><td><strong>User credential guessing</strong></td><td>Brute-forcing banking authentication by sending random usernames and passwords from distributed zombie PCs running automated programs.</td></tr>
+        <tr><td><strong>Security policy violation</strong></td><td>An employee breaks the bank's policy; combined with weak access control and logging, this exposes a customer account.</td></tr>
+        <tr><td><strong>Use of known authenticated session</strong></td><td>Forcing the user to connect with a preset session ID; once the user authenticates, the attacker uses that ID to send packets while spoofing the user.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <dl class="defs">
+    <div class="def"><dt>Brute force attack</dt><dd>Trying every possible value (here, PINs or username/password pairs) until one works. <span class="src">Stallings Ch. 3 defines the same idea for keys.</span></dd></div>
+    <div class="def"><dt>Sniffing</dt><dd>Passively capturing data as it crosses the communication channel; a sniffer is also called a packet sniffer or passive wiretap.<span class="src">Stallings Ch. 1; NIST CSRC Glossary (CNSSI 4009-2022)</span></dd></div>
+    <div class="def"><dt>Pharming</dt><dd>Using technical means to redirect users to a fake website posing as a legitimate one, so they reveal personal information.<span class="src">NIST CSRC Glossary (SP 800-44 v2)</span></dd></div>
+    <div class="def"><dt>Man-in-the-middle attack</dt><dd>The attacker sits between two communicating parties to intercept and/or alter the data passing between them.<span class="src">NIST CSRC Glossary (SP 1800-21B)</span></dd></div>
+    <div class="def"><dt>Session hijacking</dt><dd>After a successful authentication, the attacker inserts itself into the session and poses as one party to control the exchanged data.<span class="src">NIST CSRC Glossary (SP 800-63-4)</span></dd></div>
+  </dl>
+</section>
+
+<!-- ============ 1.8 ============ -->
+<section id="s1-8">
+  <div class="sec-head"><span class="eyebrow">Section 1.8</span><h2>A Model for Network Security</h2></div>
+  <p class="lede">Two <strong>principals</strong> (sender and recipient) cooperate to exchange a message across the Internet. A logical <strong>information channel</strong> is set up by defining a route and by both using communication protocols such as TCP/IP.</p>
+
+  <figure>
+    <div class="svgbox">
+      <svg id="model" viewBox="0 0 680 300" width="100%" style="max-width:680px;min-width:500px;display:block;margin:auto" role="img" aria-labelledby="mT">
+        <title id="mT">Model for network security: sender transforms message with secret information, sends across information channel, recipient reverses transformation; opponent watches; trusted third party supports</title>
+        <defs><style>
+          .bx{fill:var(--surface);stroke:var(--ink);stroke-width:1.5}
+          .tf{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+          .sec{fill:var(--sunk);stroke:var(--muted);stroke-width:1.2;stroke-dasharray:4 3}
+          .t1{fill:var(--ink);font-size:13px;font-weight:700}
+          .t2{fill:var(--muted);font-size:11.5px}
+          .ln{stroke:var(--muted);stroke-width:1.5;fill:none}
+          .chan{stroke:var(--accent);stroke-width:2.5;fill:none}
+          .opp{fill:var(--threat-soft);stroke:var(--threat);stroke-width:1.5}
+          .ttp{fill:var(--guard-soft);stroke:var(--guard);stroke-width:1.5}
+        </style>
+        <marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10z" fill="var(--muted)"/></marker></defs>
+        <rect class="ttp" x="240" y="8" width="200" height="50" rx="8"/>
+        <text class="t1" x="340" y="30" text-anchor="middle" style="fill:var(--guard)">Trusted third party</text>
+        <text class="t2" x="340" y="47" text-anchor="middle">arbiter · distributor of secrets</text>
+        <rect class="bx" x="8" y="120" width="70" height="44" rx="6"/><text class="t1" x="43" y="147" text-anchor="middle">Sender</text>
+        <rect class="tf" x="100" y="110" width="130" height="64" rx="8"/>
+        <text class="t1" x="165" y="137" text-anchor="middle">Security-related</text><text class="t1" x="165" y="154" text-anchor="middle">transformation</text>
+        <rect class="sec" x="115" y="200" width="100" height="40" rx="6"/><text class="t2" x="165" y="224" text-anchor="middle">Secret information</text>
+        <line class="ln" x1="165" y1="198" x2="165" y2="177" marker-end="url(#am)"/>
+        <rect class="tf" x="450" y="110" width="130" height="64" rx="8"/>
+        <text class="t1" x="515" y="137" text-anchor="middle">Security-related</text><text class="t1" x="515" y="154" text-anchor="middle">transformation</text>
+        <rect class="sec" x="465" y="200" width="100" height="40" rx="6"/><text class="t2" x="515" y="224" text-anchor="middle">Secret information</text>
+        <line class="ln" x1="515" y1="198" x2="515" y2="177" marker-end="url(#am)"/>
+        <rect class="bx" x="602" y="120" width="70" height="44" rx="6"/><text class="t1" x="637" y="147" text-anchor="middle">Recipient</text>
+        <line class="ln" x1="78" y1="142" x2="97" y2="142" marker-end="url(#am)"/>
+        <path id="chanPath" class="chan" d="M230,142 L450,142"/>
+        <line class="ln" x1="580" y1="142" x2="599" y2="142" marker-end="url(#am)"/>
+        <text class="t2" x="340" y="120" text-anchor="middle">Information channel</text>
+        <line class="ln" x1="290" y1="56" x2="185" y2="108" stroke-dasharray="3 3"/>
+        <line class="ln" x1="390" y1="56" x2="495" y2="108" stroke-dasharray="3 3"/>
+        <rect class="opp" x="285" y="230" width="110" height="44" rx="8"/><text class="t1" x="340" y="257" text-anchor="middle" style="fill:var(--threat)">Opponent</text>
+        <line class="ln" x1="340" y1="228" x2="340" y2="158" stroke-dasharray="3 3" style="stroke:var(--threat)"/>
+        <g id="mPkt">
+          <rect x="-34" y="-11" width="68" height="22" rx="5" fill="var(--accent)"/>
+          <text x="0" y="4" text-anchor="middle" font-family="var(--f-mono)" font-size="10.5" font-weight="600" fill="var(--bg)">secure msg</text>
+          <animateMotion dur="3.2s" repeatCount="indefinite" path="M272,142 L408,142"/>
+          <animate attributeName="opacity" dur="3.2s" repeatCount="indefinite" values="0;1;1;0" keyTimes="0;0.15;0.85;1"/>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>Fig. 1.5 (redrawn, animated)</b> Only the transformed "secure message" crosses the channel the opponent can observe; each principal holds the secret information.</figcaption>
+  </figure>
+
+  <div class="grid2">
+    <div class="card"><span class="eyebrow">Every technique has two components</span>
+      <ol class="tight"><li><strong>A security-related transformation</strong> of the information, e.g. encryption that scrambles the message, or adding a code based on its contents to verify the sender.</li>
+      <li><strong>Secret information</strong> shared by the principals and unknown to the opponent, e.g. an encryption key.</li></ol>
+      <p class="muted">A <strong>trusted third party</strong> may distribute the secret or arbitrate disputes about authenticity.</p></div>
+    <div class="card"><span class="eyebrow">Four basic tasks in designing a security service</span>
+      <ol class="tight"><li>Design an algorithm for the transformation that an opponent cannot defeat.</li>
+      <li>Generate the secret information for the algorithm.</li>
+      <li>Develop methods to distribute and share the secret.</li>
+      <li>Specify a protocol the principals use with the algorithm and secret to achieve the service.</li></ol></div>
+  </div>
+
+  <h3>Network access security model (Fig. 1.6)</h3>
+  <p class="prose">Some situations don't fit Fig. 1.5: protecting an <strong>information system</strong> from unwanted access by human opponents (hackers, intruders) or by software (viruses, worms) inserted via disk or, of more concern here, across a network.</p>
+  <figure>
+    <div class="svgbox">
+      <svg viewBox="0 0 640 200" width="100%" style="max-width:640px;min-width:480px;display:block;margin:auto" role="img" aria-labelledby="naT">
+        <title id="naT">Opponent reaches the information system through an access channel guarded by a gatekeeper function; inside, internal security controls protect resources</title>
+        <rect x="10" y="60" width="140" height="80" rx="8" fill="var(--threat-soft)" stroke="var(--threat)" stroke-width="1.5"/>
+        <text x="80" y="88" text-anchor="middle" font-weight="700" font-size="14" fill="var(--threat)">Opponent</text>
+        <text x="80" y="108" text-anchor="middle" font-size="11.5" fill="var(--muted)">human: hacker</text>
+        <text x="80" y="124" text-anchor="middle" font-size="11.5" fill="var(--muted)">software: virus, worm</text>
+        <line x1="152" y1="100" x2="232" y2="100" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5 4"/>
+        <text x="192" y="92" text-anchor="middle" font-size="11" fill="var(--muted)">access channel</text>
+        <rect x="230" y="14" width="400" height="172" rx="10" fill="var(--sunk)" stroke="var(--line)"/>
+        <text x="430" y="34" text-anchor="middle" font-family="var(--f-mono)" font-size="11" fill="var(--muted)" letter-spacing="1">INFORMATION SYSTEM</text>
+        <rect x="236" y="50" width="96" height="100" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+        <text x="284" y="96" text-anchor="middle" font-weight="700" font-size="13" fill="var(--accent)">Gatekeeper</text>
+        <text x="284" y="113" text-anchor="middle" font-weight="700" font-size="13" fill="var(--accent)">function</text>
+        <rect x="350" y="50" width="268" height="120" rx="8" fill="var(--surface)" stroke="var(--guard)" stroke-width="1.5" stroke-dasharray="5 3"/>
+        <text x="484" y="70" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--guard)">Internal security controls</text>
+        <text x="484" y="96" text-anchor="middle" font-size="12" fill="var(--ink)">Computing resources (processor, memory, I/O)</text>
+        <text x="484" y="118" text-anchor="middle" font-size="12" fill="var(--ink)">Data · Processes · Software</text>
+      </svg>
+    </div>
+    <figcaption><b>Fig. 1.6 (redrawn)</b> Two lines of defense against unwanted access.</figcaption>
+  </figure>
+  <div class="grid2">
+    <div class="card"><span class="eyebrow">Two threats from malicious programs</span>
+      <ul class="tight"><li><strong>Information access threats:</strong> intercept or modify data for users who shouldn't access it.</li>
+      <li><strong>Service threats:</strong> exploit service flaws to block use by legitimate users.</li></ul></div>
+    <div class="card"><span class="eyebrow">Two categories of defense</span>
+      <ul class="tight"><li><strong>Gatekeeper function:</strong> password-based login that denies all but authorized users; screening logic that detects and rejects worms and viruses.</li>
+      <li><strong>Internal controls:</strong> once something gets in, monitor activity and analyze stored information to detect intruders.</li></ul></div>
+  </div>
+</section>
+
+<!-- ============ 1.9 ============ -->
+<section id="s1-9">
+  <div class="sec-head"><span class="eyebrow">Section 1.9</span><h2>Standards</h2></div>
+  <p class="lede">Many techniques in the book are specified as standards, along with management practices and overall architectures. The four key organizations:</p>
+  <div class="grid2">
+    <div class="card std"><span class="abbr">NIST</span><strong>National Institute of Standards and Technology</strong><p>U.S. federal agency for measurement science, standards and technology for government use and private-sector innovation. Worldwide impact despite national scope.</p><span class="pub">Publishes → FIPS · Special Publications (SP)</span></div>
+    <div class="card std"><span class="abbr">ISOC</span><strong>Internet Society</strong><p>Professional membership society with worldwide members; home of the groups responsible for Internet infrastructure standards: the <strong>IETF</strong> (Internet Engineering Task Force) and <strong>IAB</strong> (Internet Architecture Board).</p><span class="pub">Publishes → RFCs (Requests for Comments)</span></div>
+    <div class="card std"><span class="abbr">ITU-T</span><strong>ITU Telecommunication Standardization Sector</strong><p>One of three sectors of the ITU, a UN body where governments and the private sector coordinate global telecom. Develops technical standards for all fields of telecommunications.</p><span class="pub">Publishes → Recommendations (e.g. X.800)</span></div>
+    <div class="card std"><span class="abbr">ISO</span><strong>International Organization for Standardization</strong><p>Nongovernmental worldwide federation of national standards bodies from 140+ countries (one each). Promotes standardization to ease international exchange and cooperation.</p><span class="pub">Publishes → International Standards</span></div>
+  </div>
+  <div class="note"><span class="eyebrow">Standards met in this chapter</span>X.800 (ITU-T) · RFC 4949 Internet Security Glossary (IETF) · FIPS 199 (NIST)</div>
+</section>
+
+<!-- ============ REVIEW ============ -->
+<section id="review">
+  <div class="sec-head"><span class="eyebrow">Section 1.10</span><h2>Review Questions</h2></div>
+  <p class="lede">The book's review questions. Try each before opening the answer.</p>
+  <div>
+    <details class="q"><summary><span class="mono">1.1</span>What is the OSI security architecture?</summary><div class="ans"><p>ITU-T Recommendation X.800: a systematic way to define security requirements and characterize approaches to satisfying them. It focuses on security attacks, mechanisms and services.</p></div></details>
+    <details class="q"><summary><span class="mono">1.2</span>List and briefly define the three key objectives of computer security.</summary><div class="ans"><p><strong>Confidentiality</strong>: no unauthorized disclosure (plus privacy). <strong>Integrity</strong>: no unauthorized modification or destruction of data or system. <strong>Availability</strong>: timely, reliable access for authorized users.</p></div></details>
+    <details class="q"><summary><span class="mono">1.3</span>List and briefly define categories of passive and active security attacks.</summary><div class="ans"><p><strong>Passive:</strong> release of message contents (learning what's sent); traffic analysis (learning from the pattern, frequency and length of messages).</p><p><strong>Active:</strong> masquerade (posing as another entity); replay (capturing and retransmitting data); modification of messages (altering, delaying or reordering); denial of service (preventing normal use or management of facilities).</p></div></details>
+    <details class="q"><summary><span class="mono">1.4</span>List and briefly define categories of security services.</summary><div class="ans"><p>Authentication (entity is who it claims); access control (prevents unauthorized resource use); data confidentiality (protects data from disclosure); data integrity (data received exactly as sent); nonrepudiation (no denial of sending or receiving). Plus availability service (accessible on demand).</p></div></details>
+    <details class="q"><summary><span class="mono">1.5</span>List and briefly define categories of security mechanisms.</summary><div class="ans"><p><strong>Specific</strong> (fit in a protocol layer): encipherment, digital signature, access control, data integrity, authentication exchange, traffic padding, routing control, notarization.</p><p><strong>Pervasive</strong> (not tied to a layer or service): trusted functionality, security label, event detection, security audit trail, security recovery.</p></div></details>
+    <details class="q"><summary><span class="mono">1.6</span>List and briefly define the fundamental security design principles.</summary><div class="ans"><p>Economy of mechanism, fail-safe defaults, complete mediation, open design, separation of privilege, least privilege, least common mechanism, psychological acceptability, isolation, encapsulation, modularity, layering, least astonishment. See the cards in §1.6 for definitions.</p></div></details>
+    <details class="q"><summary><span class="mono">1.7</span>Explain the difference between an attack surface and an attack tree.</summary><div class="ans"><p>An <strong>attack surface</strong> is the set of reachable, exploitable vulnerabilities in a system (network, software, human); it shows <em>where</em> a system can be attacked. An <strong>attack tree</strong> is a hierarchical structure with the attacker's goal at the root and ways to reach it as AND/OR subgoals and leaves; it shows <em>how</em> a goal can be achieved.</p></div></details>
+  </div>
+  <p class="prose muted">Practice: the chapter's problems (1.1–1.9) include rating CIA impact levels for systems like a cash deposit machine and building an attack tree for opening a physical safe.</p>
+</section>
+
+<!-- ============ SOURCES ============ -->
+<section id="sources">
+  <div class="sec-head"><span class="eyebrow">References</span><h2>Sources</h2></div>
+  <ul class="sources prose">
+    <li>W. Stallings, <em>Cryptography and Network Security: Principles and Practice</em>, 7th ed., Global Edition, Pearson, 2017. Chapter 1, pp. 19–45. All content not marked otherwise.</li>
+    <li>NIST Computer Security Resource Center Glossary, used for terms the chapter uses without defining:
+      <a href="https://csrc.nist.gov/glossary/term/vulnerability" target="_blank" rel="noopener">vulnerability</a>,
+      <a href="https://csrc.nist.gov/glossary/term/security_policy" target="_blank" rel="noopener">security policy</a>,
+      <a href="https://csrc.nist.gov/glossary/term/port" target="_blank" rel="noopener">port</a>,
+      <a href="https://csrc.nist.gov/glossary/term/firewall" target="_blank" rel="noopener">firewall</a>,
+      <a href="https://csrc.nist.gov/glossary/term/social_engineering" target="_blank" rel="noopener">social engineering</a>,
+      <a href="https://csrc.nist.gov/glossary/term/sniffer" target="_blank" rel="noopener">sniffer</a>,
+      <a href="https://csrc.nist.gov/glossary/term/pharming" target="_blank" rel="noopener">pharming</a>,
+      <a href="https://csrc.nist.gov/glossary/term/man_in_the_middle_attack" target="_blank" rel="noopener">man-in-the-middle attack</a>,
+      <a href="https://csrc.nist.gov/glossary/term/session_hijack_attack" target="_blank" rel="noopener">session hijack attack</a>. Definitions are paraphrased.</li>
+    <li>Further reading: <a href="https://www.rfc-editor.org/rfc/rfc4949" target="_blank" rel="noopener">RFC 4949, Internet Security Glossary</a> · <a href="https://www.itu.int/rec/T-REC-X.800" target="_blank" rel="noopener">ITU-T X.800</a> · <a href="https://csrc.nist.gov/pubs/fips/199/final" target="_blank" rel="noopener">NIST FIPS 199</a></li>
+  </ul>
+  <footer><a href="./">← All units</a> · Unit 1 of 12 · Study guide for Stallings, Ch. 1. Figures are redrawn from the book's figures for study purposes.</footer>
+</section>
+</main>
+</div>
+
+<script>
+(function(){
+  /* ---------- Table 1.4 matrix ---------- */
+  const mechs=8;
+  const rows=[
+    ["Peer entity authentication",[0,1,4]],
+    ["Data origin authentication",[0,1]],
+    ["Access control",[2]],
+    ["Confidentiality",[0,6]],
+    ["Traffic flow confidentiality",[0,5,6]],
+    ["Data integrity",[0,1,3]],
+    ["Nonrepudiation",[1,3,7]],
+    ["Availability",[3,4]]
+  ];
+  const mx=document.getElementById('mx');
+  rows.forEach(([name,ys])=>{
+    const tr=document.createElement('tr');
+    let h='<th scope="row">'+name+'</th>';
+    for(let i=0;i<mechs;i++){h+= ys.includes(i)?'<td class="y" aria-label="yes">●</td>':'<td class="n" aria-label="no">·</td>';}
+    tr.innerHTML=h; mx.appendChild(tr);
+  });
+
+  /* ---------- reduced motion ---------- */
+  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce){const m=document.querySelector('#mPkt animateMotion'); if(m) m.remove(); const g=document.getElementById('mPkt'); if(g){g.setAttribute('transform','translate(340,142)');const o=g.querySelector('animate');if(o)o.remove();}}
+
+  /* ---------- attack theatre ---------- */
+  const NS='http://www.w3.org/2000/svg';
+  const layer=document.getElementById('layer');
+  const noteD=document.getElementById('noteD'), noteB=document.getElementById('noteB'), noteB2=document.getElementById('noteB2');
+  const desc=document.getElementById('atkDesc');
+  const pAB=document.getElementById('pAB'), pAD=document.getElementById('pAD'), pDB=document.getElementById('pDB');
+  const A=[120,100], B=[520,100], D=[320,208];
+  let run=0;
+
+  const info={
+    release:{t:'Release of message contents',k:'Passive',d:'A phone call, email or file may hold sensitive data. Darth captures a copy in transit and reads it. Neither Alice nor Bob notices. Countered by encryption.',paths:['pAD']},
+    traffic:{t:'Traffic analysis',k:'Passive',d:'Contents are encrypted, but Darth still observes the pattern: location and identity of hosts, frequency and length of messages. This can reveal the nature of the communication. Countered by traffic-flow confidentiality (e.g. traffic padding).',paths:['pAD']},
+    masq:{t:'Masquerade',k:'Active',d:'One entity pretends to be another. Here Darth sends Bob a message claiming to be from Alice. It usually includes another active attack, e.g. replaying a captured authentication sequence to gain extra privileges.',paths:['pDB']},
+    replay:{t:'Replay',k:'Active',d:'Darth passively captures a data unit, then retransmits it later to produce an unauthorized effect. Bob receives the same valid message twice.',paths:['pAD','pDB']},
+    modify:{t:'Modification of messages',k:'Active',d:'Part of a legitimate message is altered, or messages are delayed or reordered. Book example: "Allow John Smith to read confidential file accounts" becomes "Allow Fred Brown to read…".',paths:['pAD','pDB']},
+    dos:{t:'Denial of service',k:'Active',d:'Prevents or inhibits normal use or management of communication facilities. Darth may suppress messages to one destination, or overload the whole network so performance degrades.',paths:['pDB']}
+  };
+
+  function sleep(ms,id){return new Promise(r=>setTimeout(()=>r(id===run),reduce?Math.min(ms,60):ms));}
+  function pkt(label,cls,at){
+    const g=document.createElementNS(NS,'g'); g.setAttribute('class','pkt '+(cls||''));
+    const w=Math.max(48,label.length*7.2+14);
+    g.innerHTML='<rect x="'+(-w/2)+'" y="-11" width="'+w+'" height="22" rx="5"></rect><text x="0" y="4" text-anchor="middle">'+label+'</text>';
+    g.setAttribute('transform','translate('+at[0]+','+at[1]+')');
+    layer.appendChild(g); return g;
+  }
+  function wOf(g){return +g.querySelector('rect').getAttribute('width');}
+  function edge(g,to){ /* stop just outside Bob's or Darth's circle */
+    const w=wOf(g);
+    if(to===B) return [532-w/2-6,100];
+    if(to===D) return [320,191];
+    return to;
+  }
+  function fadeOut(g,ms){
+    if(reduce||!g.animate){g.remove();return Promise.resolve();}
+    return g.animate([{opacity:1},{opacity:0}],{duration:ms||350,fill:'forwards'}).finished.then(()=>g.remove());
+  }
+  function move(g,from,to,ms){
+    from=edge(g,from); to=edge(g,to);
+    if(reduce||!g.animate){g.setAttribute('transform','translate('+to[0]+','+to[1]+')');return Promise.resolve();}
+    const a=g.animate([{transform:'translate('+from[0]+'px,'+from[1]+'px)'},{transform:'translate('+to[0]+'px,'+to[1]+'px)'}],{duration:ms,easing:'ease-in-out',fill:'forwards'});
+    return a.finished.then(()=>{g.setAttribute('transform','translate('+to[0]+','+to[1]+')');try{a.cancel()}catch(e){}});
+  }
+  function setNotes(d,b,b2,bcls){noteD.textContent=d||'';noteB.textContent=b||'';noteB2.textContent=b2||'';noteB.setAttribute('class','note-t '+(bcls||''));noteB2.setAttribute('class','note-t '+(bcls||''));}
+  function clear(){layer.innerHTML='';setNotes();[pAB,pAD,pDB].forEach(p=>p.classList.remove('hot'));}
+
+  const scenes={
+    async release(id){
+      const m=pkt('payroll.xls','',A), c=pkt('copy','evil',A);
+      await Promise.all([move(m,A,B,1600),move(c,A,D,1600)]); if(!await sleep(100,id))return;
+      await Promise.all([fadeOut(m),fadeOut(c)]); setNotes('Darth reads: payroll records','Bob: received normally','');
+    },
+    async traffic(id){
+      for(let i=0;i<3;i++){
+        const m=pkt('🔒 '+['412 B','1.2 KB','388 B'][i],'lock',A), c=pkt('·','evil',A);
+        await Promise.all([move(m,A,B,900),move(c,A,D,900)]); c.remove();
+        setNotes('Log: '+(i+1)+' msg(s) · Alice→Bob · sizes & times','Bob: received normally','');
+        await fadeOut(m,250); if(!await sleep(150,id))return;
+      }
+      setNotes('Contents hidden, pattern revealed','Bob: received normally','');
+    },
+    async masq(id){
+      const m=pkt('from: Alice','evil',D);
+      await move(m,D,B,1500); if(!await sleep(100,id))return; await fadeOut(m);
+      setNotes('Darth posed as Alice','Bob accepts message','"from Alice"','bad');
+    },
+    async replay(id){
+      const m=pkt('pay $500','',A), c=pkt('pay $500','evil',A);
+      await Promise.all([move(m,A,B,1400),move(c,A,D,1400)]); fadeOut(m);
+      setNotes('Captured, holding…','Bob: pay $500 (1st)','');
+      if(!await sleep(900,id))return;
+      await move(c,D,B,1300); if(id!==run)return; await fadeOut(c);
+      setNotes('Retransmitted later','Bob: pay $500 (2nd)','unauthorized effect','bad');
+    },
+    async modify(id){
+      const m=pkt('allow John Smith','',A);
+      await move(m,A,D,1300); if(!await sleep(250,id))return;
+      await fadeOut(m,200); const n=pkt('allow Fred Brown','evil',D);
+      setNotes('Darth alters the message');
+      await move(n,D,B,1300); if(id!==run)return; await fadeOut(n);
+      setNotes('Altered and forwarded','Bob trusts it:','"allow Fred Brown"','bad');
+    },
+    async dos(id){
+      const ps=[];
+      for(let i=0;i<7;i++){const f=pkt('junk','evil',D); ps.push(move(f,D,B,700+i*90).then(()=>fadeOut(f,200)));}
+      const m=pkt('msg','',A); const mid=[230,100];
+      await move(m,A,mid,1100); await fadeOut(m,500); await Promise.all(ps); if(id!==run)return;
+      setNotes('Flooding Bob with messages','Bob: overloaded','Alice’s message never arrives','bad');
+    }
+  };
+
+  async function play(k){
+    const id=++run; clear();
+    const i=info[k];
+    desc.innerHTML='<strong>'+i.t+'</strong> <span class="tag '+(i.k==='Passive'?'p':'a')+'">'+i.k.toUpperCase()+'</span><p>'+i.d+'</p>';
+    i.paths.forEach(p=>document.getElementById(p).classList.add('hot'));
+    document.querySelectorAll('button.atk').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===k?'true':'false'));
+    await sleep(250,id); if(id!==run)return;
+    try{await scenes[k](id);}catch(e){}
+  }
+  document.querySelectorAll('button.atk').forEach(b=>b.addEventListener('click',()=>play(b.dataset.k)));
+  play('release');
+
+  /* ---------- toc highlight ---------- */
+  const links=[...document.querySelectorAll('nav.toc a')];
+  const secs=links.map(a=>document.querySelector(a.getAttribute('href')));
+  if('IntersectionObserver' in window){
+    const ol=document.querySelector('nav.toc ol');
+    const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>{const on=l.getAttribute('href')==='#'+e.target.id;l.classList.toggle('on',on);
+      if(on&&ol){const li=l.parentElement;const b=reduce?'auto':'smooth';
+        if(ol.scrollWidth>ol.clientWidth){ol.scrollTo({left:li.offsetLeft-(ol.clientWidth-li.offsetWidth)/2,behavior:b});}
+        else if(ol.scrollHeight>ol.clientHeight){ol.scrollTo({top:li.offsetTop-(ol.clientHeight-li.offsetHeight)/2,behavior:b});}}});}})},{rootMargin:'-30% 0px -60% 0px'});
+    secs.forEach(s=>s&&io.observe(s));
+  }
+})();
+</script>
+</body>
+</html>
