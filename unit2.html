@@ -7,7 +7,7 @@
 <meta name="description" content="Study guide for Stallings, Cryptography and Network Security, Chapter 2: divisibility, Euclidean algorithm, modular arithmetic, primes, Fermat and Euler, Miller-Rabin, CRT, discrete logarithms.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Mono:wght@400;600&display=swap">
 <style>
 /* Layout: graph-paper study notebook — sticky contents rail on desktop, single column on phones; each section = one book section */
 :root{
@@ -16,8 +16,8 @@
   --accent:#0b7a5f; --accent-soft:#dff1ea; --mark:#c98a00; --mark-soft:#fdf1d2;
   --bad:#b4372f; --bad-soft:#f9e1de;
   --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
-  --body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
-  --mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono:"Noto Sans Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#101614; --paper:#161e1b; --ink:#e4ece8; --muted:#97a6a0; --line:#2b3733;
@@ -75,6 +75,9 @@ h3{font-family:var(--display);font-weight:700;font-size:1.2rem;margin:28px 0 8px
 p,li{max-width:70ch}
 code,.m{font-family:var(--mono);font-size:.9em}
 .m{white-space:nowrap}
+.m.wr{white-space:normal;overflow-wrap:anywhere}
+.def,.ex,.warn{min-width:0;overflow-wrap:break-word}
+.gk{font-family:var(--mono);font-style:normal}
 
 .def{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0}
 .def b:first-child{font-family:var(--display);font-weight:700}
@@ -191,9 +194,9 @@ section.unit{scroll-margin-top:calc(20px + var(--topbar-h))}
     <li><a href="#s26"><span>2.6</span>Primality testing</a></li>
     <li><a href="#s27"><span>2.7</span>Chinese remainder thm.</a></li>
     <li><a href="#s28"><span>2.8</span>Discrete logarithms</a></li>
-    <li><a href="#terms"><span>Key</span>Key terms</a></li>
-    <li><a href="#review"><span>Q&amp;A</span>Review questions</a></li>
-    <li><a href="#res"><span>More</span>Resources</a></li>
+    <li><a href="#terms"><span>2.9</span>Key terms</a></li>
+    <li><a href="#review"><span>2.9</span>Review</a></li>
+    <li><a href="#res"><span>Ref</span>Sources</a></li>
   </ol>
   <div class="bar" aria-hidden="true"><i id="toc-progress"></i></div>
 </nav>
@@ -207,7 +210,7 @@ section.unit{scroll-margin-top:calc(20px + var(--topbar-h))}
     <span><b>a = qn + r</b>, 0 ≤ r &lt; n</span>
     <span><b>gcd(a,b) = gcd(b, a mod b)</b></span>
     <span><b>a<sup>p−1</sup> ≡ 1</b> (mod p)</span>
-    <span><b>a<sup>φ(n)</sup> ≡ 1</b> (mod n)</span>
+    <span><b>a<sup><span class="gk">φ</span>(n)</sup> ≡ 1</b> (mod n)</span>
   </div>
 </header>
 
@@ -252,9 +255,9 @@ section.unit{scroll-margin-top:calc(20px + var(--topbar-h))}
   <h2><span class="sec">2.2</span>The Euclidean Algorithm</h2>
   <p class="why">A fast way to find the greatest common divisor without factoring — used constantly in cryptography.</p>
 
-  <div class="def"><b>Greatest common divisor.</b> <span class="m">gcd(a, b)</span> is the largest integer that divides both <i>a</i> and <i>b</i>. Formally, a positive integer <i>c</i> is the gcd if (1) <i>c</i> divides <i>a</i> and <i>b</i>, and (2) every divisor of <i>a</i> and <i>b</i> divides <i>c</i>.<br>Equivalently: <span class="m">gcd(a, b) = max[k such that k | a and k | b]</span>.</div>
+  <div class="def"><b>Greatest common divisor.</b> <span class="m">gcd(a, b)</span> is the largest integer that divides both <i>a</i> and <i>b</i>. Formally, a positive integer <i>c</i> is the gcd if (1) <i>c</i> divides <i>a</i> and <i>b</i>, and (2) every divisor of <i>a</i> and <i>b</i> divides <i>c</i>.<br>Equivalently: <span class="m wr">gcd(a, b) = max[k such that k | a and k | b]</span>.</div>
   <ul class="props">
-    <li>The gcd is positive, so <span class="m">gcd(a, b) = gcd(|a|, |b|)</span>; e.g., gcd(60, −24) = 12.</li>
+    <li>The gcd is positive, so <span class="m wr">gcd(a, b) = gcd(|a|, |b|)</span>; e.g., gcd(60, −24) = 12.</li>
     <li>All nonzero integers divide 0, so <span class="m">gcd(a, 0) = |a|</span>. By definition <span class="m">gcd(0, 0) = 0</span>.</li>
   </ul>
   <div class="def"><b>Relatively prime.</b> Two integers are relatively prime if their only common positive divisor is 1, i.e., <span class="m">gcd(a, b) = 1</span>. Example: 8 (divisors 1, 2, 4, 8) and 15 (divisors 1, 3, 5, 15).</div>
@@ -293,7 +296,7 @@ section.unit{scroll-margin-top:calc(20px + var(--topbar-h))}
 310 = 3 × 90  + 40
  90 = 2 × 40  + 10
  40 = 4 × 10  + 0      ⇒ gcd = 10</div>
-      <p style="margin:0">Each line has the same gcd as the line above it. The book also works <span class="m">gcd(1160718174, 316258250) = 1078</span> in 10 steps (Table 2.1) — try it below.</p>
+      <p style="margin:0">Each line has the same gcd as the line above it. The book also works <span class="m wr">gcd(1160718174, 316258250) = 1078</span> in 10 steps (Table 2.1) — try it below.</p>
     </div>
   </div>
   <p>The interactive table for both the plain and extended versions is in Section 2.3, right after the extended algorithm is introduced.</p>
@@ -304,7 +307,7 @@ section.unit{scroll-margin-top:calc(20px + var(--topbar-h))}
   <h2><span class="sec">2.3</span>Modular Arithmetic</h2>
   <p class="why">Arithmetic that “wraps around” inside the finite set {0, 1, …, n−1}. Nearly every algorithm in the book works this way.</p>
 
-  <div class="def"><b>Modulus and a mod n.</b> For integer <i>a</i> and positive integer <i>n</i>, <span class="m">a mod n</span> is the remainder when <i>a</i> is divided by <i>n</i>; <i>n</i> is the <b>modulus</b>. So <span class="m">a = ⌊a/n⌋ × n + (a mod n)</span>.<br>Examples: 11 mod 7 = 4; −11 mod 7 = 3.</div>
+  <div class="def"><b>Modulus and a mod n.</b> For integer <i>a</i> and positive integer <i>n</i>, <span class="m">a mod n</span> is the remainder when <i>a</i> is divided by <i>n</i>; <i>n</i> is the <b>modulus</b>. So <span class="m wr">a = ⌊a/n⌋ × n + (a mod n)</span>.<br>Examples: 11 mod 7 = 4; −11 mod 7 = 3.</div>
   <div class="def"><b>Congruent modulo n.</b> <span class="m">a ≡ b (mod n)</span> if <span class="m">(a mod n) = (b mod n)</span>. Examples: 73 ≡ 4 (mod 23); 21 ≡ −9 (mod 10). If <span class="m">a ≡ 0 (mod n)</span>, then <span class="m">n | a</span>.</div>
 
   <div class="lab" id="lab-clock">
@@ -324,7 +327,7 @@ section.unit{scroll-margin-top:calc(20px + var(--topbar-h))}
 
   <h3>Two meanings of “mod” (Appendix 2A)</h3>
   <div class="grid2">
-    <div class="def" style="margin:0"><b>Binary operator.</b> <span class="m">a mod n = a − ⌊a/n⌋ × n</span> returns a number: 7 mod 3 = 1. Written without parentheses around “mod”.</div>
+    <div class="def" style="margin:0"><b>Binary operator.</b> <span class="m wr">a mod n = a − ⌊a/n⌋ × n</span> returns a number: 7 mod 3 = 1. Written without parentheses around “mod”.</div>
     <div class="def" style="margin:0"><b>Congruence relation.</b> <span class="m">7 ≡ 4 (mod 3)</span> is a true/false statement: 7 and 4 leave the same remainder, i.e. 3 | (7 − 4). Written with ≡ and “(mod n)” in parentheses.</div>
   </div>
 
@@ -346,13 +349,13 @@ section.unit{scroll-margin-top:calc(20px + var(--topbar-h))}
 11⁷ = 11 × 11² × 11⁴ ≡ 11 × 4 × 3 = 132 ≡ 2  (mod 13)</div></div>
 
   <h3>Z<sub>n</sub> and residue classes</h3>
-  <div class="def"><b>Z<sub>n</sub></b> is the set of nonnegative integers less than <i>n</i>: <span class="m">Z<sub>n</sub> = {0, 1, …, n − 1}</span>, the <b>set of residues</b> mod <i>n</i>. Each element <i>r</i> stands for a <b>residue class</b> <span class="m">[r] = {a : a ≡ r (mod n)}</span>.<br><b>Reducing k modulo n</b> means finding the smallest nonnegative integer congruent to <i>k</i>, which is the class representative.</div>
+  <div class="def"><b>Z<sub>n</sub></b> is the set of nonnegative integers less than <i>n</i>: <span class="m">Z<sub>n</sub> = {0, 1, …, n − 1}</span>, the <b>set of residues</b> mod <i>n</i>. Each element <i>r</i> stands for a <b>residue class</b> <span class="m wr">[r] = {a : a ≡ r (mod n)}</span>.<br><b>Reducing k modulo n</b> means finding the smallest nonnegative integer congruent to <i>k</i>, which is the class representative.</div>
   <div class="ex"><span class="t">Residue classes mod 4</span><div class="eq">[0] = {…, −8, −4, 0, 4, 8, …}
 [1] = {…, −7, −3, 1, 5, 9, …}
 [2] = {…, −6, −2, 2, 6, 10, …}
 [3] = {…, −5, −1, 3, 7, 11, …}</div></div>
 
-  <p>Within Z<sub>n</sub> the usual laws hold (Table 2.3): commutative, associative and distributive laws, identities <span class="m">(0 + w) mod n = w mod n</span> and <span class="m">(1 × w) mod n = w mod n</span>, and every <i>w</i> has an additive inverse. (Section 5 calls such a structure a commutative ring with a multiplicative identity.)</p>
+  <p>Within Z<sub>n</sub> the usual laws hold (Table 2.3): commutative, associative and distributive laws, identities <span class="m wr">(0 + w) mod n = w mod n</span> and <span class="m wr">(1 × w) mod n = w mod n</span>, and every <i>w</i> has an additive inverse. (Section 5 calls such a structure a commutative ring with a multiplicative identity.)</p>
 
   <div class="def"><b>Additive inverse</b> of <i>x</i>: the <i>y</i> with <span class="m">(x + y) mod n = 0</span>; always exists. <br><b>Multiplicative inverse</b> of <i>x</i>, written <span class="m">x⁻¹</span>: the <i>y</i> with <span class="m">(x × y) mod n = 1</span>; does <em>not</em> always exist.</div>
 
@@ -436,38 +439,38 @@ Stop when rᵢ = 0. The previous row gives d, x, y.</div>
   <div class="def"><b>Fermat.</b> If <i>p</i> is prime and <i>a</i> is a positive integer not divisible by <i>p</i>:</div>
   <div class="eq">a^(p−1) ≡ 1 (mod p)                       <span class="n">(2.10)</span>
 a^p ≡ a (mod p)          (any positive a)   <span class="n">(2.11)</span></div>
-  <p><b>Proof idea.</b> Multiplying each of {1, 2, …, p − 1} by <i>a</i> mod <i>p</i> gives the same set reordered (no zeros, because p ∤ a; no repeats, by Eq. 2.5). Multiply all elements of both sets: <span class="m">a^(p−1)·(p−1)! ≡ (p−1)! (mod p)</span>. Cancel <span class="m">(p−1)!</span>, which is relatively prime to <i>p</i>.</p>
+  <p><b>Proof idea.</b> Multiplying each of {1, 2, …, p − 1} by <i>a</i> mod <i>p</i> gives the same set reordered (no zeros, because p ∤ a; no repeats, by Eq. 2.5). Multiply all elements of both sets: <span class="m wr">a^(p−1)·(p−1)! ≡ (p−1)! (mod p)</span>. Cancel <span class="m">(p−1)!</span>, which is relatively prime to <i>p</i>.</p>
   <div class="ex"><span class="t">Examples</span><div class="eq">a = 7, p = 19:  7² ≡ 11,  7⁴ ≡ 7,  7⁸ ≡ 11,  7¹⁶ ≡ 7
                 7¹⁸ = 7¹⁶ × 7² ≡ 7 × 11 = 77 ≡ 1 (mod 19) ✓
 p = 5, a = 3:   3⁵ = 243 ≡ 3 (mod 5)
 p = 5, a = 10:  10⁵ ≡ 10 ≡ 0 (mod 5)   ← form (2.11) works even when p | a</div></div>
 
-  <h3>Euler’s totient function φ(n)</h3>
-  <div class="def"><b>φ(n)</b> = the number of positive integers less than <i>n</i> that are relatively prime to <i>n</i>. By convention φ(1) = 1.</div>
+  <h3>Euler’s totient function <span class="gk">φ</span>(n)</h3>
+  <div class="def"><b><span class="gk">φ</span>(n)</b> = the number of positive integers less than <i>n</i> that are relatively prime to <i>n</i>. By convention <span class="gk">φ</span>(1) = 1.</div>
   <ul class="props">
-    <li>For prime <i>p</i>: <span class="m">φ(p) = p − 1</span> (every number below <i>p</i> qualifies).</li>
-    <li>For distinct primes <i>p</i>, <i>q</i>: <span class="m">φ(pq) = φ(p) × φ(q) = (p − 1)(q − 1)</span>. <br><span class="src">Why: of the pq − 1 numbers below pq, the ones sharing a factor are the (q − 1) multiples of p and the (p − 1) multiples of q, and these sets don’t overlap. So φ = (pq − 1) − (q − 1) − (p − 1) = (p − 1)(q − 1).</span></li>
-    <li>From the end-of-chapter problems: <span class="m">φ(pⁱ) = pⁱ − pⁱ⁻¹</span> for prime <i>p</i> (Prob. 2.26), and <span class="m">φ(mn) = φ(m)φ(n)</span> when gcd(m, n) = 1 (Prob. 2.27).</li>
+    <li>For prime <i>p</i>: <span class="m"><span class="gk">φ</span>(p) = p − 1</span> (every number below <i>p</i> qualifies).</li>
+    <li>For distinct primes <i>p</i>, <i>q</i>: <span class="m wr"><span class="gk">φ</span>(pq) = <span class="gk">φ</span>(p) × <span class="gk">φ</span>(q) = (p − 1)(q − 1)</span>. <br><span class="src">Why: of the pq − 1 numbers below pq, the ones sharing a factor are the (q − 1) multiples of p and the (p − 1) multiples of q, and these sets don’t overlap. So <span class="gk">φ</span> = (pq − 1) − (q − 1) − (p − 1) = (p − 1)(q − 1).</span></li>
+    <li>From the end-of-chapter problems: <span class="m"><span class="gk">φ</span>(pⁱ) = pⁱ − pⁱ⁻¹</span> for prime <i>p</i> (Prob. 2.26), and <span class="m"><span class="gk">φ</span>(mn) = <span class="gk">φ</span>(m)<span class="gk">φ</span>(n)</span> when gcd(m, n) = 1 (Prob. 2.27).</li>
   </ul>
 
   <div class="lab" id="lab-phi">
-    <div class="lab-h"><span class="t">Try it · count φ(n)</span>
+    <div class="lab-h"><span class="t">Try it · count <span class="gk">φ</span>(n)</span>
       <span><button type="button" class="ghost" data-n="35">35</button> <button type="button" class="ghost" data-n="37">37</button> <button type="button" class="ghost" data-n="21">21</button></span></div>
     <div class="lab-b">
       <div class="controls"><label for="phi-n">n (1–300)<input type="number" id="phi-n" value="35" min="1" max="300"></label></div>
       <div class="out" id="phi-msg" style="margin-bottom:10px"></div>
       <div class="cells" id="phi-cells"></div>
-      <div class="cap">Highlighted cells are relatively prime to n. Book examples: φ(37) = 36, φ(35) = 24, φ(21) = φ(3)·φ(7) = 12.</div>
+      <div class="cap">Highlighted cells are relatively prime to n. Book examples: <span class="gk">φ</span>(37) = 36, <span class="gk">φ</span>(35) = 24, <span class="gk">φ</span>(21) = <span class="gk">φ</span>(3)·<span class="gk">φ</span>(7) = 12.</div>
     </div>
   </div>
 
   <h3>Euler’s theorem</h3>
   <div class="def"><b>Euler.</b> For every <i>a</i> and <i>n</i> that are relatively prime:</div>
-  <div class="eq">a^φ(n) ≡ 1 (mod n)                       <span class="n">(2.12)</span>
-a^(φ(n)+1) ≡ a (mod n)    (gcd not required) <span class="n">(2.13)</span></div>
-  <p>Fermat’s theorem is the special case where <i>n</i> is prime (φ(p) = p − 1). The proof is the same idea: multiplying the φ(n) integers coprime to <i>n</i> by <i>a</i> mod <i>n</i> just reorders them (a <b>permutation</b> — an ordered sequence of all the elements of a set, each appearing exactly once).</p>
-  <div class="ex"><span class="t">Examples</span><div class="eq">a = 3, n = 10:  φ(10) = 4,   3⁴ = 81 ≡ 1 (mod 10)
-a = 2, n = 11:  φ(11) = 10,  2¹⁰ = 1024 ≡ 1 (mod 11)</div></div>
+  <div class="eq">a^<span class="gk">φ</span>(n) ≡ 1 (mod n)                       <span class="n">(2.12)</span>
+a^(<span class="gk">φ</span>(n)+1) ≡ a (mod n)    (gcd not required) <span class="n">(2.13)</span></div>
+  <p>Fermat’s theorem is the special case where <i>n</i> is prime (<span class="gk">φ</span>(p) = p − 1). The proof is the same idea: multiplying the <span class="gk">φ</span>(n) integers coprime to <i>n</i> by <i>a</i> mod <i>n</i> just reorders them (a <b>permutation</b> — an ordered sequence of all the elements of a set, each appearing exactly once).</p>
+  <div class="ex"><span class="t">Examples</span><div class="eq">a = 3, n = 10:  <span class="gk">φ</span>(10) = 4,   3⁴ = 81 ≡ 1 (mod 10)
+a = 2, n = 11:  <span class="gk">φ</span>(11) = 10,  2¹⁰ = 1024 ≡ 1 (mod 11)</div></div>
 </section>
 
 <!-- ============ 2.6 ============ -->
@@ -481,9 +484,9 @@ a = 2, n = 11:  φ(11) = 10,  2¹⁰ = 1024 ≡ 1 (mod 11)</div></div>
   <h3>Two properties of primes</h3>
   <ol>
     <li>If <i>p</i> is prime and <span class="m">a &lt; p</span>: <span class="m">a² mod p = 1</span> ⇔ <span class="m">a mod p = 1</span> or <span class="m">a mod p = p − 1</span> (i.e. −1).</li>
-    <li>If <i>p</i> &gt; 2 is prime, <span class="m">p − 1 = 2ᵏq</span>, and <span class="m">1 &lt; a &lt; p − 1</span>, then either <span class="m">a^q ≡ 1 (mod p)</span>, or one of <span class="m">a^q, a^(2q), a^(4q), …, a^(2^(k−1) q)</span> is ≡ −1 (mod p).</li>
+    <li>If <i>p</i> &gt; 2 is prime, <span class="m">p − 1 = 2ᵏq</span>, and <span class="m">1 &lt; a &lt; p − 1</span>, then either <span class="m">a^q ≡ 1 (mod p)</span>, or one of <span class="m wr">a^q, a^(2q), a^(4q), …, a^(2^(k−1) q)</span> is ≡ −1 (mod p).</li>
   </ol>
-  <p class="src">Why (2): by Fermat, the last term of the sequence <span class="m">a^q, a^(2q), …, a^(2^k q) = a^(p−1)</span> is 1, and each term is the square of the one before. So either the first term is already 1, or some term ≠ 1 squares to 1 — and by property (1) that term must be p − 1.</p>
+  <p class="src">Why (2): by Fermat, the last term of the sequence <span class="m wr">a^q, a^(2q), …, a^(2^k q) = a^(p−1)</span> is 1, and each term is the square of the one before. So either the first term is already 1, or some term ≠ 1 squares to 1 — and by property (1) that term must be p − 1.</p>
 
   <h3>The Miller–Rabin TEST(n)</h3>
   <div class="eq">1. Find k &gt; 0, q odd, with n − 1 = 2ᵏq
@@ -559,9 +562,9 @@ A  ≡ (a₁c₁ + a₂c₂ + … + aₖcₖ)  (mod M)                   <span c
   <p class="why">The “hard direction” behind Diffie–Hellman key exchange and the Digital Signature Algorithm (DSA).</p>
 
   <h3>Powers of an integer, modulo n</h3>
-  <p>If gcd(a, n) = 1, Euler guarantees at least one <i>m</i> with <span class="m">a^m ≡ 1 (mod n)</span>, namely m = φ(n).</p>
+  <p>If gcd(a, n) = 1, Euler guarantees at least one <i>m</i> with <span class="m">a^m ≡ 1 (mod n)</span>, namely m = <span class="gk">φ</span>(n).</p>
   <div class="def"><b>Order.</b> The <b>least</b> positive exponent <i>m</i> with <span class="m">a^m ≡ 1 (mod n)</span>. Also called “the exponent to which a belongs (mod n)” or “the length of the period generated by a”. The powers of <i>a</i> repeat with this period: e.g. 7¹ ≡ 7, 7² ≡ 11, 7³ ≡ 1 (mod 19), then 7, 11, 1, … again.</div>
-  <div class="def"><b>Primitive root.</b> The highest possible order mod <i>n</i> is φ(n). An <i>a</i> with order φ(n) is a primitive root of <i>n</i>: its powers <span class="m">a, a², …, a^φ(n)</span> are all distinct mod n and all relatively prime to n. For prime p, a primitive root <b>generates</b> every nonzero residue 1 … p − 1.</div>
+  <div class="def"><b>Primitive root.</b> The highest possible order mod <i>n</i> is <span class="gk">φ</span>(n). An <i>a</i> with order <span class="gk">φ</span>(n) is a primitive root of <i>n</i>: its powers <span class="m">a, a², …, a^<span class="gk">φ</span>(n)</span> are all distinct mod n and all relatively prime to n. For prime p, a primitive root <b>generates</b> every nonzero residue 1 … p − 1.</div>
   <p>Only integers of the form <span class="m">2, 4, pᵃ, 2pᵃ</span> (p an odd prime) have primitive roots. Primitive roots of 19: 2, 3, 10, 13, 14, 15.</p>
 
   <div class="lab" id="lab-pow">
@@ -569,7 +572,7 @@ A  ≡ (a₁c₁ + a₂c₂ + … + aₖcₖ)  (mod M)                   <span c
     <div class="lab-b">
       <div class="controls"><label for="pow-p">prime p (3–31)<input type="number" id="pow-p" value="19" min="3" max="31"></label></div>
       <div class="tbl" id="pow-out"></div>
-      <div class="cap">Gold cells mark the first 1 in each row (the order). Green row labels are primitive roots. Notice: every row ends in 1, and every order divides φ(p) = p − 1.</div>
+      <div class="cap">Gold cells mark the first 1 in each row (the order). Green row labels are primitive roots. Notice: every row ends in 1, and every order divides <span class="gk">φ</span>(p) = p − 1.</div>
     </div>
   </div>
 
@@ -577,10 +580,10 @@ A  ≡ (a₁c₁ + a₂c₂ + … + aₖcₖ)  (mod M)                   <span c
   <div class="def"><b>Discrete logarithm (index).</b> For a primitive root <i>a</i> of prime <i>p</i> and any integer <i>b</i>, there is a unique exponent <i>i</i> with <span class="m">b ≡ aⁱ (mod p)</span>, 0 ≤ i ≤ p − 1. This <i>i</i> is <span class="m">dlog<sub>a,p</sub>(b)</span>. (“Index” is another name; there is no agreed notation.)</div>
   <div class="eq">dlog_a,p(1) = 0                              <span class="n">(2.21)</span>
 dlog_a,p(a) = 1                              <span class="n">(2.22)</span>
-dlog_a,p(xy)  ≡ dlog_a,p(x) + dlog_a,p(y)   (mod φ(p))
-dlog_a,p(yʳ)  ≡ r × dlog_a,p(y)             (mod φ(p))</div>
-  <p>These mirror ordinary log rules, except exponents live mod φ(p) (by Euler, <span class="m">a^z ≡ a^q</span> when <span class="m">z ≡ q mod φ(n)</span>). Unique discrete logs mod m to base a exist <b>only if a is a primitive root of m</b>.</p>
-  <div class="ex"><span class="t">Non-prime modulus · n = 9, φ(9) = 6, primitive root a = 2</span><div class="eq">2⁰=1  2¹=2  2²=4  2³=8  2⁴=16≡7  2⁵=32≡5  (mod 9)
+dlog_a,p(xy)  ≡ dlog_a,p(x) + dlog_a,p(y)   (mod <span class="gk">φ</span>(p))
+dlog_a,p(yʳ)  ≡ r × dlog_a,p(y)             (mod <span class="gk">φ</span>(p))</div>
+  <p>These mirror ordinary log rules, except exponents live mod <span class="gk">φ</span>(p) (by Euler, <span class="m">a^z ≡ a^q</span> when <span class="m">z ≡ q mod <span class="gk">φ</span>(n)</span>). Unique discrete logs mod m to base a exist <b>only if a is a primitive root of m</b>.</p>
+  <div class="ex"><span class="t">Non-prime modulus · n = 9, <span class="gk">φ</span>(9) = 6, primitive root a = 2</span><div class="eq">2⁰=1  2¹=2  2²=4  2³=8  2⁴=16≡7  2⁵=32≡5  (mod 9)
 
 Number     1  2  4  5  7  8
 Logarithm  0  1  2  5  4  3</div></div>
@@ -599,13 +602,13 @@ Logarithm  0  1  2  5  4  3</div></div>
   <h3>Why it is useful in cryptography</h3>
   <div class="grid2">
     <div class="def" style="margin:0"><b>Easy:</b> given g, x, p, compute <span class="m">y = gˣ mod p</span>. At worst x multiplications; faster methods exist (Ch. 9).</div>
-    <div class="warn" style="margin:0"><b>Hard:</b> given y, g, p, find x. Roughly as hard as factoring for RSA. Fastest known method is on the order of <span class="m">e^((ln p)^(1/3) (ln ln p)^(2/3))</span> — infeasible for large primes.</div>
+    <div class="warn" style="margin:0"><b>Hard:</b> given y, g, p, find x. Roughly as hard as factoring for RSA. Fastest known method is on the order of <span class="m wr">e^((ln p)^(1/3) (ln ln p)^(2/3))</span> — infeasible for large primes.</div>
   </div>
 </section>
 
 <!-- ============ Key terms ============ -->
 <section class="unit" id="terms">
-  <h2><span class="sec">Key</span>Key Terms</h2>
+  <h2><span class="sec">2.9</span>Key Terms</h2>
   <p class="why">The chapter’s key-term list (Section 2.9), plus terms needed to understand them.</p>
   <dl class="gloss">
     <dt>Divisor</dt><dd>Nonzero b is a divisor of a (b | a) if a = mb for some integer m.</dd>
@@ -621,12 +624,12 @@ Logarithm  0  1  2  5  4  3</div></div>
     <dt>Prime number</dt><dd>Integer p &gt; 1 whose only divisors are ±1, ±p.</dd>
     <dt>Composite number</dt><dd>Integer &gt; 1 that is not prime.</dd>
     <dt>Fermat’s theorem</dt><dd>a^(p−1) ≡ 1 (mod p) for prime p not dividing a.</dd>
-    <dt>Euler’s totient function</dt><dd>φ(n): count of positive integers &lt; n relatively prime to n.</dd>
-    <dt>Euler’s theorem</dt><dd>a^φ(n) ≡ 1 (mod n) when gcd(a, n) = 1.</dd>
+    <dt>Euler’s totient function</dt><dd><span class="gk">φ</span>(n): count of positive integers &lt; n relatively prime to n.</dd>
+    <dt>Euler’s theorem</dt><dd>a^<span class="gk">φ</span>(n) ≡ 1 (mod n) when gcd(a, n) = 1.</dd>
     <dt>Bijection</dt><dd>One-to-one correspondence between two sets.</dd>
     <dt>Chinese remainder theorem</dt><dd>With pairwise relatively prime moduli, A ∈ Z<sub>M</sub> ↔ (A mod m₁, …, A mod mₖ) is a bijection that preserves +, −, ×.</dd>
     <dt>Order</dt><dd>Least m &gt; 0 with a^m ≡ 1 (mod n).</dd>
-    <dt>Primitive root</dt><dd>An a whose order mod n is φ(n).</dd>
+    <dt>Primitive root</dt><dd>An a whose order mod n is <span class="gk">φ</span>(n).</dd>
     <dt>Discrete logarithm</dt><dd>The exponent i with b ≡ aⁱ (mod p) for primitive root a; dlog<sub>a,p</sub>(b).</dd>
     <dt>Index</dt><dd>Another name for the discrete logarithm.</dd>
   </dl>
@@ -634,25 +637,26 @@ Logarithm  0  1  2  5  4  3</div></div>
 
 <!-- ============ Review ============ -->
 <section class="unit" id="review">
-  <h2><span class="sec">Q&amp;A</span>Review Questions</h2>
+  <h2><span class="sec">2.9</span>Review Questions</h2>
   <p class="why">Questions 2.1–2.8 from the book. Answer first, then open to check.</p>
   <details><summary>2.1 What does it mean to say that b is a divisor of a?</summary><p>b is nonzero and a = mb for some integer m; dividing a by b leaves no remainder.</p></details>
   <details><summary>2.2 What is the meaning of the expression “a divides b”?</summary><p>a | b: a is nonzero and b = ma for some integer m.</p></details>
   <details><summary>2.3 What is the difference between modular arithmetic and ordinary arithmetic?</summary><p>Modular arithmetic works within Z<sub>n</sub> = {0, …, n − 1}, reducing results mod n. Addition, subtraction and multiplication rules carry over, but cancellation in multiplication (Eq. 2.5) holds only when the factor is relatively prime to n, and a multiplicative inverse exists only for integers relatively prime to n.</p></details>
   <details><summary>2.4 What is a prime number?</summary><p>An integer p &gt; 1 whose only divisors are ±1 and ±p.</p></details>
-  <details><summary>2.5 What is Euler’s totient function?</summary><p>φ(n), the number of positive integers less than n and relatively prime to n (φ(1) = 1 by convention). φ(p) = p − 1 for prime p; φ(pq) = (p − 1)(q − 1) for distinct primes.</p></details>
+  <details><summary>2.5 What is Euler’s totient function?</summary><p><span class="gk">φ</span>(n), the number of positive integers less than n and relatively prime to n (<span class="gk">φ</span>(1) = 1 by convention). <span class="gk">φ</span>(p) = p − 1 for prime p; <span class="gk">φ</span>(pq) = (p − 1)(q − 1) for distinct primes.</p></details>
   <details><summary>2.6 Miller–Rabin can show a number is not prime but cannot prove it is prime. How can it be used to test for primality?</summary><p>Run TEST repeatedly with randomly chosen bases a. Any “composite” result proves n is composite. Each run lets a composite slip through with probability &lt; 1/4, so after t “inconclusive” results the error is &lt; (1/4)ᵗ; for large enough t, accept n as prime.</p></details>
-  <details><summary>2.7 What is a primitive root of a number?</summary><p>An integer a whose order mod n equals φ(n), the highest possible. Its powers a, a², …, a^φ(n) are distinct mod n; for a prime p they produce every integer 1 … p − 1.</p></details>
+  <details><summary>2.7 What is a primitive root of a number?</summary><p>An integer a whose order mod n equals <span class="gk">φ</span>(n), the highest possible. Its powers a, a², …, a^<span class="gk">φ</span>(n) are distinct mod n; for a prime p they produce every integer 1 … p − 1.</p></details>
   <details><summary>2.8 What is the difference between an index and a discrete logarithm?</summary><p>None. They are two names for the same concept: the exponent i such that b ≡ aⁱ (mod p) for a primitive root a.</p></details>
 
   <h3>Practice problems worth doing</h3>
-  <p class="src">From Section 2.9: 2.10 (inverses in Z₅), 2.12 (gcds), 2.16 (inverses by extended Euclid), 2.20–2.24 (Fermat/Euler shortcuts), 2.27 (φ values), 2.32 (strong pseudoprime 2047), 2.34 (CRT), 2.37 (discrete log table for primitive root 5 of 23).</p>
+  <p class="src">From Section 2.9: 2.10 (inverses in Z₅), 2.12 (gcds), 2.16 (inverses by extended Euclid), 2.20–2.24 (Fermat/Euler shortcuts), 2.27 (<span class="gk">φ</span> values), 2.32 (strong pseudoprime 2047), 2.34 (CRT), 2.37 (discrete log table for primitive root 5 of 23).</p>
 </section>
 
 <!-- ============ Resources ============ -->
 <section class="unit" id="res">
-  <h2><span class="sec">More</span>Resources</h2>
+  <h2><span class="sec">References</span>Sources</h2>
   <ul>
+    <li>W. Stallings, <i>Cryptography and Network Security: Principles and Practice</i>, 7th ed., Global Edition, Pearson, 2017. Chapter 2 and Appendix 2A, pp. 46–84. All content not marked otherwise.</li>
     <li><b>In the book:</b> Appendix B.2 has Sage examples for this chapter (Euclid, extended Euclid, totient, Miller–Rabin, modular exponentiation, discrete logs, CRT).</li>
     <li><a href="https://www.sagemath.org/" target="_blank" rel="noopener">SageMath</a> — the free computer algebra system the book uses; <a href="https://doc.sagemath.org/html/en/tutorial/" target="_blank" rel="noopener">official tutorial</a>. Useful built-ins: <code>gcd</code>, <code>xgcd</code>, <code>euler_phi</code>, <code>power_mod</code>, <code>inverse_mod</code>, <code>is_prime</code>, <code>primitive_root</code>, <code>discrete_log</code>, <code>crt</code>.</li>
     <li><a href="https://www.khanacademy.org/computing/computer-science/cryptography" target="_blank" rel="noopener">Khan Academy · Cryptography</a> — short practice lessons on modular arithmetic, inverses, and primality tests.</li>
