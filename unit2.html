@@ -177,6 +177,12 @@ footer{font-size:.82rem;color:var(--muted);margin-top:24px}
 nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h) + 20px)}
 section.unit{scroll-margin-top:calc(20px + var(--topbar-h))}
 @media (max-width:900px){nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h))}section.unit{scroll-margin-top:calc(72px + var(--topbar-h))}}
+
+/* justified prose (wider screens only: narrow columns get large word gaps) */
+@media (min-width:600px){
+section.unit p,section.unit li,.def,.note,.warn,.why,.lede,details p,.ex,.cmp p{text-align:justify;hyphens:auto;-webkit-hyphens:auto}
+section.unit .out,section.unit .cap,section.unit td,section.unit th,.lab-h,.kv,.ex .eq,.def .m{text-align:left;hyphens:manual;-webkit-hyphens:manual}
+section.unit .grid2 *,section.unit .cmp *,section.unit .stwrap *,section.unit .src{text-align:left;hyphens:manual;-webkit-hyphens:manual}}
 </style>
 
 </head>

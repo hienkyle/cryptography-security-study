@@ -248,6 +248,12 @@ input[type=range]{accent-color:var(--accent)}
 input[type=text].hex{width:23em}
 input[type=text].byte{width:4.2em}
 @media (max-width:560px){input[type=text].hex{width:100%}.sbox{font-size:.62rem}.sbox td,.sbox th{width:1.75em;height:1.7em}}
+
+/* justified prose (wider screens only: narrow columns get large word gaps) */
+@media (min-width:600px){
+section.unit p,section.unit li,.def,.note,.warn,.why,.lede,details p,.ex,.cmp p{text-align:justify;hyphens:auto;-webkit-hyphens:auto}
+section.unit .out,section.unit .cap,section.unit td,section.unit th,.lab-h,.kv,.ex .eq,.def .m{text-align:left;hyphens:manual;-webkit-hyphens:manual}
+section.unit .grid2 *,section.unit .cmp *,section.unit .stwrap *,section.unit .src{text-align:left;hyphens:manual;-webkit-hyphens:manual}}
 </style>
 </head>
 <body>

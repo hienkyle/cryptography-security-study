@@ -249,6 +249,11 @@ select{font:inherit;font-family:var(--mono);font-size:.88rem;padding:6px 8px;bor
 .pseudo .kw{color:var(--accent);font-weight:600}
 .pseudo .cm{color:var(--muted)}
 sub{line-height:0;font-size:.75em}
+/* justified prose (wider screens only: narrow columns get large word gaps) */
+@media (min-width:600px){
+section.unit p,section.unit li,.def,.note,.warn,.why,.lede,details p{text-align:justify;hyphens:auto;-webkit-hyphens:auto}
+section.unit .out,section.unit .cap,section.unit td,section.unit th,.lab-h,.kv{text-align:left;hyphens:manual;-webkit-hyphens:manual}
+section.unit .grid2 *,section.unit .cmp *,section.unit .src{text-align:left;hyphens:manual;-webkit-hyphens:manual}}
 </style>
 </head>
 <body>
@@ -352,8 +357,8 @@ sub{line-height:0;font-size:.75em}
       <div class="controls">
         <label>K1 (0–255)<input type="number" id="mm-k1" min="0" max="255" value="57"></label>
         <label>K2 (0–255)<input type="number" id="mm-k2" min="0" max="255" value="200"></label>
-        <label>P<sub>1</sub><input type="number" id="mm-p1" min="0" max="255" value="17"></label>
-        <label>P<sub>2</sub><input type="number" id="mm-p2" min="0" max="255" value="138"></label>
+        <label><span>P<sub>1</sub></span><input type="number" id="mm-p1" min="0" max="255" value="17"></label>
+        <label><span>P<sub>2</sub></span><input type="number" id="mm-p2" min="0" max="255" value="138"></label>
         <button id="mm-run" type="button">Run attack</button>
       </div>
       <div class="out" id="mm-out" aria-live="polite"></div>
@@ -813,7 +818,7 @@ C<sub>m</sub>    = MSB<sub>s</sub>(XX)</div>
     <div class="lab-h"><span class="t">Lab · LCG period</span></div>
     <div class="lab-b">
       <div class="controls">
-        <label>a<input type="number" id="lc-a" value="7"></label><label>c<input type="number" id="lc-c" value="0"></label><label>m (≤ 4096)<input type="number" id="lc-m" value="32"></label><label>X<sub>0</sub><input type="number" id="lc-x" value="1"></label>
+        <label>a<input type="number" id="lc-a" value="7"></label><label>c<input type="number" id="lc-c" value="0"></label><label>m (≤ 4096)<input type="number" id="lc-m" value="32"></label><label><span>X<sub>0</sub></span><input type="number" id="lc-x" value="1"></label>
         <button class="ghost" data-lc="5,0,32,1" type="button">a = 5</button><button class="ghost" data-lc="3,0,31,1" type="button">m = 31, a = 3</button>
       </div>
       <div id="lc-out" aria-live="polite"></div>
@@ -974,8 +979,8 @@ V<sub>i+1</sub> = EDE([K1, K2], R<sub>i</sub> <span class="op">⊕</span> EDE([K
   <div class="lab" id="lab-reuse">
     <div class="lab-h"><span class="t">Lab · Why a keystream must never be reused</span></div>
     <div class="lab-b">
-      <div class="controls"><label class="grow">P<sub>1</sub><input type="text" id="ru-p1" value="TRANSFER $100 TO BOB"></label><label class="grow">P<sub>2</sub><input type="text" id="ru-p2" value="MEET AT THE OLD MILL"></label></div>
-      <div class="controls"><label class="grow">Guess a word in P<sub>1</sub> (crib)<input type="text" id="ru-g" value="TRANSFER"></label></div>
+      <div class="controls"><label class="grow"><span>P<sub>1</sub></span><input type="text" id="ru-p1" value="TRANSFER $100 TO BOB"></label><label class="grow"><span>P<sub>2</sub></span><input type="text" id="ru-p2" value="MEET AT THE OLD MILL"></label></div>
+      <div class="controls"><label class="grow"><span>Guess a word in P<sub>1</sub> (crib)</span><input type="text" id="ru-g" value="TRANSFER"></label></div>
       <div id="ru-out" aria-live="polite"></div>
     </div>
   </div>
@@ -1095,7 +1100,7 @@ e.g. W = 2⁻³⁰, H = 7.3  →  C = ⌈1 + 30/7.3⌉ = 6</div>
   <div class="lab" id="lab-rct">
     <div class="lab-h"><span class="t">Lab · Repetition Count cutoff</span></div>
     <div class="lab-b">
-      <div class="controls"><label>−log<sub>2</sub> W<input type="number" id="rt-w" value="30" min="1" step="1"></label><label>H (bits/sample)<input type="number" id="rt-h" value="7.3" min="0.1" step="0.1"></label></div>
+      <div class="controls"><label><span>−log<sub>2</sub> W</span><input type="number" id="rt-w" value="30" min="1" step="1"></label><label>H (bits/sample)<input type="number" id="rt-h" value="7.3" min="0.1" step="0.1"></label></div>
       <div class="out" id="rt-out" aria-live="polite"></div>
     </div>
   </div>
@@ -1365,7 +1370,7 @@ const U5=(function(){
           if(nx)s+=`<circle cx="${c}" cy="30" r="2.5" fill="var(--mark)"/>`+P(`M${c} 30 H${c+120} V109 H${nx-13}`,1);
           if(k===0)s+=T(c-96,113,'IV','lbf')+A(c-82,109,c-13,109,1);else s+=T(c-62,101,sub('C',prevIdx[k]),'lbf')}}
       if(mode==='CFB'){h=272;
-        s+=`<rect class="box" x="${c-75}" y="22" width="150" height="26" rx="5"/><line class="ln" x1="${c+35}" y1="22" x2="${c+35}" y2="48"/>`+T(c-20,39,'b − s','lbm')+T(c+55,39,'s','lbm')+T(c,15,k===0?'I₁ = IV':sub('I',idx[k])+' shift register','lbm');
+        s+=`<rect class="box" x="${c-75}" y="22" width="150" height="26" rx="5"/><line class="ln" x1="${c+35}" y1="22" x2="${c+35}" y2="48"/>`+T(c-20,39,'b − s','lbm')+T(c+55,39,'s','lbm')+T(c,15,k===0?sub('I','1')+' = IV':sub('I',idx[k])+' shift register','lbm');
         if(k===0)s+=T(c-104,39,'IV','lbf')+A(c-94,35,c-77,35,1);
         s+=A(c,48,c,70)+Bx(c,72,110,32,'Encrypt',true)+Kin(c,88,110)+A(c,104,c,124);
         s+=`<rect class="box" x="${c-75}" y="126" width="150" height="24" rx="5"/><line class="ln" x1="${c-35}" y1="126" x2="${c-35}" y2="150"/>`+T(c-55,142,'s','lb')+T(c+20,142,'discard b − s','lbm');
@@ -1415,10 +1420,10 @@ const U5=(function(){
     const cand=[];for(let b=0;b<256;b++){const x=tD(b,c1);(fwd.get(x)||[]).forEach(a=>cand.push([a,b]))}
     const surv=cand.filter(([a,b])=>tE(b,tE(a,p2))===c2);
     o.innerHTML=`<div class="kv">
-      <span class="k">Known pairs</span><span class="v">(P₁, C₁) = (${p1}, ${c1})   (P₂, C₂) = (${p2}, ${c2})</span>
-      <span class="k">Step 1</span><span class="v">256 encryptions of P₁ → table of X = E(K1, P₁)</span>
-      <span class="k">Step 2</span><span class="v">256 decryptions of C₁ → <b>${cand.length}</b> matches = candidate (K1, K2) pairs (expect ≈ 2¹⁶ / 2⁸ = 256 false alarms)</span>
-      <span class="k">Step 3</span><span class="v">test candidates on (P₂, C₂) → <b>${surv.length}</b> survivor${surv.length===1?'':'s'}: ${surv.map(([a,b])=>`<span class="pill${a===k1&&b===k2?'':' mk'}">(${a}, ${b})</span>`).join(' ')}</span>
+      <span class="k">Known pairs</span><span class="v">(P<sub>1</sub>, C<sub>1</sub>) = (${p1}, ${c1})   (P<sub>2</sub>, C<sub>2</sub>) = (${p2}, ${c2})</span>
+      <span class="k">Step 1</span><span class="v">256 encryptions of P<sub>1</sub> → table of X = E(K1, P<sub>1</sub>)</span>
+      <span class="k">Step 2</span><span class="v">256 decryptions of C<sub>1</sub> → <b>${cand.length}</b> matches = candidate (K1, K2) pairs (expect ≈ 2¹⁶ / 2⁸ = 256 false alarms)</span>
+      <span class="k">Step 3</span><span class="v">test candidates on (P<sub>2</sub>, C<sub>2</sub>) → <b>${surv.length}</b> survivor${surv.length===1?'':'s'}: ${surv.map(([a,b])=>`<span class="pill${a===k1&&b===k2?'':' mk'}">(${a}, ${b})</span>`).join(' ')}</span>
       <span class="k">Work</span><span class="v">≈ ${512+cand.length} cipher operations vs. up to 65 536 key pairs for brute force (2⁸⁺¹ vs 2¹⁶ — like 2⁵⁷ vs 2¹¹² for double DES)</span></div>`;
   }catch(e){err(o,e)}}
   $('mm-run').addEventListener('click',mitm);mitm();
@@ -1478,7 +1483,7 @@ const U5=(function(){
       <span class="k">C<sub>${m-1}</sub> = blockEnc(YY, j=${m})</span><span class="v">${H(C.slice(16*(m-1),16*m))}</span>
       <span class="k">C<sub>${m}</sub> = MSB<sub>s</sub>(XX)</span><span class="v">${H(C.slice(16*m))}</span></div>`}
     const v1=H(key)==='0'.repeat(64)&&i===0&&L===32;
-    o.innerHTML=`<div class="tbl"><table><thead><tr><th>j</th><th>T = E(Key2, i) ⊗ αʲ</th><th>Cⱼ (Pⱼ = 00…00)</th></tr></thead><tbody>${rows}</tbody></table></div>${cts}
+    o.innerHTML=`<div class="tbl"><table><thead><tr><th>j</th><th>T = E(Key2, i) ⊗ αʲ</th><th>C<sub>j</sub> (P<sub>j</sub> = 00…00)</th></tr></thead><tbody>${rows}</tbody></table></div>${cts}
       <div class="kv" style="margin-top:10px"><span class="k">sector ciphertext (${L} bytes)</span><span class="v">${H(C)}</span>
       <span class="k">decrypts back</span><span class="v">${H(D)===H(P)?'<span class="pill">yes</span>':'<span class="pill no">no</span>'} ${v1?(H(C)===V1?'<span class="pill">matches IEEE 1619 vector 1</span>':'<span class="pill no">vector mismatch</span>'):''}</span></div>`;
   }catch(e){err(o,e)}}
@@ -1491,11 +1496,11 @@ const U5=(function(){
     let bytes=Math.max(4,Math.ceil(x.toString(16).length/2));const bh=x.toString(16).padStart(bytes*2,'0');
     const le=bh.match(/../g).reverse().join(' ');const back=U5.str(x,26,Xn.length).map(d=>String.fromCharCode(97+d)).join('');
     o.innerHTML=`<span class="k">numeral string X</span><span class="v">${Xn.join(' ')}</span>
-      <span class="k">x = NUM₂₆(X)</span><span class="v">${x} (hex ${x.toString(16).toUpperCase()})</span>
+      <span class="k">x = NUM<sub>26</sub>(X)</span><span class="v">${x} (hex ${x.toString(16).toUpperCase()})</span>
       <span class="k">[x]^${bytes} (big-endian)</span><span class="v">${bh.match(/../g).join(' ')}</span>
       <span class="k">x as stored little-endian</span><span class="v">${le}</span>
       <span class="k">STR^${Xn.length}₂₆(x)</span><span class="v">${Xn.length} numerals → “${back}”</span>
-      <span class="k">bitlen = ⌈len·log₂26⌉</span><span class="v">${Math.ceil(Xn.length*Math.log2(26))} bits</span>`}catch(e){err(o,e)}}
+      <span class="k">bitlen = ⌈len·log<sub>2</sub>26⌉</span><span class="v">${Math.ceil(Xn.length*Math.log2(26))} bits</span>`}catch(e){err(o,e)}}
   $('nm-s').addEventListener('input',nm);nm();
 
   /* ===== 7.8 FF1 ===== */
@@ -1530,7 +1535,7 @@ const U5=(function(){
     if(![a,c,m,x].every(Number.isInteger))throw new Error('all parameters must be integers');
     if(!(m>0&&m<=4096))throw new Error('m must be 1 … 4096 here');if(!(a>0&&a<m))throw new Error('need 0 < a < m');if(!(c>=0&&c<m))throw new Error('need 0 ≤ c < m');if(!(x>=0&&x<m))throw new Error('need 0 ≤ X₀ < m');
     const r=U5.lcg(a,c,m,x,m+2);const tail=r.seq.length-r.period;
-    o.innerHTML=`<p class="out">X₁, X₂, …: <span class="mono">${r.seq.slice(0,48).join(', ')}${r.seq.length>48?', …':''}</span></p>
+    o.innerHTML=`<p class="out">X<sub>1</sub>, X<sub>2</sub>, …: <span class="mono">${r.seq.slice(0,48).join(', ')}${r.seq.length>48?', …':''}</span></p>
       <p class="out">Period <b>${r.period}</b> of ${m} possible values${tail>0?` (after ${tail} non-repeating value${tail>1?'s':''})`:''}. ${r.period===m?'<span class="pill">full period</span>':r.period===m-1&&c===0?'<span class="pill">maximum for c = 0 (all except 0)</span>':'<span class="pill no">not full period</span>'}</p>`;
   }catch(e){err(o,e)}}
   ['lc-a','lc-c','lc-m','lc-x'].forEach(id=>$(id).addEventListener('input',lc));
@@ -1544,8 +1549,8 @@ const U5=(function(){
     if(!(isPrime(p)&&isPrime(q)))throw new Error('p and q must be prime');if(p%4!==3||q%4!==3)throw new Error('need p ≡ q ≡ 3 (mod 4)');if(p===q)throw new Error('use two different primes');if(p*q>1e9)throw new Error('keep p × q below 10⁹ for this lab');
     if(gcd(s,p*q)!==1)throw new Error('s must be relatively prime to n = pq');
     const r=U5.bbs(p,q,s,n);const half=Math.ceil((n+1)/2);
-    const tbl=rows=>`<table><thead><tr><th>i</th><th>Xᵢ</th><th>Bᵢ</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x.i}</td><td class="mono">${x.x}</td><td>${x.b===null?'':x.b}</td></tr>`).join('')}</tbody></table>`;
-    o.innerHTML=`<p class="out">n = ${p} × ${q} = ${r.n};  X₀ = s² mod n = ${r.rows[0].x}</p><div class="grid2"><div class="tbl">${tbl(r.rows.slice(0,half))}</div><div class="tbl">${tbl(r.rows.slice(half))}</div></div>
+    const tbl=rows=>`<table><thead><tr><th>i</th><th>X<sub>i</sub></th><th>B<sub>i</sub></th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x.i}</td><td class="mono">${x.x}</td><td>${x.b===null?'':x.b}</td></tr>`).join('')}</tbody></table>`;
+    o.innerHTML=`<p class="out">n = ${p} × ${q} = ${r.n};  X<sub>0</sub> = s² mod n = ${r.rows[0].x}</p><div class="grid2"><div class="tbl">${tbl(r.rows.slice(0,half))}</div><div class="tbl">${tbl(r.rows.slice(half))}</div></div>
       <p class="out">Bits: <span class="mono">${r.rows.slice(1).map(x=>x.b).join('')}</span></p>`;
   }catch(e){err(o,e)}}
   ['bb-p','bb-q','bb-s','bb-n'].forEach(id=>$(id).addEventListener('input',bb));bb();
@@ -1566,9 +1571,9 @@ const U5=(function(){
     let drag='';if(g.length&&g.length<=L){for(let pos=0;pos+g.length<=L;pos++){const frag=U5.xor(x.slice(pos,pos+g.length),g);const ok=[...frag].every(v=>(v>=65&&v<=90)||(v>=97&&v<=122)||(v>=48&&v<=57)||v===32);
         if(ok)drag+=`<span class="k">position ${pos}</span><span class="v"><b>${esc(printable(frag))}</b></span>`}}
     o.innerHTML=`<div class="kv"><span class="k">keystream k (random, reused!)</span><span class="v">${H(ks.slice(0,L))}</span>
-      <span class="k">C₁ = P₁ ⊕ k</span><span class="v">${H(c1)}</span><span class="k">C₂ = P₂ ⊕ k</span><span class="v">${H(c2)}</span>
-      <span class="k">C₁ ⊕ C₂ = P₁ ⊕ P₂</span><span class="v">${H(x)}  — the key has cancelled out</span></div>
-      ${drag?`<p class="out" style="margin-top:10px">Slide the guessed word along C₁ ⊕ C₂; where it really is in P₁, the matching part of P₂ appears. Positions where the result is only letters, digits and spaces:</p><div class="kv">${drag}</div>`:''}`}
+      <span class="k">C<sub>1</sub> = P<sub>1</sub> ⊕ k</span><span class="v">${H(c1)}</span><span class="k">C<sub>2</sub> = P<sub>2</sub> ⊕ k</span><span class="v">${H(c2)}</span>
+      <span class="k">C<sub>1</sub> ⊕ C<sub>2</sub> = P<sub>1</sub> ⊕ P<sub>2</sub></span><span class="v">${H(x)}  — the key has cancelled out</span></div>
+      ${drag?`<p class="out" style="margin-top:10px">Slide the guessed word along C<sub>1</sub> ⊕ C<sub>2</sub>; where it really is in P<sub>1</sub>, the matching part of P<sub>2</sub> appears. Positions where the result is only letters, digits and spaces:</p><div class="kv">${drag}</div>`:''}`}
   ['ru-p1','ru-p2','ru-g'].forEach(id=>$(id).addEventListener('input',ru));ru();
 
   /* ===== 8.5 RC4 step-by-step ===== */

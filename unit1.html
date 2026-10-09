@@ -189,6 +189,11 @@ nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h) + 20px)}
 nav.toc ol{max-height:calc(100vh - 80px - var(--topbar-h))}
 section{scroll-margin-top:calc(70px + var(--topbar-h))}
 @media (max-width:900px){nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h))}nav.toc ol{max-height:none}}
+
+/* justified prose (wider screens only: narrow columns get large word gaps) */
+@media (min-width:600px){
+.prose p,.prose li,p.prose,.lede,.note,.def dd,.atk-desc,details.q .ans p,details.q .ans li{text-align:justify;hyphens:auto;-webkit-hyphens:auto}
+main .note .def dt,main .note .def dd,main .card *{text-align:left;hyphens:manual;-webkit-hyphens:manual}}
 </style>
 </head>
 <body>
