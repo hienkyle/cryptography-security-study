@@ -63,7 +63,7 @@ footer{font-size:.84rem;color:var(--muted);display:grid;gap:4px}
     <h1>Cryptography &amp; Network Security</h1>
     <p>Twelve units that follow the printed chapters of the textbook, with definitions, redrawn figures, animations and review questions.</p>
     <span class="book">Stallings · Cryptography and Network Security: Principles and Practice · 7th ed., Global Edition</span>
-    <div class="progress"><div class="bar"><i id="fill" style="width:8.33%"></i></div><span id="count">1 of 12 ready</span></div>
+    <div class="progress"><div class="bar"><i id="fill" style="width:41.67%"></i></div><span id="count">5 of 12 ready</span></div>
   </header>
 
   <ol class="units" id="units"></ol>
@@ -80,7 +80,7 @@ const UNITS=[
   {n:2,  t:"Number Theory",                        ch:"Ch. 2",       file:"unit2.html"},
   {n:3,  t:"Classical Ciphers & DES",              ch:"Ch. 3–4",     file:"unit3.html"},
   {n:4,  t:"Finite Fields & AES",                  ch:"Ch. 5–6",     file:"unit4.html"},
-  {n:5,  t:"Using Symmetric Ciphers",              ch:"Ch. 7–8",     file:null},
+  {n:5,  t:"Using Symmetric Ciphers",              ch:"Ch. 7–8",     file:"unit5.html"},
   {n:6,  t:"Public-Key Cryptography",              ch:"Ch. 9–10",    file:null},
   {n:7,  t:"Hashes & MACs",                        ch:"Ch. 11–12",   file:null},
   {n:8,  t:"Digital Signatures",                   ch:"Ch. 13",      file:null},
@@ -104,6 +104,6 @@ const done=UNITS.filter(u=>u.file).length;
 document.getElementById('count').textContent=done+' of 12 ready';
 document.getElementById('fill').style.width=(done/12*100)+'%';
 </script>
-<noscript><p style="padding:20px"><a href="unit1.html">Unit 1 · Security Foundations</a><br><a href="unit2.html">Unit 2 · Number Theory</a><br><a href="unit3.html">Unit 3 · Classical Ciphers &amp; DES</a><br><a href="unit4.html">Unit 4 · Finite Fields &amp; AES</a></p></noscript>
+<noscript><p style="padding:20px"><a href="unit1.html">Unit 1 · Security Foundations</a><br><a href="unit2.html">Unit 2 · Number Theory</a><br><a href="unit3.html">Unit 3 · Classical Ciphers &amp; DES</a><br><a href="unit4.html">Unit 4 · Finite Fields &amp; AES</a><br><a href="unit5.html">Unit 5 · Using Symmetric Ciphers</a></p></noscript>
 </body>
 </html>

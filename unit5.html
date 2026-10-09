@@ -1,0 +1,1639 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unit 5 · Using Symmetric Ciphers</title>
+<meta name="description" content="Study guide for Stallings, Cryptography and Network Security, Chapters 7–8: double and triple DES, meet-in-the-middle, ECB, CBC, CFB, OFB, CTR, XTS-AES, format-preserving encryption (FF1), PRNG principles, LCG, Blum Blum Shub, CTR_DRBG, ANSI X9.17, stream ciphers, RC4, TRNGs, conditioning, health tests, Intel DRNG.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,700;1,400&family=Cousine:wght@400;700&family=Noto+Sans+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: graph-paper study notebook — sticky contents rail on desktop, single column on phones; each section = one book section */
+:root{
+  --bg:#f3f4f8; --paper:#ffffff; --ink:#191b2b; --muted:#585d78; --line:#d9dce8;
+  --grid:rgba(25,27,43,.045);
+  --accent:#3f46c4; --accent-soft:#e5e7fb; --mark:#b8580f; --mark-soft:#fcebdc;
+  --bad:#b4372f; --bad-soft:#f9e1de;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono:"Cousine", "Noto Sans Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10121c; --paper:#171a28; --ink:#e6e8f2; --muted:#9ca1bb; --line:#2c3048;
+  --grid:rgba(230,232,242,.04);
+  --accent:#9ea6ff; --accent-soft:#232955; --mark:#f6a25a; --mark-soft:#3b2615;
+  --bad:#f08c84; --bad-soft:#3c1d1a; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#10121c; --paper:#171a28; --ink:#e6e8f2; --muted:#9ca1bb; --line:#2c3048;
+  --grid:rgba(230,232,242,.04);
+  --accent:#9ea6ff; --accent-soft:#232955; --mark:#f6a25a; --mark-soft:#3b2615;
+  --bad:#f08c84; --bad-soft:#3c1d1a; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16.5px;line-height:1.6;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;padding-inline:16px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;padding-block:32px 80px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr);gap:16px}}
+
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;font-size:.88rem}
+nav.toc .lbl{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+nav.toc a{display:flex;gap:10px;padding:5px 8px;border-radius:6px;color:var(--ink);text-decoration:none}
+nav.toc a span{font-family:var(--mono);color:var(--accent);min-width:2.6em;font-size:.8rem;padding-top:2px}
+nav.toc a{position:relative;transition:background .15s,color .15s}
+nav.toc a:hover,nav.toc a:focus-visible{background:var(--accent-soft);outline:none}
+nav.toc a.active{background:var(--accent);color:var(--paper);font-weight:700}
+nav.toc a.active span{color:var(--paper)}
+nav.toc .bar{height:3px;background:var(--line);border-radius:2px;margin:12px 0 0;overflow:hidden}
+nav.toc .bar i{display:block;height:100%;width:0;background:var(--accent)}
+@media (max-width:900px){
+  nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border:1px solid var(--line);border-radius:0 0 10px 10px;padding:8px 10px;margin-inline:-4px}
+  nav.toc .lbl{display:none}
+  nav.toc ol{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth}
+  nav.toc ol::-webkit-scrollbar{display:none}
+  nav.toc li{flex:0 0 auto}
+  nav.toc a{white-space:nowrap;padding:5px 10px}
+  nav.toc .bar{margin-top:8px}
+  section.unit{scroll-margin-top:72px}}
+
+main{min-width:0}
+header.hero{padding-block:8px 28px;border-bottom:2px solid var(--ink);margin-bottom:28px}
+.eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,6vw,4rem);line-height:1;margin:.25em 0 .3em;letter-spacing:-.02em;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{max-width:65ch;color:var(--muted);margin:0}
+.formula-strip{font-family:var(--mono);font-size:.85rem;color:var(--muted);margin-top:18px;display:flex;flex-wrap:wrap;gap:8px 18px}
+.formula-strip b{color:var(--ink);font-weight:600}
+
+section.unit{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:28px clamp(18px,4vw,40px);margin-bottom:28px;scroll-margin-top:20px}
+h2{font-family:var(--display);font-weight:700;font-size:1.75rem;line-height:1.15;margin:0 0 4px;text-wrap:balance;display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
+h2 .sec{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:600}
+h3{font-family:var(--display);font-weight:700;font-size:1.2rem;margin:28px 0 8px}
+.why{color:var(--muted);font-size:.95rem;margin:0 0 18px;max-width:70ch}
+p,li{max-width:70ch}
+code,.m{font-family:var(--mono);font-size:.9em}
+.m{white-space:nowrap}
+.m.wr{white-space:normal;overflow-wrap:anywhere}
+.def,.ex,.warn{min-width:0;overflow-wrap:break-word}
+.gk{font-family:var(--mono);font-style:normal}
+
+.def{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+.def b:first-child{font-family:var(--display);font-weight:700}
+.eq{font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;overflow-x:auto;white-space:pre;line-height:1.7;font-size:.92rem}
+.eq .n{color:var(--muted)}
+.eqrows{display:grid;gap:8px;margin:12px 0}
+.eqrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px 14px;align-items:center;font-family:var(--mono);font-size:.92rem;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.eqrow .ex1{min-width:0;line-height:1.6}
+.eqrow .n{color:var(--muted)}
+.eqrow .tag{font-size:.75rem;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--accent-soft);color:var(--accent)}
+.tag.no{background:var(--bad-soft);color:var(--bad)}
+@media (max-width:560px){.eqrow{grid-template-columns:minmax(0,1fr) auto}.eqrow .ex1{grid-column:1 / -1}}
+.ex{border:1px dashed var(--mark);background:var(--mark-soft);border-radius:8px;padding:10px 16px;margin:12px 0}
+.ex .t{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mark);font-weight:600}
+.ex .eq{background:transparent;border:0;padding:4px 0;margin:2px 0}
+.warn{border-left:3px solid var(--bad);background:var(--bad-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+ul.props{padding-left:1.2em}
+ul.props li{margin:4px 0}
+
+/* tables */
+.tbl{overflow-x:auto;margin:12px 0}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.9rem}
+th,td{border:1px solid var(--line);padding:5px 9px;text-align:center}
+th{background:var(--bg);font-family:var(--mono);font-weight:600;font-size:.8rem}
+td.l,th.l{text-align:left}
+td.hi{background:var(--accent-soft);font-weight:700}
+td.one{background:var(--mark-soft);font-weight:700}
+td.dim{color:var(--muted)}
+
+/* interactive lab */
+.lab{border:1px solid var(--line);border-radius:12px;margin:18px 0;overflow:hidden}
+.lab-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--line)}
+.lab-h .t{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.lab-b{padding:14px}
+.controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:end;margin-bottom:12px}
+.controls label{display:grid;gap:3px;font-size:.78rem;font-family:var(--mono);color:var(--muted)}
+input[type=number]{width:9.5em;font:inherit;font-family:var(--mono);font-size:.95rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+button{font-family:var(--mono);font-size:.82rem;padding:7px 12px;border:1px solid var(--accent);background:var(--accent);color:var(--paper);border-radius:6px;cursor:pointer}
+button.ghost{background:transparent;color:var(--accent)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.out{font-family:var(--mono);font-size:.9rem}
+.out .res{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:600}
+.res.ok{background:var(--accent-soft);color:var(--accent)}
+.res.no{background:var(--bad-soft);color:var(--bad)}
+.err{color:var(--bad);font-family:var(--mono);font-size:.85rem}
+svg text{font-family:var(--mono)}
+.figure{margin:16px 0;overflow-x:auto}
+.figure svg{display:block;max-width:100%;height:auto}
+.cap{font-size:.82rem;color:var(--muted);margin-top:6px}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.grid2>*{min-width:0}
+
+/* totient grid */
+.cells{display:flex;flex-wrap:wrap;gap:4px}
+.cells span{font-family:var(--mono);font-size:.78rem;width:2.6em;text-align:center;padding:4px 0;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.cells span.on{background:var(--accent);border-color:var(--accent);color:var(--paper);font-weight:600}
+
+/* mapping row */
+.maprow{display:grid;grid-template-columns:7.5em repeat(8,minmax(2.2em,1fr));gap:4px;font-family:var(--mono);font-size:.85rem;min-width:420px}
+.maprow div{padding:5px 0;text-align:center;border-radius:4px}
+.maprow .h{text-align:left;color:var(--muted);font-size:.75rem;padding-top:7px}
+.maprow .c{background:var(--bg)}
+.maprow .dup{background:var(--bad-soft);color:var(--bad);font-weight:600}
+.maprow .uni{background:var(--accent-soft);color:var(--accent);font-weight:600}
+
+/* glossary & review */
+dl.gloss{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr);gap:0;margin:0}
+dl.gloss dt,dl.gloss dd{padding:9px 0;border-bottom:1px solid var(--line);margin:0}
+dl.gloss dt{font-family:var(--display);font-weight:700;padding-right:16px}
+@media (max-width:560px){dl.gloss{grid-template-columns:minmax(0,1fr)} dl.gloss dt{border-bottom:0;padding-bottom:0}}
+details{border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:8px 0;background:var(--paper)}
+summary{cursor:pointer;font-weight:700}
+details p{margin:.6em 0 0}
+.src{font-size:.85rem;color:var(--muted)}
+.src a,a{color:var(--accent)}
+footer{font-size:.82rem;color:var(--muted);margin-top:24px}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---- Sticky "All units" bar + back-to-top (shared across unit pages) ---- */
+:root{--topbar-h:52px}
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.topbar-in{max-width:1180px;margin:0 auto;height:var(--topbar-h);padding-inline:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.topbar a.home{flex:0 0 auto;font-family:var(--f-mono,var(--mono));font-size:.84rem;font-weight:600;color:var(--ink);text-decoration:none;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface,var(--paper))}
+.topbar a.home:hover{border-color:var(--accent);color:var(--accent)}
+.topbar a.home:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.topbar .where{min-width:0;font-family:var(--f-mono,var(--mono));font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.to-top{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono,var(--mono));font-size:.82rem;font-weight:600;padding:10px 14px;border:1px solid var(--accent);border-radius:999px;background:var(--accent);color:var(--surface,var(--paper));cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.18);opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .2s,transform .2s,visibility 0s linear .2s}
+.to-top.show{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .2s}
+.to-top:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.to-top{transition:none}}
+
+.topbar{margin-inline:-16px}
+.topbar-in{padding-inline:16px}
+nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h) + 20px)}
+section.unit{scroll-margin-top:calc(20px + var(--topbar-h))}
+@media (max-width:900px){nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h))}section.unit{scroll-margin-top:calc(72px + var(--topbar-h))}}
+
+input[type=text],textarea,select{font:inherit;font-family:var(--mono);font-size:.92rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);max-width:100%}
+input[type=text]{width:18em}
+input.wide{width:min(34em,100%)}
+textarea{width:100%;min-height:4.6em;resize:vertical}
+input[type=range]{accent-color:var(--accent)}
+.controls label.grow{flex:1 1 280px}
+.controls label.grow input,.controls label.grow textarea{width:100%}
+.mono{font-family:var(--mono)}
+.big{font-family:var(--mono);font-size:1.05rem;letter-spacing:.06em;overflow-wrap:anywhere}
+.hlrow td{background:var(--accent-soft);font-weight:700;color:var(--accent)}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:12px 0}
+.cmp>div{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--paper);min-width:0}
+.cmp h4{margin:0 0 6px;font-family:var(--display);font-size:1.02rem}
+.cmp p{margin:0;font-size:.95rem}
+.diffbit{color:var(--bad);font-weight:700}
+@media (max-width:560px){input[type=text]{width:100%}}
+/* ---- Unit 5 additions ---- */
+.mf svg{min-width:620px}
+.mf .col{transition:opacity .3s}
+.mf.anim .col{opacity:.18}
+.mf.anim .col.on{opacity:1}
+.mf .box{fill:var(--paper);stroke:var(--accent);stroke-width:1.4}
+.mf .box.enc{fill:var(--accent-soft)}
+.mf .xo{fill:var(--paper);stroke:var(--ink);stroke-width:1.3}
+.mf .ln{stroke:var(--ink);stroke-width:1.3;fill:none}
+.mf .fb{stroke:var(--mark);stroke-width:1.6;fill:none}
+.mf .lb{fill:var(--ink);font-size:12px}
+.mf .lbm{fill:var(--muted);font-size:10.5px}
+.mf .lbf{fill:var(--mark);font-size:10.5px}
+.mf.anim .col.on .box.enc{fill:var(--mark-soft);stroke:var(--mark)}
+.figbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 6px}
+.bytes{display:flex;flex-wrap:wrap;gap:3px;font-family:var(--mono);font-size:.74rem}
+.bytes span{min-width:1.95em;text-align:center;padding:2px 0;border-radius:3px;background:var(--bg);border:1px solid var(--line)}
+.bytes span.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);font-weight:700}
+.bytes span.flip{background:var(--mark);border-color:var(--mark);color:var(--paper);font-weight:700}
+.bytes span.gap{margin-left:8px}
+.blkrow{display:grid;grid-template-columns:5.6em minmax(0,1fr);gap:4px 10px;align-items:start;margin:6px 0}
+.blkrow .h{font-family:var(--mono);font-size:.74rem;color:var(--muted);padding-top:3px}
+canvas.px{image-rendering:pixelated;width:192px;height:192px;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+.pxrow{display:flex;flex-wrap:wrap;gap:16px}
+.pxrow figure{margin:0;display:grid;gap:4px;justify-items:start}
+.pxrow figcaption{font-family:var(--mono);font-size:.74rem;color:var(--muted)}
+.rc4grid{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;font-family:var(--mono);font-size:.62rem;max-width:560px}
+.rc4grid div{text-align:center;padding:2px 0;border-radius:3px;background:var(--bg);color:var(--muted);transition:background .2s,color .2s}
+.rc4grid div.i{background:var(--accent);color:var(--paper);font-weight:700}
+.rc4grid div.j{background:var(--mark);color:var(--paper);font-weight:700}
+.rc4grid div.t{outline:2px solid var(--bad);outline-offset:-2px;color:var(--ink);font-weight:700}
+.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;font-family:var(--mono);font-size:.84rem;align-items:baseline}
+.kv .k{color:var(--muted)}
+.kv .v{overflow-wrap:anywhere}
+.pill{display:inline-block;font-family:var(--mono);font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.pill.no{background:var(--bad-soft);color:var(--bad)}
+.pill.mk{background:var(--mark-soft);color:var(--mark)}
+.note{border-left:3px solid var(--mark);background:var(--mark-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0;font-size:.95rem}
+.note .t{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mark);font-weight:600;display:block;margin-bottom:2px}
+.modes td,.modes th{text-align:left;vertical-align:top}
+.modes td.c{text-align:center}
+.bitstr{font-family:var(--mono);font-size:.8rem;overflow-wrap:anywhere;line-height:1.5}
+.bitstr b{color:var(--accent)}
+.bitstr i{font-style:normal;color:var(--muted);text-decoration:line-through}
+select{font:inherit;font-family:var(--mono);font-size:.88rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+@media (max-width:560px){.blkrow{grid-template-columns:minmax(0,1fr)}.blkrow .h{padding-top:0}canvas.px{width:150px;height:150px}.kv{grid-template-columns:minmax(0,1fr)}.kv .k{margin-top:4px}}
+.op{font-family:var(--mono);font-size:.92em}
+.seg{display:inline-flex;border:1px solid var(--accent);border-radius:6px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent;color:var(--accent)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--paper)}
+.eq sub,.kv sub{font-size:.75em}
+.pseudo{font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;overflow-x:auto;white-space:pre;line-height:1.55;font-size:.86rem}
+.pseudo .kw{color:var(--accent);font-weight:600}
+.pseudo .cm{color:var(--muted)}
+sub{line-height:0;font-size:.75em}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-in"><a class="home" href="./">← All units</a><span class="where">Unit 5 · Using Symmetric Ciphers</span></div></header>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <div class="lbl">Contents</div>
+  <ol>
+    <li><a href="#s71"><span>7.1</span>Multiple encryption &amp; 3DES</a></li>
+    <li><a href="#s72"><span>7.2</span>ECB</a></li>
+    <li><a href="#s73"><span>7.3</span>CBC</a></li>
+    <li><a href="#s74"><span>7.4</span>CFB</a></li>
+    <li><a href="#s75"><span>7.5</span>OFB</a></li>
+    <li><a href="#s76"><span>7.6</span>CTR &amp; comparison</a></li>
+    <li><a href="#s77"><span>7.7</span>XTS-AES</a></li>
+    <li><a href="#s78"><span>7.8</span>Format-preserving encryption</a></li>
+    <li><a href="#s81"><span>8.1</span>Randomness principles</a></li>
+    <li><a href="#s82"><span>8.2</span>LCG &amp; BBS</a></li>
+    <li><a href="#s83"><span>8.3</span>Block-cipher PRNGs</a></li>
+    <li><a href="#s84"><span>8.4</span>Stream ciphers</a></li>
+    <li><a href="#s85"><span>8.5</span>RC4</a></li>
+    <li><a href="#s86"><span>8.6</span>True random generators</a></li>
+    <li><a href="#terms">Key terms</a></li>
+    <li><a href="#review">Review</a></li>
+    <li><a href="#res"><span>Ref</span>Sources</a></li>
+  </ol>
+  <div class="bar" aria-hidden="true"><i id="toc-progress"></i></div>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Unit 5 · Stallings, Chapters 7–8</div>
+  <h1>Using <em>Symmetric Ciphers</em></h1>
+  <p class="lede">A block cipher on its own encrypts exactly one b-bit block. Chapter 7 shows how to use one on real data: repeating it (triple DES), chaining blocks together (the five NIST modes), encrypting disk sectors (XTS-AES), and keeping a field’s format (FPE). Chapter 8 covers the random and pseudorandom bits that keys, IVs, nonces and stream ciphers depend on.</p>
+  <div class="formula-strip">
+    <span><b>3DES: C = E(K3, D(K2, E(K1, P)))</b></span>
+    <span><b>CBC: C<sub>j</sub> = E(K, P<sub>j</sub> <span class="op">⊕</span> C<sub>j−1</sub>)</b></span>
+    <span><b>CTR: C<sub>j</sub> = P<sub>j</sub> <span class="op">⊕</span> E(K, T<sub>j</sub>)</b></span>
+    <span><b>BBS: X<sub>i</sub> = X<sub>i−1</sub>² mod n</b></span>
+    <span><b>Stream: c<sub>i</sub> = p<sub>i</sub> <span class="op">⊕</span> k<sub>i</sub></b></span>
+  </div>
+</header>
+
+<!-- ============ 7.1 ============ -->
+<section class="unit" id="s71">
+  <h2><span class="sec">7.1</span>Multiple Encryption and Triple DES</h2>
+  <p class="why">DES’s 56-bit key is too short for brute force resistance. One fix is a new cipher (AES); the other keeps existing DES hardware and software and runs DES several times with several keys.</p>
+
+  <div class="figure" aria-label="Double and triple encryption">
+    <svg viewBox="0 0 760 230" role="img" aria-labelledby="me-t">
+      <title id="me-t">Double encryption passes P through E with K1 then E with K2, intermediate X. Triple encryption uses E with K1, D with K2, then E with K1 or K3, intermediates A and B.</title>
+      <defs><marker id="ar1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink)"/></marker></defs>
+      <g font-size="12">
+        <text x="10" y="22" fill="var(--muted)" font-size="11">(a) Double encryption</text>
+        <text x="20" y="66" fill="var(--ink)">P</text><line x1="34" y1="62" x2="84" y2="62" stroke="var(--ink)" marker-end="url(#ar1)"/>
+        <rect x="86" y="42" width="60" height="40" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="116" y="67" text-anchor="middle" fill="var(--ink)" font-weight="600">E</text><text x="116" y="100" text-anchor="middle" fill="var(--muted)" font-size="11">K1</text>
+        <line x1="146" y1="62" x2="216" y2="62" stroke="var(--ink)" marker-end="url(#ar1)"/><text x="181" y="55" text-anchor="middle" fill="var(--mark)" font-weight="600">X</text>
+        <rect x="218" y="42" width="60" height="40" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="248" y="67" text-anchor="middle" fill="var(--ink)" font-weight="600">E</text><text x="248" y="100" text-anchor="middle" fill="var(--muted)" font-size="11">K2</text>
+        <line x1="278" y1="62" x2="328" y2="62" stroke="var(--ink)" marker-end="url(#ar1)"/><text x="334" y="66" fill="var(--ink)">C</text>
+        <text x="10" y="142" fill="var(--muted)" font-size="11">(b) Triple encryption (EDE)</text>
+        <text x="20" y="186" fill="var(--ink)">P</text><line x1="34" y1="182" x2="84" y2="182" stroke="var(--ink)" marker-end="url(#ar1)"/>
+        <rect x="86" y="162" width="60" height="40" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="116" y="187" text-anchor="middle" fill="var(--ink)" font-weight="600">E</text><text x="116" y="220" text-anchor="middle" fill="var(--muted)" font-size="11">K1</text>
+        <line x1="146" y1="182" x2="216" y2="182" stroke="var(--ink)" marker-end="url(#ar1)"/><text x="181" y="175" text-anchor="middle" fill="var(--mark)" font-weight="600">A</text>
+        <rect x="218" y="162" width="60" height="40" rx="6" fill="var(--paper)" stroke="var(--accent)"/><text x="248" y="187" text-anchor="middle" fill="var(--ink)" font-weight="600">D</text><text x="248" y="220" text-anchor="middle" fill="var(--muted)" font-size="11">K2</text>
+        <line x1="278" y1="182" x2="348" y2="182" stroke="var(--ink)" marker-end="url(#ar1)"/><text x="313" y="175" text-anchor="middle" fill="var(--mark)" font-weight="600">B</text>
+        <rect x="350" y="162" width="60" height="40" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="380" y="187" text-anchor="middle" fill="var(--ink)" font-weight="600">E</text><text x="380" y="220" text-anchor="middle" fill="var(--muted)" font-size="11">K1 (2-key) or K3 (3-key)</text>
+        <line x1="410" y1="182" x2="460" y2="182" stroke="var(--ink)" marker-end="url(#ar1)"/><text x="466" y="186" fill="var(--ink)">C</text>
+        <rect x="496" y="40" width="258" height="170" rx="10" fill="var(--bg)" stroke="var(--line)"/>
+        <text x="508" y="64" fill="var(--ink)" font-weight="600">Decryption reverses the order</text>
+        <text x="508" y="90" fill="var(--muted)" font-size="11">Double:  P = D(K1, D(K2, C))</text>
+        <text x="508" y="114" fill="var(--muted)" font-size="11">2-key:   P = D(K1, E(K2, D(K1, C)))</text>
+        <text x="508" y="138" fill="var(--muted)" font-size="11">3-key:   P = D(K1, E(K2, D(K3, C)))</text>
+        <text x="508" y="170" fill="var(--ink)" font-size="11">K1 = K2  ⇒  E(K1, P): plain DES</text>
+        <text x="508" y="190" fill="var(--muted)" font-size="10.5">(backward compatibility)</text>
+      </g>
+    </svg>
+    <div class="cap">Redrawn from Figure 7.1.</div>
+  </div>
+
+  <h3>Double DES</h3>
+  <div class="eq">C = E(K2, E(K1, P))        P = D(K1, D(K2, C))</div>
+  <p>The key appears to be 2 × 56 = 112 bits. Two questions decide whether that is real strength:</p>
+  <ul class="props">
+    <li><b>Reduction to a single stage.</b> If for every K1, K2 there were a K3 with E(K2, E(K1, P)) = E(K3, P) (Eq. 7.1), any number of DES stages would equal one DES. This is believed not to happen: with a fixed key, DES is a <i>permutation</i> of the 2⁶⁴ possible blocks (each input maps to a unique output, otherwise decryption would fail). There are (2⁶⁴)! &gt; 10<sup>10<sup>20</sup></sup> such permutations but DES keys select at most 2⁵⁶ &lt; 10¹⁷ of them, so composing two DES mappings almost certainly gives a mapping that no single key produces.</li>
+    <li><b>Meet-in-the-middle.</b> The attack below breaks double encryption with far less than 2¹¹² work, for <i>any</i> block cipher.</li>
+  </ul>
+
+  <h3>Meet-in-the-middle attack</h3>
+  <div class="def"><b>Meet-in-the-middle attack</b> — a known-plaintext attack on double encryption. It uses the fact that the middle value can be reached from both ends: <span class="m">X = E(K1, P) = D(K2, C)</span>.</div>
+  <ol>
+    <li>Given a known pair (P, C), encrypt P under all 2⁵⁶ values of K1; store the results X in a table sorted by X.</li>
+    <li>Decrypt C under all 2⁵⁶ values of K2. Look each result up in the table.</li>
+    <li>Every match gives a candidate (K1, K2). Test candidates on a second known pair; keep the ones that also work.</li>
+  </ol>
+  <p><b>Why a second pair is needed:</b> there are 2¹¹² keys but only 2⁶⁴ possible ciphertexts, so about 2¹¹²/2⁶⁴ = 2⁴⁸ wrong key pairs also map P to C (“false alarms”). A second 64-bit pair cuts this to 2⁴⁸⁻⁶⁴ = 2⁻¹⁶, so the correct keys are found with probability 1 − 2⁻¹⁶. Total work is on the order of 2⁵⁶ — barely more than the 2⁵⁵ average for single DES.</p>
+
+  <div class="lab" id="lab-mitm">
+    <div class="lab-h"><span class="t">Lab · Meet-in-the-middle on a toy cipher</span><span class="pill mk">toy 8-bit cipher, not DES</span></div>
+    <div class="lab-b">
+      <p class="src">To make the numbers small enough to run, this lab uses an invented 8-bit block cipher with 8-bit keys: E(k, p) = rotl<sub>1</sub>(S[p <span class="op">⊕</span> k]) <span class="op">⊕</span> k, where S is the AES S-box. Double encryption then has a 16-bit key (65 536 key pairs) — the same structure as double DES with every exponent scaled down. In the result, the blue pill is the true key pair and orange pills are false alarms that survived.</p>
+      <div class="controls">
+        <label>K1 (0–255)<input type="number" id="mm-k1" min="0" max="255" value="57"></label>
+        <label>K2 (0–255)<input type="number" id="mm-k2" min="0" max="255" value="200"></label>
+        <label>P<sub>1</sub><input type="number" id="mm-p1" min="0" max="255" value="17"></label>
+        <label>P<sub>2</sub><input type="number" id="mm-p2" min="0" max="255" value="138"></label>
+        <button id="mm-run" type="button">Run attack</button>
+      </div>
+      <div class="out" id="mm-out" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <h3>Triple DES with two keys</h3>
+  <div class="eq">C = E(K1, D(K2, E(K1, P)))        P = D(K1, E(K2, D(K1, C)))</div>
+  <p>The sequence is encrypt–decrypt–encrypt (<b>EDE</b>). Using D in the middle adds no cryptographic strength; it only lets 3DES talk to single DES, since setting K2 = K1 collapses it to E(K1, P). 3DES is also called the Triple Data Encryption Algorithm (TDEA), standardized in NIST SP 800-67.</p>
+  <p>Brute force on two-key 3DES costs about 2¹¹² ≈ 5 × 10³³. The attacks the book describes are all impractical:</p>
+  <ul class="props">
+    <li><b>Chosen-plaintext attack</b> — find plaintexts that make the first intermediate value A = 0, then meet in the middle. Effort about 2⁵⁶, but it needs 2⁵⁶ chosen plaintext–ciphertext pairs.</li>
+    <li><b>Known-plaintext attack</b> — if A and C were known, the problem would reduce to attacking double DES. The attacker guesses a value a for A, uses n known (P, C) pairs to build candidate K1 values (P<sub>i</sub> = D(i, a) must match a known P, Figure 7.2), then searches K2. Expected effort ≈ 2⁵⁶ · 2⁶⁴/n = 2<sup>120 − log<sub>2</sub> n</sup>.</li>
+  </ul>
+
+  <h3>Triple DES with three keys</h3>
+  <div class="eq">C = E(K3, D(K2, E(K1, P)))</div>
+  <p>Compatible with DES by setting K3 = K2 or K1 = K2. Although the key is 3 × 56 = 168 bits, a meet-in-the-middle attack reduces its strength to about that of a 112-bit key. NIST SP 800-57 recommends retiring two-key 3DES in favour of three-key 3DES.</p>
+  <div class="note"><span class="t">Current status (outside the book)</span>NIST withdrew SP 800-67 on January 1, 2024: TDEA is no longer approved for encryption, key wrapping or MAC generation, and remains allowed only for decrypting or verifying data already protected with it. See Sources.</div>
+</section>
+
+<!-- ============ 7.2 ============ -->
+<section class="unit" id="s72">
+  <h2><span class="sec">7.2</span>Electronic Codebook</h2>
+  <p class="why">A block cipher maps a b-bit block and a key to a b-bit block (b = 64 for DES/3DES, 128 for AES). Longer data is split into b-bit blocks, and how those blocks are combined is the mode.</p>
+  <div class="def"><b>Mode of operation</b> — a technique that adapts a block cipher to an application, such as encrypting a sequence of blocks or a data stream. NIST SP 800-38A defines five (ECB, CBC, CFB, OFB, CTR) for use with any symmetric block cipher, including 3DES and AES.</div>
+  <div class="def"><b>Padding</b> — extra bits appended so the last block is a full b bits. ECB and CBC (and CFB with s-bit segments) need it; OFB and CTR do not.</div>
+  <div class="def"><b>Electronic codebook (ECB)</b> — each plaintext block is encrypted independently with the same key. For a given key, every b-bit plaintext has one fixed ciphertext, like an entry in a giant codebook.</div>
+  <div class="eq">C<sub>j</sub> = E(K, P<sub>j</sub>)        P<sub>j</sub> = D(K, C<sub>j</sub>)        j = 1, …, N</div>
+  <div class="mf figure" data-mode="ECB"></div>
+  <p><b>Weakness:</b> identical plaintext blocks always give identical ciphertext blocks. In long, structured messages this leaks patterns, gives known plaintext–ciphertext pairs (e.g. fixed headers), and lets an attacker substitute or rearrange blocks. ECB should be used only for data no longer than one block, such as a single encryption key.</p>
+
+  <div class="lab" id="lab-px">
+    <div class="lab-h"><span class="t">Lab · What ECB leaks</span><span class="pill">AES-128, live</span></div>
+    <div class="lab-b">
+      <p class="src">A 128 × 128 image (one byte per pixel) is encrypted with AES-128. Every 16 consecutive pixels in a row form one block; ciphertext bytes are shown as grey levels.</p>
+      <div class="controls"><label>Image<select id="px-shape"><option value="lock">Padlock</option><option value="text">Text “ECB”</option><option value="rings">Rings</option></select></label><button class="ghost" id="px-key" type="button">New random key</button></div>
+      <div class="pxrow">
+        <figure><canvas class="px" id="px-p" width="128" height="128"></canvas><figcaption>Plaintext</figcaption></figure>
+        <figure><canvas class="px" id="px-ecb" width="128" height="128"></canvas><figcaption>ECB</figcaption></figure>
+        <figure><canvas class="px" id="px-cbc" width="128" height="128"></canvas><figcaption>CBC (random IV)</figcaption></figure>
+      </div>
+    </div>
+  </div>
+
+  <h3>Criteria for evaluating modes</h3>
+  <p>Properties for judging modes that improve on ECB (from [KNUD00], as listed in the book):</p>
+  <ul class="props">
+    <li><b>Overhead</b> — extra work for encryption and decryption compared with ECB.</li>
+    <li><b>Error recovery</b> — a bit error in the iᵗʰ ciphertext block affects only a few plaintext blocks, after which the mode resynchronizes.</li>
+    <li><b>Error propagation</b> — a bit error in the iᵗʰ ciphertext block (a transmission error, not a computation error) affects the iᵗʰ and all later plaintext blocks.</li>
+    <li><b>Diffusion</b> — how plaintext statistics show in the ciphertext. Low-entropy (predictable) plaintext blocks should not be reflected in the ciphertext.</li>
+    <li><b>Security</b> — whether ciphertext blocks leak information about plaintext blocks.</li>
+  </ul>
+</section>
+
+<!-- ============ 7.3 ============ -->
+<section class="unit" id="s73">
+  <h2><span class="sec">7.3</span>Cipher Block Chaining Mode</h2>
+  <p class="why">Goal: a repeated plaintext block should produce different ciphertext blocks. CBC gets this by mixing each plaintext block with the previous ciphertext block before encrypting.</p>
+  <div class="def"><b>Initialization vector (IV)</b> — a b-bit block (same size as the cipher block) used in place of the “previous ciphertext block” for the first block. Sender and receiver must both know it, but a third party must not be able to predict it.</div>
+  <div class="def"><b>Cipher block chaining (CBC)</b> — the input to the encryption function is the XOR of the current plaintext block and the preceding ciphertext block; the same key is used for every block.</div>
+  <div class="eq">C<sub>1</sub> = E(K, P<sub>1</sub> <span class="op">⊕</span> IV)          C<sub>j</sub> = E(K, P<sub>j</sub> <span class="op">⊕</span> C<sub>j−1</sub>)   j = 2, …, N
+P<sub>1</sub> = D(K, C<sub>1</sub>) <span class="op">⊕</span> IV          P<sub>j</sub> = D(K, C<sub>j</sub>) <span class="op">⊕</span> C<sub>j−1</sub>   j = 2, …, N</div>
+  <div class="mf figure" data-mode="CBC"></div>
+  <p><b>Why decryption works:</b> D(K, C<sub>j</sub>) = D(K, E(K, C<sub>j−1</sub> <span class="op">⊕</span> P<sub>j</sub>)) = C<sub>j−1</sub> <span class="op">⊕</span> P<sub>j</sub>, and XORing with C<sub>j−1</sub> leaves P<sub>j</sub>.</p>
+  <h3>Protecting the IV</h3>
+  <p>The IV should be protected against unauthorized change (e.g. sent with ECB encryption). Because P<sub>1</sub> = IV <span class="op">⊕</span> D(K, C<sub>1</sub>), bit by bit P<sub>1</sub>[i] = IV[i] <span class="op">⊕</span> D(K, C<sub>1</sub>)[i]: an opponent who flips IV[i] flips P<sub>1</sub>[i] at the receiver, without knowing the key.</p>
+  <div class="def"><b>Nonce</b> — a time-varying value with at most a negligible chance of repeating: e.g. a fresh random value, a timestamp, a sequence number, or a combination (NIST SP 800-90 definition).</div>
+  <p>Any unpredictable IV works. SP 800-38A suggests two ways: (1) encrypt a nonce under the same key used for the message; or (2) generate a random block with a random number generator.</p>
+  <p><b>Uses:</b> general-purpose block-oriented transmission of messages longer than b bits, and authentication (CBC-MAC, Chapter 12). Like ECB, CBC pads the last block.</p>
+</section>
+
+<!-- ============ 7.4 ============ -->
+<section class="unit" id="s74">
+  <h2><span class="sec">7.4</span>Cipher Feedback Mode</h2>
+  <p class="why">CFB, OFB and CTR turn a block cipher into a stream cipher: no padding, ciphertext the same length as the plaintext, and each character (e.g. s = 8 bits) can be sent as soon as it is typed.</p>
+  <div class="def"><b>Stream cipher</b> — encrypts a data stream one bit or one byte (generally s bits) at a time, usually by XORing it with a key-dependent pseudorandom stream (Section 8.4).</div>
+  <div class="def"><b>Shift register</b> — here, a b-bit register whose contents are shifted left by s bits each step, with s new bits entering on the right.</div>
+  <div class="def"><b>MSB<sub>s</sub>(X), LSB<sub>s</sub>(X)</b> — the s most / least significant (leftmost / rightmost) bits of X. <b>‖</b> is concatenation.</div>
+  <div class="def"><b>Cipher feedback (CFB)</b> — the plaintext is processed s bits at a time. A b-bit shift register (starting at the IV) is encrypted; the leftmost s output bits are XORed with the plaintext segment to give the ciphertext segment, which is then shifted into the register.</div>
+  <div class="eq">I<sub>1</sub> = IV        I<sub>j</sub> = LSB<sub>b−s</sub>(I<sub>j−1</sub>) ‖ C<sub>j−1</sub>        O<sub>j</sub> = E(K, I<sub>j</sub>)
+C<sub>j</sub> = P<sub>j</sub> <span class="op">⊕</span> MSB<sub>s</sub>(O<sub>j</sub>)            P<sub>j</sub> = C<sub>j</sub> <span class="op">⊕</span> MSB<sub>s</sub>(O<sub>j</sub>)</div>
+  <div class="mf figure" data-mode="CFB"></div>
+  <ul class="props">
+    <li><b>Decryption uses E, not D.</b> C<sub>1</sub> = P<sub>1</sub> <span class="op">⊕</span> MSB<sub>s</sub>[E(K, IV)] rearranges to P<sub>1</sub> = C<sub>1</sub> <span class="op">⊕</span> MSB<sub>s</sub>[E(K, IV)]; the receiver regenerates the same O<sub>j</sub>.</li>
+    <li><b>Not a typical stream cipher:</b> the bits XORed with the plaintext depend on earlier ciphertext, hence on earlier plaintext — not only on the key and IV.</li>
+    <li><b>Parallelism:</b> encryption cannot be parallelized (each register needs the previous ciphertext). Decryption can, once the input blocks are built in series from the IV and ciphertext.</li>
+    <li><b>Uses:</b> general-purpose stream-oriented transmission; authentication.</li>
+  </ul>
+</section>
+
+<!-- ============ 7.5 ============ -->
+<section class="unit" id="s75">
+  <h2><span class="sec">7.5</span>Output Feedback Mode</h2>
+  <p class="why">OFB looks like CFB, but the feedback is the encryption output itself, not the ciphertext — so the pseudorandom stream never depends on the message.</p>
+  <div class="def"><b>Output feedback (OFB)</b> — the output of each encryption is fed back as the input to the next encryption; the outputs are XORed with full plaintext blocks.</div>
+  <div class="eq">I<sub>1</sub> = Nonce      I<sub>j</sub> = O<sub>j−1</sub>      O<sub>j</sub> = E(K, I<sub>j</sub>)
+C<sub>j</sub> = P<sub>j</sub> <span class="op">⊕</span> O<sub>j</sub>   (j = 1 … N−1)         C*<sub>N</sub> = P*<sub>N</sub> <span class="op">⊕</span> MSB<sub>u</sub>(O<sub>N</sub>)
+P<sub>j</sub> = C<sub>j</sub> <span class="op">⊕</span> O<sub>j</sub>   (j = 1 … N−1)         P*<sub>N</sub> = C*<sub>N</sub> <span class="op">⊕</span> MSB<sub>u</sub>(O<sub>N</sub>)</div>
+  <p class="src">* marks a final partial block of u &lt; b bits; only the leftmost u bits of O<sub>N</sub> are used and the rest discarded.</p>
+  <div class="mf figure" data-mode="OFB"></div>
+  <ul class="props">
+    <li><b>The IV must be a nonce.</b> O<sub>1</sub>, O<sub>2</sub>, … depend only on K and the IV. Reusing them on two messages means a known plaintext block in one reveals that part of the O<sub>i</sub> stream, and therefore the matching block of the other.</li>
+    <li><b>Advantage:</b> bit errors do not propagate. An error in C<sub>1</sub> affects only P<sub>1</sub>. (In CFB, C<sub>1</sub> also enters the shift register and corrupts later segments.)</li>
+    <li><b>Disadvantage:</b> more vulnerable to message stream modification than CFB. Flipping a ciphertext bit flips exactly that plaintext bit, so an opponent can make controlled changes to both data and checksum that an error-correcting code will not detect.</li>
+    <li>OFB has the structure of a typical stream cipher (key + initial value → bit stream <span class="op">⊕</span> plaintext), but works a full block at a time. <b>Use:</b> stream-oriented transmission over noisy channels (e.g. satellite).</li>
+  </ul>
+</section>
+
+<!-- ============ 7.6 ============ -->
+<section class="unit" id="s76">
+  <h2><span class="sec">7.6</span>Counter Mode</h2>
+  <p class="why">CTR encrypts a sequence of counter values and XORs the results with the plaintext. There is no chaining at all, which makes it fast and random-access.</p>
+  <div class="def"><b>Counter (CTR)</b> — a b-bit counter T is encrypted and XORed with the plaintext block. SP 800-38A only requires a different counter value for every plaintext block; typically it starts at some value and is incremented by 1 per block (mod 2ᵇ).</div>
+  <div class="eq">C<sub>j</sub> = P<sub>j</sub> <span class="op">⊕</span> E(K, T<sub>j</sub>)   (j = 1 … N−1)        C*<sub>N</sub> = P*<sub>N</sub> <span class="op">⊕</span> MSB<sub>u</sub>[E(K, T<sub>N</sub>)]
+P<sub>j</sub> = C<sub>j</sub> <span class="op">⊕</span> E(K, T<sub>j</sub>)   (j = 1 … N−1)        P*<sub>N</sub> = C*<sub>N</sub> <span class="op">⊕</span> MSB<sub>u</sub>[E(K, T<sub>N</sub>)]</div>
+  <div class="mf figure" data-mode="CTR"></div>
+  <p><b>Counter uniqueness:</b> like OFB, T<sub>1</sub> must be a nonce, and every T<sub>i</sub> across all messages under the same key must be unique. If a counter value repeats and one plaintext block for it is known, E(K, T) = P <span class="op">⊕</span> C is exposed and every other block encrypted with that counter can be read. One way to ensure uniqueness: start each message’s counter one above the last counter of the previous message.</p>
+  <h3>Advantages of CTR [LIPM00]</h3>
+  <ul class="props">
+    <li><b>Hardware efficiency</b> — blocks can be encrypted or decrypted in parallel; throughput is limited only by the parallelism available, not by one cipher execution per block.</li>
+    <li><b>Software efficiency</b> — parallel processor features (pipelining, multiple dispatch, many registers, SIMD) can be exploited.</li>
+    <li><b>Preprocessing</b> — E(K, T<sub>j</sub>) does not depend on the data, so it can be computed in advance; when data arrives only XORs remain.</li>
+    <li><b>Random access</b> — block i can be processed without the i − 1 blocks before it.</li>
+    <li><b>Provable security</b> — at least as secure as the other modes in the chapter.</li>
+    <li><b>Simplicity</b> — only the encryption algorithm (and its key schedule) is needed, which matters for AES, where decryption differs substantially.</li>
+  </ul>
+
+  <h3>Comparing the five modes</h3>
+  <p>Except ECB, every NIST mode has feedback into the cipher’s input register (Figure 7.8). OFB and CTR produce output independent of both plaintext and ciphertext, so they act as stream ciphers that XOR a full block at a time.</p>
+  <div class="tbl"><table class="modes">
+    <thead><tr><th>Mode</th><th>Cipher input</th><th>Pad?</th><th>Needs D?</th><th>Parallel enc / dec</th><th>One flipped ciphertext bit damages</th><th>Typical application (Table 7.1)</th></tr></thead>
+    <tbody>
+      <tr><td><b>ECB</b></td><td>P<sub>j</sub></td><td class="c">yes</td><td class="c">yes</td><td class="c">yes / yes</td><td>that whole block</td><td>Single values, e.g. a key</td></tr>
+      <tr><td><b>CBC</b></td><td>P<sub>j</sub> <span class="op">⊕</span> C<sub>j−1</sub></td><td class="c">yes</td><td class="c">yes</td><td class="c">no / yes</td><td>whole block + same bit of next block</td><td>Block-oriented transmission; authentication</td></tr>
+      <tr><td><b>CFB</b></td><td>shift register of past C</td><td class="c">no*</td><td class="c">no</td><td class="c">no / yes</td><td>same bit of that segment + following segments while it stays in the register</td><td>Stream-oriented transmission; authentication</td></tr>
+      <tr><td><b>OFB</b></td><td>previous output</td><td class="c">no</td><td class="c">no</td><td class="c">no / no†</td><td>that bit only</td><td>Noisy channels (satellite)</td></tr>
+      <tr><td><b>CTR</b></td><td>counter</td><td class="c">no</td><td class="c">no</td><td class="c">yes / yes</td><td>that bit only</td><td>Block-oriented, high-speed</td></tr>
+    </tbody></table></div>
+  <p class="src">* With s = 8 (bytes) no padding is needed. † The OFB stream can still be computed ahead of time. Error columns follow from the mode equations (the book’s Problem 7.4 explores CBC); try them in the lab.</p>
+
+  <div class="lab" id="lab-modes">
+    <div class="lab-h"><span class="t">Lab · Modes and error propagation</span><span class="pill">AES-128, checked against SP 800-38A</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>Mode<select id="md-mode"><option>ECB</option><option selected>CBC</option><option>CFB</option><option>OFB</option><option>CTR</option></select></label>
+        <label class="grow">Plaintext (text)<input type="text" id="md-pt" value="ATTACK AT DAWN!!ATTACK AT DAWN!!ATTACK AT DUSK!!"></label>
+      </div>
+      <div class="controls">
+        <label class="grow">Key (hex, 128 bits)<input type="text" class="hex" id="md-k" value="2b7e151628aed2a6abf7158809cf4f3c"></label>
+        <label class="grow">IV / nonce / initial counter (hex)<input type="text" class="hex" id="md-iv" value="000102030405060708090a0b0c0d0e0f"></label>
+      </div>
+      <div class="controls">
+        <label>Flip ciphertext bit #<input type="number" id="md-bit" min="0" value="10"></label>
+        <button class="ghost" id="md-noflip" type="button">No flip</button>
+        <span class="src">CFB here uses s = 8 (one byte per segment).</span>
+      </div>
+      <div id="md-out" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7.7 ============ -->
+<section class="unit" id="s77">
+  <h2><span class="sec">7.7</span>XTS-AES Mode for Block-Oriented Storage Devices</h2>
+  <p class="why">XTS-AES (IEEE Std 1619-2007, approved by NIST in SP 800-38E) encrypts data stored in sector-based devices, where the adversary may get at the stored data.</p>
+  <h3>Tweakable block ciphers</h3>
+  <div class="def"><b>Tweak</b> — an extra, non-secret input to a block cipher. The key provides security; the tweak provides <i>variability</i>: the same plaintext under the same key with different tweaks gives different ciphertexts. It plays a role like a salt for passwords.</div>
+  <div class="def"><b>Tweakable block cipher</b> — a cipher with three inputs, plaintext P, key K and tweak T: C = E(K, T, P). A common structure uses a hash H of the tweak:</div>
+  <div class="eq">C = H(T) <span class="op">⊕</span> E(K, H(T) <span class="op">⊕</span> P)        P = H(T) <span class="op">⊕</span> D(K, H(T) <span class="op">⊕</span> C)</div>
+  <p>A mode built from it is essentially ECB with a different tweak for every block, which removes ECB’s main weakness (equal blocks → equal ciphertext).</p>
+  <h3>Storage encryption requirements (P1619)</h3>
+  <ul class="props">
+    <li>The ciphertext is freely available to an attacker (shared database with encrypted records, unauthorized access, stolen disk or laptop).</li>
+    <li>Data layout does not change: ciphertext is the same size as plaintext.</li>
+    <li>Data is accessed in fixed-size blocks, independently, in any order; encryption is in 16-byte blocks, independently (except the last two blocks of a sector that is not a multiple of 16 bytes).</li>
+    <li>No metadata except the location of the data blocks.</li>
+    <li>The same plaintext encrypts to different ciphertexts at different locations, but always to the same ciphertext when rewritten to the same location.</li>
+    <li>Any conforming device can decrypt data encrypted by another.</li>
+  </ul>
+  <p><b>Why not CTR or CBC?</b> With CTR, an attacker with write access flips any plaintext bit by flipping the ciphertext bit. With CBC and a sector-number IV, a ciphertext sector copied to another position still decrypts to the same plaintext (except perhaps the first 128 bits), and flipping a ciphertext bit flips the matching plaintext bit of the next block (randomizing the current one).</p>
+
+  <h3>Operation on a single block</h3>
+  <div class="def"><b>Parameters</b> — <b>Key</b>: 256 or 512 bits, split as Key = Key1 ‖ Key2. <b>P<sub>j</sub>, C<sub>j</sub></b>: 128-bit plaintext / ciphertext block j of a data unit (typically a sector). <b>j</b>: sequential number of the block inside the data unit. <b>i</b>: 128-bit tweak, a nonnegative integer assigned to each data unit, consecutively. <b>α</b>: a primitive element of GF(2¹²⁸), the polynomial x. <b><span class="op">⊗</span></b>: multiplication in GF(2¹²⁸), i.e. of binary polynomials modulo x¹²⁸ + x⁷ + x² + x + 1. <b>αʲ</b>: α multiplied by itself j times.</div>
+  <div class="eq">T  = E(Key2, i) <span class="op">⊗</span> αʲ                     T  = E(Key2, i) <span class="op">⊗</span> αʲ
+PP = P <span class="op">⊕</span> T                               CC = C <span class="op">⊕</span> T
+CC = E(Key1, PP)                         PP = D(Key1, CC)
+C  = CC <span class="op">⊕</span> T                              P  = PP <span class="op">⊕</span> T</div>
+  <div class="figure" aria-label="XTS-AES operation on a single block">
+    <svg viewBox="0 0 640 258" role="img" aria-labelledby="xts-t"><title id="xts-t">Tweak i is encrypted with Key2 then multiplied by alpha to the j to give T. T is XORed before and after AES encryption of block Pj under Key1.</title>
+      <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink)"/></marker></defs>
+      <g font-size="12">
+        <text x="40" y="30" fill="var(--ink)">i (tweak)</text><line x1="70" y1="38" x2="70" y2="62" stroke="var(--ink)" marker-end="url(#ar2)"/>
+        <rect x="20" y="64" width="100" height="40" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="70" y="89" text-anchor="middle" fill="var(--ink)" font-weight="600">AES Enc</text><text x="70" y="122" text-anchor="middle" fill="var(--muted)" font-size="11">Key2</text>
+        <line x1="120" y1="84" x2="176" y2="84" stroke="var(--ink)" marker-end="url(#ar2)"/>
+        <circle cx="194" cy="84" r="16" fill="var(--paper)" stroke="var(--ink)"/><text x="194" y="89" text-anchor="middle" fill="var(--ink)">⊗</text><text x="194" y="54" text-anchor="middle" fill="var(--muted)" font-size="11">αʲ</text><line x1="194" y1="58" x2="194" y2="66" stroke="var(--ink)" marker-end="url(#ar2)"/>
+        <line x1="210" y1="84" x2="420" y2="84" stroke="var(--mark)" stroke-width="1.6"/><text x="300" y="76" fill="var(--mark)" font-weight="600">T</text>
+        <line x1="320" y1="84" x2="320" y2="122" stroke="var(--mark)" stroke-width="1.6" marker-end="url(#ar2)"/>
+        <line x1="420" y1="84" x2="420" y2="216" stroke="var(--mark)" stroke-width="1.6"/><line x1="420" y1="216" x2="334" y2="216" stroke="var(--mark)" stroke-width="1.6" marker-end="url(#ar2)"/>
+        <text x="236" y="140" fill="var(--ink)">Pⱼ</text><line x1="256" y1="136" x2="306" y2="136" stroke="var(--ink)" marker-end="url(#ar2)"/>
+        <circle cx="320" cy="136" r="12" fill="var(--paper)" stroke="var(--ink)"/><text x="320" y="141" text-anchor="middle" fill="var(--ink)">⊕</text>
+        <line x1="320" y1="148" x2="320" y2="160" stroke="var(--ink)" marker-end="url(#ar2)"/><text x="330" y="158" fill="var(--muted)" font-size="10.5">PP</text>
+        <rect x="270" y="162" width="100" height="30" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="320" y="182" text-anchor="middle" fill="var(--ink)" font-weight="600">AES Enc</text><text x="244" y="182" text-anchor="middle" fill="var(--muted)" font-size="11">Key1</text>
+        <line x1="320" y1="192" x2="320" y2="202" stroke="var(--ink)" marker-end="url(#ar2)"/><text x="296" y="204" fill="var(--muted)" font-size="10.5">CC</text>
+        <circle cx="320" cy="216" r="12" fill="var(--paper)" stroke="var(--ink)"/><text x="320" y="221" text-anchor="middle" fill="var(--ink)">⊕</text>
+        <line x1="320" y1="228" x2="320" y2="246" stroke="var(--ink)" marker-end="url(#ar2)"/><text x="332" y="248" fill="var(--ink)">Cⱼ</text>
+        <rect x="446" y="56" width="188" height="160" rx="10" fill="var(--bg)" stroke="var(--line)"/>
+        <text x="458" y="80" fill="var(--ink)" font-weight="600" font-size="11.5">Two variability inputs</text>
+        <text x="458" y="104" fill="var(--muted)" font-size="10.5">j acts like a CTR counter:</text>
+        <text x="458" y="120" fill="var(--muted)" font-size="10.5">same block, new position</text>
+        <text x="458" y="136" fill="var(--muted)" font-size="10.5">in a sector → new C.</text>
+        <text x="458" y="164" fill="var(--muted)" font-size="10.5">i acts like a nonce per</text>
+        <text x="458" y="180" fill="var(--muted)" font-size="10.5">sector: same position in</text>
+        <text x="458" y="196" fill="var(--muted)" font-size="10.5">another sector → new C.</text>
+      </g></svg>
+    <div class="cap">Redrawn from Figure 7.10 (encryption). Decryption replaces the Key1 encryption with AES decryption; T is still computed with encryption.</div>
+  </div>
+  <p><b>Check:</b> P = D(Key1, C <span class="op">⊕</span> T) <span class="op">⊕</span> T = D(Key1, E(Key1, P <span class="op">⊕</span> T)) <span class="op">⊕</span> T = P.</p>
+
+  <h3>Operation on a sector: ciphertext stealing</h3>
+  <p>A sector’s plaintext is split into 128-bit blocks P<sub>0</sub> … P<sub>m</sub>; the last block may be empty or 1–127 bits. Full blocks are encrypted independently. If the last block P<sub>m</sub> has s &lt; 128 bits, the last two blocks use <b>ciphertext stealing</b> instead of padding, so the ciphertext stays exactly as long as the plaintext:</p>
+  <div class="eq">XX    = XTS-AES-blockEnc(K, P<sub>m−1</sub>, i, m−1)
+CP    = LSB<sub>128−s</sub>(XX)          ← the “stolen” tail of XX
+YY    = P<sub>m</sub> ‖ CP                   ← pad P<sub>m</sub> with it
+C<sub>m−1</sub> = XTS-AES-blockEnc(K, YY, i, m)
+C<sub>m</sub>    = MSB<sub>s</sub>(XX)</div>
+  <p>Like CTR, XTS-AES has no chaining, so blocks can be processed in parallel; unlike CTR it uses both a nonce (i) and a counter (j).</p>
+
+  <div class="lab" id="lab-xts">
+    <div class="lab-h"><span class="t">Lab · XTS-AES tweaks and ciphertext stealing</span><span class="pill">checked against IEEE 1619 vector 1</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label class="grow">Key1 ‖ Key2 (hex, 256 bits)<input type="text" class="wide" id="xt-k" value="0000000000000000000000000000000000000000000000000000000000000000"></label>
+        <label>Tweak i (sector #)<input type="number" id="xt-i" min="0" value="0"></label>
+        <label>Sector length (bytes)<input type="range" id="xt-len" min="16" max="64" value="32"></label><span class="mono" id="xt-lenv">32</span>
+      </div>
+      <p class="src">Every plaintext byte is 00. Block j gets its own T = E(Key2, i) <span class="op">⊗</span> αʲ, so equal plaintext blocks still encrypt differently. With all-zero keys, i = 0 and 32 bytes, the result matches IEEE 1619 test vector 1. Lengths that are not a multiple of 16 use ciphertext stealing; decryption is verified.</p>
+      <div id="xt-out" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7.8 ============ -->
+<section class="unit" id="s78">
+  <h2><span class="sec">7.8</span>Format-Preserving Encryption</h2>
+  <p class="why">Encrypt a field so the ciphertext has the same format as the plaintext — a 16-digit card number stays 16 digits — and can be stored wherever the plaintext was.</p>
+  <div class="def"><b>Format-preserving encryption (FPE)</b> — any encryption technique that takes plaintext in a given format and produces ciphertext in the same format. The ciphertext need not be (and probably is not) valid, e.g. a valid card number. Ordinary block ciphers preserve only the format of binary strings.</div>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>Credit card</th><th>Tax ID</th><th>Bank account number</th></tr></thead>
+    <tbody>
+      <tr><th class="l">Plaintext</th><td class="mono">8123 4512 3456 6780</td><td class="mono">219-09-9999</td><td class="mono">800N2982K-22</td></tr>
+      <tr><th class="l">FPE</th><td class="mono">8123 4521 7292 6780</td><td class="mono">078-05-1120</td><td class="mono">709G9242H-35</td></tr>
+      <tr><th class="l">AES (hex)</th><td class="mono">af411326466add24<br>c86abd8aa525db7a</td><td class="mono">7b9af4f3f218ab25<br>07c7376869313afa</td><td class="mono">9720ec7f793096ff<br>d37141242e1c51bd</td></tr>
+    </tbody></table></div>
+  <div class="cap">Table 7.2. AES output is a 128-bit binary block that fits none of these fields.</div>
+  <h3>Motivation</h3>
+  <p>FPE retrofits encryption into legacy applications without changing database schemas, and with minimal changes to applications (only those that must see plaintext). Examples: COBOL record structures referenced by hundreds of modules; database fields that accept only character strings (Base64 of binary ciphertext would lengthen them); and FPE ciphertext, unlike AES binary output, compresses well for transmission.</p>
+  <h3>Design requirements and difficulties</h3>
+  <ol>
+    <li>Ciphertext has the same length and format as the plaintext.</li>
+    <li>Adaptable to many character sets: decimal digits, lowercase letters, a full keyboard character set.</li>
+    <li>Works with variable plaintext lengths.</li>
+    <li>Security comparable to AES.</li>
+    <li>Strong even for very short plaintexts.</li>
+  </ol>
+  <p><b>Reversibility.</b> Encrypting 4-bit-coded digits with AES and taking each 4-bit output mod 10 gives 16 decimal digits — but it cannot be decrypted, because mod 10 is many-to-one (12 mod 10 = 2 mod 10 = 2).</p>
+  <p><b>Short inputs.</b> In a card number, the first six digits identify the issuer and the last is a check digit; if the last four must stay in the clear, only six digits are encrypted. An adversary collecting plaintext/ciphertext pairs could build a dictionary of six-digit values; in a database of 100 million cards about 100 share any given middle six digits, so learning k numbers exposes about 100k. The fix is a <b>tweak</b> (Section 7.7): e.g. add the first two and last four digits, digit by digit mod 10, to the middle six before encrypting.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>CCN</th><th>Tweak</th><th>Plaintext</th><th>Plaintext + tweak</th></tr></thead>
+    <tbody><tr><td class="mono">4012 8812 3456 1884</td><td class="mono">401884</td><td class="mono">123456</td><td class="mono">524230</td></tr>
+    <tr><td class="mono">5105 1012 3456 6782</td><td class="mono">516782</td><td class="mono">123456</td><td class="mono">639138</td></tr></tbody></table></div>
+
+  <h3>Feistel structure for FPE</h3>
+  <p>Most FPE proposals, including all NIST methods, use a Feistel structure (as in DES, Unit 3), drawn untwisted — no swap shown.</p>
+  <div class="figure" aria-label="Feistel structure for format-preserving encryption">
+    <svg viewBox="0 0 640 250" role="img" aria-labelledby="fpe-t"><title id="fpe-t">Two Feistel rounds: round 0 adds F<tspan font-size="9" dy="3">K</tspan> of B0 to A0 modulo radix to the u, giving C0; round 1 adds F<tspan font-size="9" dy="3">K</tspan> of C0 to B0 giving C1.</title>
+      <defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink)"/></marker></defs>
+      <g font-size="12">
+        <rect x="80" y="14" width="140" height="28" rx="5" fill="var(--bg)" stroke="var(--line)"/><text x="150" y="33" text-anchor="middle" fill="var(--ink)">A₀ (u chars)</text>
+        <rect x="300" y="14" width="140" height="28" rx="5" fill="var(--bg)" stroke="var(--line)"/><text x="370" y="33" text-anchor="middle" fill="var(--ink)">B₀ (v chars)</text>
+        <line x1="150" y1="42" x2="150" y2="78" stroke="var(--ink)" marker-end="url(#ar3)"/>
+        <line x1="370" y1="42" x2="370" y2="200" stroke="var(--ink)"/>
+        <line x1="370" y1="92" x2="302" y2="92" stroke="var(--ink)" marker-end="url(#ar3)"/>
+        <rect x="244" y="78" width="56" height="28" rx="5" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="272" y="97" text-anchor="middle" fill="var(--ink)" font-weight="600">F<tspan font-size="9" dy="3">K</tspan></text>
+        <text x="272" y="72" text-anchor="middle" fill="var(--muted)" font-size="10.5">n, T, 0</text>
+        <line x1="244" y1="92" x2="166" y2="92" stroke="var(--ink)" marker-end="url(#ar3)"/>
+        <circle cx="150" cy="92" r="14" fill="var(--paper)" stroke="var(--ink)"/><text x="150" y="97" text-anchor="middle" fill="var(--ink)">+</text>
+        <line x1="150" y1="106" x2="150" y2="200" stroke="var(--ink)"/><text x="160" y="130" fill="var(--mark)" font-weight="600">C₀</text>
+        <line x1="150" y1="160" x2="242" y2="160" stroke="var(--ink)" marker-end="url(#ar3)"/>
+        <rect x="244" y="146" width="56" height="28" rx="5" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="272" y="165" text-anchor="middle" fill="var(--ink)" font-weight="600">F<tspan font-size="9" dy="3">K</tspan></text>
+        <text x="272" y="140" text-anchor="middle" fill="var(--muted)" font-size="10.5">n, T, 1</text>
+        <line x1="300" y1="160" x2="354" y2="160" stroke="var(--ink)" marker-end="url(#ar3)"/>
+        <circle cx="370" cy="160" r="14" fill="var(--paper)" stroke="var(--ink)"/><text x="370" y="165" text-anchor="middle" fill="var(--ink)">+</text>
+        <text x="380" y="190" fill="var(--mark)" font-weight="600">C₁</text>
+        <rect x="80" y="202" width="140" height="28" rx="5" fill="var(--bg)" stroke="var(--line)"/><text x="150" y="221" text-anchor="middle" fill="var(--ink)">A₂ = C₀</text>
+        <rect x="300" y="202" width="140" height="28" rx="5" fill="var(--bg)" stroke="var(--line)"/><text x="370" y="221" text-anchor="middle" fill="var(--ink)">B₂ = C₁</text>
+        <text x="470" y="40" fill="var(--ink)" font-weight="600">+ is addition</text>
+        <text x="470" y="58" fill="var(--ink)" font-weight="600">mod radixᵐ</text>
+        <text x="470" y="86" fill="var(--muted)" font-size="11">even round: change left</text>
+        <text x="470" y="102" fill="var(--muted)" font-size="11">odd round: change right</text>
+        <text x="470" y="130" fill="var(--muted)" font-size="11">decryption: subtract</text>
+        <text x="470" y="146" fill="var(--muted)" font-size="11">the same F<tspan font-size="9" dy="3">K</tspan> values,</text>
+        <text x="470" y="162" fill="var(--muted)" font-size="11">rounds in reverse</text>
+        <text x="470" y="190" fill="var(--muted)" font-size="11">F<tspan font-size="9" dy="3">K</tspan> need not be</text>
+        <text x="470" y="206" fill="var(--muted)" font-size="11">reversible</text>
+      </g></svg>
+    <div class="cap">Two rounds of Figure 7.12; the NIST methods repeat this for 8 or 10 rounds.</div>
+  </div>
+  <p>The n = u + v characters split into A (u) and B (v), with u = v for even n and differing by 1 otherwise. Because a round only adds F<sub>K</sub>’s output to one half, decryption subtracts the same value, so F<sub>K</sub> itself never has to be inverted — it would work even if F<sub>K</sub> output a constant (insecurely).</p>
+
+  <h3>Character strings</h3>
+  <div class="def"><b>Alphabet</b> — a finite set of two or more symbols, called <b>characters</b>. A <b>character string</b> is a finite sequence of characters (repeats allowed). The <b>radix</b> (base) is the number of characters in the alphabet; each character is mapped to a <b>numeral</b>, a nonnegative integer less than the radix (e.g. a…z → 0…25).</div>
+  <p>All characters of one plaintext format must share one radix, so e.g. a letter followed by nine digits cannot be handled by the implemented methods. NIST’s notation (Table 7.3):</p>
+  <div class="tbl"><table class="modes">
+    <tbody>
+      <tr><td class="mono">NUM<sub>radix</sub>(X) = Σ<sub>i</sub> X[i] · radix<sup>m−i</sup></td><td>number represented by numeral string X, most significant numeral first</td></tr>
+      <tr><td class="mono">STR<sup>m</sup><sub>radix</sub>(x): X[i] = ⌊x / radix<sup>m−i</sup>⌋ mod radix</td><td>m-numeral string representing x &lt; radix<sup>m</sup></td></tr>
+      <tr><td class="mono">[x]<sup>s</sup> = STR<sup>8s</sup><sub>2</sub>(x)</td><td>the s-byte, most-significant-bit-first encoding of x, whatever the CPU’s byte order</td></tr>
+      <tr><td class="mono">bitlen = ⌈len · LOG<sub>2</sub>(radix)⌉</td><td>bits needed for a len-character string; so maxlen ≤ ⌊bitlen / LOG<sub>2</sub>(radix)⌋ (radix 10: ≈ 0.3·bitlen; radix 26: ≈ 0.21·bitlen)</td></tr>
+    </tbody></table></div>
+  <div class="lab" id="lab-num">
+    <div class="lab-h"><span class="t">Lab · NUM and STR</span></div>
+    <div class="lab-b">
+      <div class="controls"><label>Lowercase string (radix 26)<input type="text" id="nm-s" value="zaby"></label></div>
+      <div class="kv" id="nm-out"></div>
+    </div>
+  </div>
+
+  <h3>One FPE round (all NIST methods)</h3>
+  <div class="tbl"><table class="modes"><tbody><tr><td>1</td><td class="mono">Q ← [NUM<sub>radix</sub>(B)]<sup>b</sup></td><td>B as a b-byte string</td></tr><tr><td>2</td><td class="mono">Y ← RAN[Q]</td><td>pseudorandom function (AES-based) → byte string</td></tr><tr><td>3</td><td class="mono">y ← NUM<sub>2</sub>(Y)</td><td>Y as an unsigned integer</td></tr><tr><td>4</td><td class="mono">c ← (NUM<sub>radix</sub>(A) + y) mod radix<sup>m</sup></td><td>m = u on even rounds, v on odd</td></tr><tr><td>5</td><td class="mono">C ← STR<sup>m</sup><sub>radix</sub>(c)</td><td>back to an m-character string</td></tr><tr><td>6</td><td class="mono">A ← B;  B ← C</td><td>finish the round</td></tr></tbody></table></div>
+  <p class="src">Steps 1–3 form F<sub>K</sub>.</p>
+
+  <h3>NIST methods FF1, FF2, FF3 (SP 800-38G)</h3>
+  <div class="tbl"><table class="modes">
+    <thead><tr><th></th><th>FF1 (FFX[Radix])</th><th>FF2 (VAES3)</th><th>FF3 (BPS-BC)</th></tr></thead>
+    <tbody>
+      <tr><th class="l">Rounds</th><td>10</td><td>10</td><td>8</td></tr>
+      <tr><th class="l">Round function</th><td>CBC-style PRF (CBC-MAC, zero IV) over P ‖ Q</td><td>ECB: one AES block under subkey J</td><td>ECB: one AES block under K</td></tr>
+      <tr><th class="l">Key</th><td>K directly</td><td>J = E(K, P), P built from radix, lengths and tweak — may help against side-channel analysis</td><td>K directly</td></tr>
+      <tr><th class="l">Radix</th><td>2 … 2¹⁶</td><td>2 … 2⁸</td><td>2 … 2¹⁶</td></tr>
+      <tr><th class="l">Lengths</th><td>widest range of message and tweak lengths (&lt; 2³²)</td><td>B in 15 bytes; tweak ≤ 13 bytes</td><td>maxlen ≤ 2⌊log<sub>radix</sub>(2⁹⁶)⌋; 64-bit tweak (least flexible)</td></tr>
+      <tr><th class="l">Split</th><td>B one longer if n odd</td><td>as FF1</td><td>A one longer if n odd; bit reversals</td></tr>
+    </tbody></table></div>
+  <p class="src"><b>Side-channel analysis</b>: an attack using information from the physical implementation (e.g. power consumption, execution time) rather than brute force or cryptanalysis. For radices that are not a power of 2, y mod radixᵐ is not uniformly distributed, which tightens FF2’s length limit; FF1’s choice d = 4⌈b/4⌉ + 4 keeps its round output at least 4 bytes longer than B’s encoding to minimize this bias.</p>
+  <div class="note"><span class="t">Current status (outside the book)</span>The final SP 800-38G (2016) approved only FF1 and FF3. Its draft Revision 1 (second public draft, February 2025) specifies only FF1, dropping FF3 and its revision FF3-1 after published attacks on FF3’s tweak schedule. See Sources.</div>
+
+  <div class="lab" id="lab-ff1">
+    <div class="lab-h"><span class="t">Lab · FF1 on decimal digits</span><span class="pill">checked against NIST FF1 samples 1–2</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>Digits (2–30)<input type="text" id="ff-x" value="0123456789"></label>
+        <label class="grow">Tweak (hex bytes, may be empty)<input type="text" id="ff-t" value=""></label>
+        <label class="grow">Key (hex, AES-128)<input type="text" class="hex" id="ff-k" value="2b7e151628aed2a6abf7158809cf4f3c"></label>
+      </div>
+      <p class="src">Try tweak 39383736353433323130 (NIST sample 2 → 6124200773).</p>
+      <div id="ff-out" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8.1 ============ -->
+<section class="unit" id="s81">
+  <h2><span class="sec">8.1</span>Principles of Pseudorandom Number Generation</h2>
+  <p class="why">Keys, IVs, nonces and stream-cipher keystreams all need bits an opponent cannot guess. This section says what “random enough” means and which kind of generator supplies it.</p>
+  <h3>Uses of random numbers</h3>
+  <ul class="props">
+    <li>Nonces in key distribution and mutual authentication handshakes (Chapters 14–15), so an opponent cannot replay an old transaction.</li>
+    <li><b>Session keys</b> — symmetric keys generated for one transaction or session and valid briefly.</li>
+    <li>Key generation for RSA (Chapter 9).</li>
+    <li>Bit streams for symmetric stream encryption (this chapter).</li>
+  </ul>
+  <h3>Two requirements</h3>
+  <div class="def"><b>Randomness</b> — statistical randomness, validated by two criteria: <b>uniform distribution</b> (ones and zeros occur about equally often) and <b>independence</b> (no subsequence can be inferred from the others). Independence cannot be proven by a test; tests can only show its absence, so many tests are applied until confidence is high enough.</div>
+  <div class="def"><b>Unpredictability</b> — successive members of the sequence cannot be predicted from earlier ones. Needed for authentication, session keys and stream ciphers, where statistical randomness alone is not enough.</div>
+  <h3>TRNGs, PRNGs and PRFs</h3>
+  <div class="def"><b>Entropy source</b> — a source of effectively random input drawn from the physical environment, e.g. keystroke timing, disk electrical activity, mouse movements, instantaneous clock values.</div>
+  <div class="def"><b>Seed</b> — the fixed input value from which a deterministic generator computes its output.</div>
+  <div class="def"><b>Pseudorandom numbers</b> — numbers produced by a deterministic algorithm that are not statistically random but, if the algorithm is good, pass many tests of randomness.</div>
+  <div class="figure" aria-label="TRNG, PRNG and PRF">
+    <svg viewBox="0 0 720 200" role="img" aria-labelledby="gen-t"><title id="gen-t">TRNG: source of true randomness, conversion to binary, random bit stream. PRNG: seed into deterministic algorithm with feedback, pseudorandom bit stream. PRF: seed plus context-specific values into deterministic algorithm, pseudorandom value.</title>
+      <defs><marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink)"/></marker></defs>
+      <g font-size="11.5" text-anchor="middle">
+        <text x="120" y="18" fill="var(--muted)">(a) TRNG</text>
+        <rect x="50" y="30" width="140" height="40" rx="6" fill="var(--mark-soft)" stroke="var(--mark)"/><text x="120" y="47" fill="var(--ink)">source of</text><text x="120" y="62" fill="var(--ink)">true randomness</text>
+        <line x1="120" y1="70" x2="120" y2="94" stroke="var(--ink)" marker-end="url(#ar4)"/>
+        <rect x="50" y="96" width="140" height="34" rx="6" fill="var(--paper)" stroke="var(--accent)"/><text x="120" y="117" fill="var(--ink)">conversion to binary</text>
+        <line x1="120" y1="130" x2="120" y2="156" stroke="var(--ink)" marker-end="url(#ar4)"/><text x="120" y="172" fill="var(--ink)" font-weight="600">random bit stream</text>
+        <text x="360" y="18" fill="var(--muted)">(b) PRNG</text>
+        <text x="300" y="50" fill="var(--ink)">seed</text><line x1="300" y1="56" x2="300" y2="94" stroke="var(--ink)" marker-end="url(#ar4)"/>
+        <rect x="270" y="96" width="140" height="34" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="340" y="117" fill="var(--ink)">deterministic algorithm</text>
+        <path d="M400 130 V146 H440 V80 H380 V94" fill="none" stroke="var(--mark)" stroke-width="1.5" marker-end="url(#ar4)"/><text x="452" y="114" fill="var(--mark)" font-size="10" text-anchor="start">feedback</text>
+        <line x1="340" y1="130" x2="340" y2="156" stroke="var(--ink)" marker-end="url(#ar4)"/><text x="340" y="172" fill="var(--ink)" font-weight="600">pseudorandom bit stream</text>
+        <text x="600" y="18" fill="var(--muted)">(c) PRF</text>
+        <text x="550" y="50" fill="var(--ink)">seed</text><line x1="550" y1="56" x2="560" y2="94" stroke="var(--ink)" marker-end="url(#ar4)"/>
+        <text x="648" y="44" fill="var(--ink)">context-specific</text><text x="648" y="58" fill="var(--ink)">values</text><line x1="640" y1="64" x2="626" y2="94" stroke="var(--ink)" marker-end="url(#ar4)"/>
+        <rect x="530" y="96" width="140" height="34" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="600" y="117" fill="var(--ink)">deterministic algorithm</text>
+        <line x1="600" y1="130" x2="600" y2="156" stroke="var(--ink)" marker-end="url(#ar4)"/><text x="600" y="172" fill="var(--ink)" font-weight="600">pseudorandom value</text>
+        <text x="600" y="190" fill="var(--muted)" font-size="10">(fixed length: a key, a nonce)</text>
+      </g></svg>
+    <div class="cap">Redrawn from Figure 8.1.</div>
+  </div>
+  <ul class="props">
+    <li><b>True random number generator (TRNG)</b> — converts an entropy source to binary, possibly with extra processing to remove bias (Section 8.6).</li>
+    <li><b>Pseudorandom number generator (PRNG)</b> — a deterministic algorithm that produces an open-ended bit sequence from a seed, often with some output fed back. Anyone who knows the algorithm and seed can reproduce the whole stream. Typical use: keystream for a stream cipher.</li>
+    <li><b>Pseudorandom function (PRF)</b> — produces a pseudorandom string of fixed length (e.g. a symmetric key or nonce) from a seed plus context-specific values such as a user or application ID.</li>
+  </ul>
+  <p>Apart from output length, PRNG and PRF are the same: same algorithms, both need a seed, both must be random and unpredictable.</p>
+
+  <h3>PRNG requirements</h3>
+  <p>An adversary who does not know the seed must not be able to determine the output. (If a PRF that should yield a 128-bit key does not produce effectively random output, the adversary may narrow the possibilities enough for brute force.) This splits into three requirements:</p>
+  <p><b>1. Randomness.</b> No single test proves it; NIST SP 800-22 tests should establish:</p>
+  <ul class="props">
+    <li><b>Uniformity</b> — at any point, a 0 or 1 is equally likely (probability 1/2); expect n/2 zeros in n bits.</li>
+    <li><b>Scalability</b> — any test applicable to a sequence also applies to randomly extracted subsequences, which should also pass.</li>
+    <li><b>Consistency</b> — behaviour is consistent across seeds; testing one seed (or one physical output for a TRNG) is not enough.</li>
+  </ul>
+  <p>SP 800-22 has 15 tests; three examples:</p>
+  <ul class="props">
+    <li><b>Frequency test</b> — are the numbers of ones and zeros about what a truly random sequence would have? The most basic test; always included.</li>
+    <li><b>Runs test</b> — a <i>run</i> is an uninterrupted sequence of identical bits bounded by the opposite bit. Are there as many runs of each length as expected?</li>
+    <li><b>Maurer’s universal statistical test</b> — measures bits between matching patterns (related to compressed length). A significantly compressible sequence is non-random.</li>
+  </ul>
+  <div class="lab" id="lab-freq">
+    <div class="lab-h"><span class="t">Lab · Counting ones and runs</span><span class="pill mk">counts only, not the SP 800-22 statistics</span></div>
+    <div class="lab-b">
+      <div class="controls"><label class="grow">Bits<input type="text" class="wide" id="fr-b" value="1100100100001111110110101010001000100001011010001100001000110100"></label><button class="ghost" id="fr-bad" type="button">Biased example</button><button class="ghost" id="fr-alt" type="button">0101… example</button><button class="ghost" id="fr-rnd" type="button">Random (crypto.getRandomValues)</button></div>
+      <div id="fr-out" aria-live="polite"></div>
+    </div>
+  </div>
+  <p><b>2. Unpredictability.</b></p>
+  <ul class="props">
+    <li><b>Forward unpredictability</b> — without the seed, the next output bit cannot be predicted from any previous bits.</li>
+    <li><b>Backward unpredictability</b> — the seed cannot be determined from generated values; each output bit looks like an independent event with probability 1/2.</li>
+  </ul>
+  <p>The randomness tests also test unpredictability: a sequence that looks random has no usable correlation with earlier bits or with the seed.</p>
+  <p><b>3. Seed requirements.</b> The PRNG is deterministic, so the seed must be secure and unpredictable — itself random or pseudorandom. Typically a TRNG generates it (Figure 8.2, as SP 800-90A recommends):</p>
+  <div class="eq">entropy source → TRNG → seed → PRNG → pseudorandom bit stream</div>
+  <p>Why not use the TRNG directly? (1) A stream cipher with a TRNG keystream would need a key as long as the message (a one-time pad); a PRNG only needs a short key delivered securely. (2) A TRNG’s output may be biased; passing it through a PRF conditions it. (3) A TRNG may be too slow for the application.</p>
+  <h3>Algorithm design</h3>
+  <ul class="props">
+    <li><b>Purpose-built algorithms</b> — designed only for generating pseudorandom bits: general PRNGs (Section 8.2) and stream-cipher generators such as RC4 (Section 8.5).</li>
+    <li><b>Algorithms based on existing cryptographic algorithms</b> — ciphers must randomize their input, so they can be the core of a PRNG: symmetric block ciphers (Section 8.3), asymmetric ciphers (Chapter 10), hash functions and MACs (Chapter 12). Reusing code an application already has is convenient.</li>
+  </ul>
+</section>
+
+<!-- ============ 8.2 ============ -->
+<section class="unit" id="s82">
+  <h2><span class="sec">8.2</span>Pseudorandom Number Generators</h2>
+  <h3>Linear congruential generators</h3>
+  <div class="def"><b>Linear congruential generator (LCG)</b> — iterates X<sub>n+1</sub> = (aX<sub>n</sub> + c) mod m with modulus m &gt; 0, multiplier 0 &lt; a &lt; m, increment 0 ≤ c &lt; m and seed 0 ≤ X<sub>0</sub> &lt; m. Every output lies in 0 ≤ X<sub>n</sub> &lt; m.</div>
+  <div class="def"><b>Period</b> — the number of outputs before the sequence repeats. A <b>full-period</b> generator produces every value 0 … m − 1 before repeating.</div>
+  <p>The choice of a, c, m is critical. With a = 7, c = 0, m = 32, X<sub>0</sub> = 1 the sequence is 7, 17, 23, 1, 7, … (period 4); a = 5 gives period 8. m should be near the largest representable integer, e.g. near 2³¹. Three tests for a good LCG [PARK88]:</p>
+  <ul class="props"><li><b>T1</b> full period; <b>T2</b> the sequence appears random; <b>T3</b> efficient with 32-bit arithmetic.</li></ul>
+  <p>With m prime and c = 0, some a give period m − 1 (only 0 missing). A widely used, heavily tested choice: <span class="m">X<sub>n+1</sub> = (16807 · X<sub>n</sub>) mod (2³¹ − 1)</span>, with a = 7⁵.</p>
+  <div class="lab" id="lab-lcg">
+    <div class="lab-h"><span class="t">Lab · LCG period</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>a<input type="number" id="lc-a" value="7"></label><label>c<input type="number" id="lc-c" value="0"></label><label>m (≤ 4096)<input type="number" id="lc-m" value="32"></label><label>X<sub>0</sub><input type="number" id="lc-x" value="1"></label>
+        <button class="ghost" data-lc="5,0,32,1" type="button">a = 5</button><button class="ghost" data-lc="3,0,31,1" type="button">m = 31, a = 3</button>
+      </div>
+      <div id="lc-out" aria-live="polite"></div>
+    </div>
+  </div>
+  <p><b>Cryptographic weakness:</b> nothing is random except X<sub>0</sub>. If the opponent knows the parameters (e.g. a = 7⁵, c = 0, m = 2³¹ − 1), one output reveals all later ones. Even without them, four outputs X<sub>0</sub> … X<sub>3</sub> give three equations X<sub>1</sub> = (aX<sub>0</sub> + c) mod m, … that can be solved for a, c and m. Countermeasure: make the sequence non-reproducible, e.g. restart every N numbers with the current clock value (mod m) as the new seed, or add the clock value to each output (mod m).</p>
+
+  <h3>Blum Blum Shub generator</h3>
+  <p>Perhaps the strongest public proof of cryptographic strength of any purpose-built PRNG.</p>
+  <div class="eq">choose primes p ≡ q ≡ 3 (mod 4);   n = p × q
+choose seed s relatively prime to n (neither p nor q divides s)
+X<sub>0</sub> = s² mod n
+for i = 1, 2, …:   X<sub>i</sub> = (X<sub>i−1</sub>)² mod n,    B<sub>i</sub> = X<sub>i</sub> mod 2   (least significant bit)</div>
+  <div class="def"><b>Next-bit test</b> — a pseudorandom bit generator passes it if no polynomial-time algorithm, given the first k bits, can predict bit k + 1 with probability significantly greater than 1/2. (A polynomial-time algorithm of order k runs in time bounded by a polynomial of order k.)</div>
+  <div class="def"><b>Cryptographically secure pseudorandom bit generator (CSPRBG)</b> — one that passes the next-bit test. BBS is a CSPRBG; its security rests on the difficulty of factoring n into p and q.</div>
+  <div class="lab" id="lab-bbs">
+    <div class="lab-h"><span class="t">Lab · BBS (reproduces Table 8.1)</span></div>
+    <div class="lab-b">
+      <div class="controls"><label>p<input type="number" id="bb-p" value="383"></label><label>q<input type="number" id="bb-q" value="503"></label><label>s<input type="number" id="bb-s" value="101355"></label><label>bits<input type="number" id="bb-n" value="20" min="1" max="64"></label></div>
+      <div id="bb-out" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8.3 ============ -->
+<section class="unit" id="s83">
+  <h2><span class="sec">8.3</span>Pseudorandom Number Generation Using a Block Cipher</h2>
+  <p class="why">A good block cipher’s output shows no patterns that reveal its input, so it makes a good PRNG core — with known security properties if the cipher is standardized (DES, AES), and code many applications already contain.</p>
+  <h3>PRNG using block cipher modes of operation</h3>
+  <p>Two widely accepted constructions (Figure 8.4): CTR mode (recommended in SP 800-90A, ANSI X9.82 and RFC 4086) and OFB mode (X9.82, RFC 4086). In both the seed is a key plus a value V (for AES-128: 128 + 128 bits), and output comes one block (128 bits for AES) at a time.</p>
+  <div class="eq"><span class="n">CTR:</span>  while len(temp) &lt; requested bits:   V = (V + 1) mod 2¹²⁸;  temp = temp ‖ E(Key, V)
+<span class="n">OFB:</span>  while len(temp) &lt; requested bits:   V = E(Key, V);           temp = temp ‖ V</div>
+  <div class="figure" aria-label="PRNG mechanisms based on block ciphers">
+    <svg viewBox="0 0 560 150" role="img" aria-labelledby="pb-t"><title id="pb-t">CTR mode: V encrypted under K gives pseudorandom bits; V incremented by 1. OFB mode: V encrypted under K gives pseudorandom bits, which also become the new V.</title>
+      <defs><marker id="ar5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink)"/></marker></defs>
+      <g font-size="12" text-anchor="middle">
+        <text x="140" y="11" fill="var(--muted)">(a) CTR mode</text>
+        <rect x="100" y="26" width="80" height="26" rx="5" fill="var(--bg)" stroke="var(--line)"/><text x="140" y="44" fill="var(--ink)">V</text>
+        <path d="M100 39 H60 V70 H48" fill="none" stroke="var(--mark)" stroke-width="1.5"/><circle cx="36" cy="70" r="11" fill="var(--paper)" stroke="var(--ink)"/><text x="36" y="75" fill="var(--ink)">+</text><text x="36" y="102" fill="var(--muted)" font-size="11">1</text><line x1="36" y1="92" x2="36" y2="83" stroke="var(--ink)" marker-end="url(#ar5)"/>
+        <path d="M36 59 V18 H140 V24" fill="none" stroke="var(--mark)" stroke-width="1.5" marker-end="url(#ar5)"/>
+        <line x1="140" y1="52" x2="140" y2="70" stroke="var(--ink)" marker-end="url(#ar5)"/>
+        <rect x="100" y="72" width="80" height="30" rx="5" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="140" y="92" fill="var(--ink)" font-weight="600">Encrypt</text><text x="200" y="92" fill="var(--muted)" font-size="11">K</text>
+        <line x1="140" y1="102" x2="140" y2="124" stroke="var(--ink)" marker-end="url(#ar5)"/><text x="140" y="140" fill="var(--ink)">pseudorandom bits</text>
+        <text x="420" y="11" fill="var(--muted)">(b) OFB mode</text>
+        <rect x="380" y="26" width="80" height="26" rx="5" fill="var(--bg)" stroke="var(--line)"/><text x="420" y="44" fill="var(--ink)">V</text>
+        <line x1="420" y1="52" x2="420" y2="70" stroke="var(--ink)" marker-end="url(#ar5)"/>
+        <rect x="380" y="72" width="80" height="30" rx="5" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="420" y="92" fill="var(--ink)" font-weight="600">Encrypt</text><text x="480" y="92" fill="var(--muted)" font-size="11">K</text>
+        <line x1="420" y1="102" x2="420" y2="124" stroke="var(--ink)" marker-end="url(#ar5)"/><text x="420" y="140" fill="var(--ink)">pseudorandom bits</text>
+        <path d="M420 112 H520 V39 H462" fill="none" stroke="var(--mark)" stroke-width="1.5" marker-end="url(#ar5)"/>
+      </g></svg>
+    <div class="cap">Redrawn from Figure 8.4.</div>
+  </div>
+  <div class="lab" id="lab-prng">
+    <div class="lab-h"><span class="t">Lab · AES PRNG output (reproduces Tables 8.2 and 8.3)</span><span class="pill">AES-128, live</span></div>
+    <div class="lab-b">
+      <p class="src">The book’s seed is 256 bits from random.org (124 ones, a fraction of 0.48). Two rough checks per 128-bit block: the fraction of one bits (one NIST test) and the fraction of bits matching the previous block (near 0.5 means no correlation). Note: the book’s Table 8.3 encrypts V before incrementing it, so its first CTR block equals the first OFB block.</p>
+      <div class="controls">
+        <label class="grow">Key<input type="text" class="hex" id="pr-k" value="cfb0ef3108d49cc4562d5810b0a9af60"></label>
+        <label class="grow">V<input type="text" class="hex" id="pr-v" value="4c89af496176b728ed1e2ea8ba27f5a4"></label>
+        <label>Mode<select id="pr-m"><option>OFB</option><option>CTR</option></select></label>
+      </div>
+      <div class="tbl" id="pr-out"></div>
+    </div>
+  </div>
+
+  <h3>ANSI X9.17 PRNG</h3>
+  <p>One of the strongest PRNGs cryptographically; used in financial security applications and PGP. It uses two-key triple DES (EDE) three times, all with the same secret pair K1, K2 reserved for PRNG use.</p>
+  <ul class="props">
+    <li><b>Inputs:</b> DT<sub>i</sub>, a 64-bit date/time value updated on each generation, and V<sub>i</sub>, a 64-bit seed initialized arbitrarily and updated each stage.</li>
+    <li><b>Outputs:</b> a 64-bit pseudorandom number R<sub>i</sub> and the next seed V<sub>i+1</sub>.</li>
+  </ul>
+  <div class="eq">R<sub>i</sub>     = EDE([K1, K2], V<sub>i</sub> <span class="op">⊕</span> EDE([K1, K2], DT<sub>i</sub>))
+V<sub>i+1</sub> = EDE([K1, K2], R<sub>i</sub> <span class="op">⊕</span> EDE([K1, K2], DT<sub>i</sub>))</div>
+  <div class="figure" aria-label="ANSI X9.17 PRNG">
+    <svg viewBox="0 0 560 190" role="img" aria-labelledby="x917-t"><title id="x917-t">DT is encrypted by EDE; result XOR V is encrypted by EDE to give R; result XOR R is encrypted by EDE to give the next V.</title>
+      <defs><marker id="ar6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink)"/></marker></defs>
+      <g font-size="12" text-anchor="middle">
+        <text x="70" y="22" fill="var(--ink)">DTᵢ</text><line x1="70" y1="28" x2="70" y2="48" stroke="var(--ink)" marker-end="url(#ar6)"/>
+        <rect x="30" y="50" width="80" height="30" rx="5" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="70" y="70" fill="var(--ink)" font-weight="600">EDE</text>
+        <path d="M110 65 H230" fill="none" stroke="var(--ink)"/><path d="M230 65 V96" fill="none" stroke="var(--ink)" marker-end="url(#ar6)"/><path d="M230 65 H400 V146" fill="none" stroke="var(--ink)" marker-end="url(#ar6)"/>
+        <text x="230" y="22" fill="var(--ink)">Vᵢ</text><path d="M230 28 V40 H180 V110 H216" fill="none" stroke="var(--ink)" marker-end="url(#ar6)"/>
+        <circle cx="230" cy="110" r="12" fill="var(--paper)" stroke="var(--ink)"/><text x="230" y="115" fill="var(--ink)">⊕</text>
+        <line x1="242" y1="110" x2="268" y2="110" stroke="var(--ink)" marker-end="url(#ar6)"/>
+        <rect x="270" y="95" width="80" height="30" rx="5" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="310" y="115" fill="var(--ink)" font-weight="600">EDE</text>
+        <line x1="350" y1="110" x2="470" y2="110" stroke="var(--ink)" marker-end="url(#ar6)"/><text x="500" y="114" fill="var(--mark)" font-weight="600">Rᵢ</text>
+        <path d="M370 110 V160 H386" fill="none" stroke="var(--ink)" marker-end="url(#ar6)"/>
+        <circle cx="400" cy="160" r="12" fill="var(--paper)" stroke="var(--ink)"/><text x="400" y="165" fill="var(--ink)">⊕</text>
+        <line x1="412" y1="160" x2="428" y2="160" stroke="var(--ink)" marker-end="url(#ar6)"/>
+        <rect x="430" y="145" width="80" height="30" rx="5" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="470" y="165" fill="var(--ink)" font-weight="600">EDE</text>
+        <line x1="510" y1="160" x2="540" y2="160" stroke="var(--ink)" marker-end="url(#ar6)"/><text x="530" y="185" fill="var(--mark)" font-weight="600">Vᵢ₊₁</text>
+        <text x="150" y="160" fill="var(--muted)" font-size="11">all three EDE use K1, K2</text>
+      </g></svg>
+    <div class="cap">Redrawn from Figure 8.5.</div>
+  </div>
+  <p><b>Strength:</b> a 112-bit key and nine DES encryptions; two independent inputs (date/time and a seed distinct from the output). Even if R<sub>i</sub> is compromised, V<sub>i+1</sub> cannot be deduced from it, because one more EDE separates them.</p>
+
+  <h3>NIST CTR_DRBG</h3>
+  <div class="def"><b>Deterministic random bit generator (DRBG)</b> — NIST’s term for a PRNG. <b>CTR_DRBG</b> (SP 800-90A) is a counter-mode DRBG, widely implemented, including in Intel’s hardware generator (Section 8.6). It assumes an entropy source (typically a TRNG) and uses three-key 3DES or AES-128/192/256.</div>
+  <div class="def"><b>Entropy</b> — an information-theoretic measure of unpredictability, or randomness (book Appendix F).</div>
+  <div class="tbl"><table>
+    <thead><tr><th class="l">Parameter</th><th>3DES</th><th>AES-128</th><th>AES-192</th><th>AES-256</th></tr></thead>
+    <tbody>
+      <tr><td class="l"><b>outlen</b> — cipher output block length</td><td>64</td><td>128</td><td>128</td><td>128</td></tr>
+      <tr><td class="l"><b>keylen</b> — key length</td><td>168</td><td>128</td><td>192</td><td>256</td></tr>
+      <tr><td class="l"><b>seedlen</b> = outlen + keylen</td><td>232</td><td>256</td><td>320</td><td>384</td></tr>
+      <tr><td class="l"><b>reseed_interval</b> — max output blocks before a new seed</td><td>≤ 2³²</td><td>≤ 2⁴⁸</td><td>≤ 2⁴⁸</td><td>≤ 2⁴⁸</td></tr>
+    </tbody></table></div>
+  <div class="cap">Table 8.4. The seed determines part of the DRBG’s internal state; its entropy must support the DRBG’s security strength.</div>
+  <ul class="props">
+    <li><b>Initialize</b> — the seed is (Key, V). Start from arbitrary values (Intel uses Key = 0, V = 0), run CTR mode (V incremented after each encryption) until ≥ seedlen bits exist, XOR the leftmost seedlen bits with seedlen bits from the entropy source. The leftmost keylen bits become the new Key; the rightmost outlen bits the new V.</li>
+    <li><b>Generate</b> — iterate encryption under the same Key, incrementing V, one output block at a time.</li>
+    <li><b>Update (reseed)</b> — a reseed counter starts at 1 and increases per output block. At reseed_interval, the update function (same as initialize, starting from the current Key and V) mixes in seedlen fresh entropy bits and changes both Key and V.</li>
+  </ul>
+</section>
+
+<!-- ============ 8.4 ============ -->
+<section class="unit" id="s84">
+  <h2><span class="sec">8.4</span>Stream Ciphers</h2>
+  <div class="def"><b>Keystream</b> — the output of the pseudorandom generator in a stream cipher; it is XORed with the plaintext (typically a byte at a time).</div>
+  <div class="figure" aria-label="Stream cipher">
+    <svg viewBox="0 0 620 150" role="img" aria-labelledby="sc-t"><title id="sc-t">Key K enters a pseudorandom byte generator producing keystream k, XORed with plaintext M to give ciphertext C; the receiver regenerates k from K and XORs it with C to recover M.</title>
+      <defs><marker id="ar7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink)"/></marker></defs>
+      <g font-size="12" text-anchor="middle">
+        <text x="150" y="16" fill="var(--muted)">ENCRYPTION</text><text x="470" y="16" fill="var(--muted)">DECRYPTION</text>
+        <text x="150" y="36" fill="var(--ink)">Key K</text><line x1="150" y1="42" x2="150" y2="54" stroke="var(--ink)" marker-end="url(#ar7)"/>
+        <rect x="80" y="56" width="140" height="34" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="150" y="72" fill="var(--ink)">pseudorandom byte</text><text x="150" y="86" fill="var(--ink)">generator</text>
+        <line x1="150" y1="90" x2="150" y2="112" stroke="var(--mark)" stroke-width="1.6" marker-end="url(#ar7)"/><text x="162" y="104" fill="var(--mark)" text-anchor="start">k</text>
+        <text x="30" y="130" fill="var(--ink)">M</text><line x1="42" y1="126" x2="136" y2="126" stroke="var(--ink)" marker-end="url(#ar7)"/>
+        <circle cx="150" cy="126" r="12" fill="var(--paper)" stroke="var(--ink)"/><text x="150" y="131" fill="var(--ink)">⊕</text>
+        <line x1="162" y1="126" x2="456" y2="126" stroke="var(--ink)" marker-end="url(#ar7)"/><text x="310" y="118" fill="var(--ink)">C (ciphertext byte stream)</text>
+        <text x="470" y="36" fill="var(--ink)">Key K</text><line x1="470" y1="42" x2="470" y2="54" stroke="var(--ink)" marker-end="url(#ar7)"/>
+        <rect x="400" y="56" width="140" height="34" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="470" y="72" fill="var(--ink)">pseudorandom byte</text><text x="470" y="86" fill="var(--ink)">generator</text>
+        <line x1="470" y1="90" x2="470" y2="112" stroke="var(--mark)" stroke-width="1.6" marker-end="url(#ar7)"/><text x="482" y="104" fill="var(--mark)" text-anchor="start">k</text>
+        <circle cx="470" cy="126" r="12" fill="var(--paper)" stroke="var(--ink)"/><text x="470" y="131" fill="var(--ink)">⊕</text>
+        <line x1="482" y1="126" x2="586" y2="126" stroke="var(--ink)" marker-end="url(#ar7)"/><text x="600" y="130" fill="var(--ink)">M</text>
+      </g></svg>
+    <div class="cap">Redrawn from Figure 8.7.</div>
+  </div>
+  <div class="grid2"><div class="eq">  11001100  plaintext
+<span class="op">⊕</span> 01101100  keystream
+  10100000  ciphertext</div><div class="eq">  10100000  ciphertext
+<span class="op">⊕</span> 01101100  keystream
+  11001100  plaintext</div></div>
+  <p>A stream cipher resembles the one-time pad (Unit 3), but the pad is pseudorandom instead of truly random, so only the short key has to be shared.</p>
+  <h3>Design considerations [KUMA97]</h3>
+  <ol>
+    <li><b>Large period.</b> The generator eventually repeats; the longer the period, the harder the cryptanalysis (as with a longer Vigenère keyword).</li>
+    <li><b>Keystream close to a true random stream</b> — e.g. about equal ones and zeros, and all 256 byte values about equally often.</li>
+    <li><b>Long key.</b> The keystream is conditioned on the key, so brute force must be infeasible: at least 128 bits.</li>
+  </ol>
+  <p>With a properly designed PRNG, a stream cipher can be as secure as a block cipher of comparable key length.</p>
+  <h3>Stream cipher or block cipher?</h3>
+  <ul class="props">
+    <li><b>Stream advantage:</b> ciphers not built from block ciphers are typically faster and use far less code (RC4 is a few lines). This has shrunk with AES, which is efficient in software and has hardware support (Intel’s AES instructions give about an order-of-magnitude speedup over pure software).</li>
+    <li><b>Block advantage:</b> keys can be reused. Two plaintexts encrypted with the same stream-cipher keystream give C<sub>1</sub> <span class="op">⊕</span> C<sub>2</sub> = P<sub>1</sub> <span class="op">⊕</span> P<sub>2</sub>, which is often easy to break when the plaintexts have known structure.</li>
+    <li><b>Applications:</b> stream ciphers suit streams such as a data communications channel or a browser/Web link; block ciphers suit blocks of data such as file transfer, email and databases. Either can be used in virtually any application.</li>
+  </ul>
+  <div class="lab" id="lab-reuse">
+    <div class="lab-h"><span class="t">Lab · Why a keystream must never be reused</span></div>
+    <div class="lab-b">
+      <div class="controls"><label class="grow">P<sub>1</sub><input type="text" id="ru-p1" value="TRANSFER $100 TO BOB"></label><label class="grow">P<sub>2</sub><input type="text" id="ru-p2" value="MEET AT THE OLD MILL"></label></div>
+      <div class="controls"><label class="grow">Guess a word in P<sub>1</sub> (crib)<input type="text" id="ru-g" value="TRANSFER"></label></div>
+      <div id="ru-out" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8.5 ============ -->
+<section class="unit" id="s85">
+  <h2><span class="sec">8.5</span>RC4</h2>
+  <div class="def"><b>RC4</b> — a variable-key-size, byte-oriented stream cipher based on a random permutation. A key of 1 to 256 bytes initializes a 256-byte state vector S that always holds a permutation of 0 … 255. Each output byte k is selected from S, and S is permuted again. Its period is overwhelmingly likely to exceed 10¹⁰⁰; it needs 8–16 machine operations per output byte.</div>
+  <div class="grid2">
+    <div><h3>1 · Initialization of S</h3>
+<div class="pseudo"><span class="kw">for</span> i = 0 <span class="kw">to</span> 255 <span class="kw">do</span>
+    S[i] = i;
+    T[i] = K[i mod keylen];</div>
+    <p class="src">T is a temporary vector: the key, repeated to fill 256 bytes.</p></div>
+    <div><h3>2 · Initial permutation of S</h3>
+<div class="pseudo">j = 0;
+<span class="kw">for</span> i = 0 <span class="kw">to</span> 255 <span class="kw">do</span>
+    j = (j + S[i] + T[i]) mod 256;
+    Swap(S[i], S[j]);</div>
+    <p class="src">Only swaps, so S remains a permutation of 0 … 255.</p></div>
+  </div>
+  <h3>3 · Stream generation</h3>
+<div class="pseudo">i, j = 0;
+<span class="kw">while</span> (true)
+    i = (i + 1) mod 256;
+    j = (j + S[i]) mod 256;
+    Swap(S[i], S[j]);
+    t = (S[i] + S[j]) mod 256;
+    k = S[t];          <span class="cm">// encrypt: XOR k with next plaintext byte; decrypt: with next ciphertext byte</span></div>
+  <p>After initialization the key is no longer used.</p>
+  <div class="lab" id="lab-rc4">
+    <div class="lab-h"><span class="t">Lab · RC4 step by step</span><span class="pill">checked against RFC 6229</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>Key (hex)<input type="text" id="rc-k" value="0102030405"></label>
+        <label class="grow">Plaintext<input type="text" id="rc-p" value="Plaintext"></label>
+        <button id="rc-step" type="button">Generate next byte</button><button class="ghost" id="rc-play" type="button">Play</button><button class="ghost" id="rc-reset" type="button">Reset</button>
+      </div>
+      <p class="src">Grid: S after initialization. <span class="pill">i</span> <span class="pill mk">j</span> swapped cells; red outline: S[t], the output byte. With key 0102030405 the first 16 keystream bytes are b2 39 63 05 f0 3d c0 27 cc c3 52 4a 0a 11 18 a8 (RFC 6229).</p>
+      <div class="rc4grid" id="rc-grid" aria-label="RC4 state vector S"></div>
+      <div class="out" id="rc-out" aria-live="polite" style="margin-top:10px"></div>
+    </div>
+  </div>
+  <h3>Strength of RC4</h3>
+  <ul class="props">
+    <li>Early published attacks were not practical against reasonable key lengths such as 128 bits.</li>
+    <li>WEP (802.11 wireless LAN confidentiality) was broken — not through RC4 itself but through how WEP generated RC4 keys; fixable by changing key generation. It shows how hard it is to combine cryptographic functions with protocols securely.</li>
+    <li>Later: a weakness in the key scheduling algorithm reduces the effort to find the key [PAUL07], and keystream biases allow recovery of repeatedly encrypted plaintexts [ALFA13].</li>
+    <li>Consequently RFC 7465 prohibits RC4 in TLS, and NIST SP 800-52 prohibits it for U.S. government use.</li>
+  </ul>
+</section>
+
+<!-- ============ 8.6 ============ -->
+<section class="unit" id="s86">
+  <h2><span class="sec">8.6</span>True Random Number Generators</h2>
+  <h3>Entropy sources</h3>
+  <p>A TRNG uses a nondeterministic source, usually by measuring unpredictable natural processes: pulse detectors of ionizing radiation, gas discharge tubes, leaky capacitors; Intel’s chip samples thermal noise from a coupled pair of inverters; LavaRnd uses a saturated CCD in a light-tight can. RFC 4086 lists computer sources usable with care:</p>
+  <ul class="props">
+    <li><b>Sound/video input</b> — a sound digitizer with nothing plugged in, or a camera with the lens cap on, yields essentially thermal noise.</li>
+    <li><b>Disk drives</b> — small random fluctuations in rotational speed due to chaotic air turbulence; the measurements are highly correlated and need significant processing.</li>
+  </ul>
+  <h3>PRNGs vs TRNGs</h3>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>PRNG</th><th>TRNG</th></tr></thead>
+    <tbody>
+      <tr><th class="l">Efficiency</th><td>very efficient: many numbers quickly</td><td>generally inefficient</td></tr>
+      <tr><th class="l">Determinism</th><td>deterministic: a sequence can be replayed from a known starting point</td><td>nondeterministic: cannot be reproduced</td></tr>
+      <tr><th class="l">Periodicity</th><td>periodic (modern periods are long enough to ignore)</td><td>aperiodic</td></tr>
+    </tbody></table></div>
+  <div class="cap">Table 8.5.</div>
+
+  <h3>Conditioning</h3>
+  <div class="def"><b>Bias</b> — a random process is biased (with respect to a set of possible outcomes) if some outcomes are more probable than others, e.g. more ones than zeros. Physical noise may contain periodic structures that look random but fail statistical tests. <b>Skew</b> is used in the same sense.</div>
+  <div class="def"><b>Min-entropy</b> — a measure of the number of random bits in a block (book Appendix F). <b>Entropy rate</b> — assessed entropy of a bit string from the source divided by its length: k/n for an n-bit string with min-entropy k. It ranges from 0 (no entropy) to 1 (full entropy: unbiased, every bit and group of bits independent).</div>
+  <div class="def"><b>Conditioning (deskewing) algorithms</b> — methods that further “randomize” hardware bits, assuming bias and an entropy rate below 1. Usually a cryptographic algorithm scrambles them: a hash function or a symmetric block cipher.</div>
+  <ul class="props">
+    <li><b>Hash function:</b> pass blocks of m ≥ n input bits through an n-bit hash; the outputs are the random bits. Linux pools bits from four sources (mouse and keyboard activity, disk I/O, specific interrupts) and passes them through SHA-1 when bits are requested.</li>
+    <li><b>Hash_df</b> (SP 800-90A): concatenate Hash(counter ‖ no_of_bits_to_return ‖ input_string) for counter = 1, 2, … and keep the leftmost bits — up to 255 × the hash length. Only the counter differs between blocks, but a strong hash’s diffusion makes the outputs completely different.</li>
+    <li><b>Block cipher:</b> e.g. encrypt 128-bit blocks of TRNG bits with AES under some key; Intel uses an AES-based conditioner.</li>
+  </ul>
+  <div class="lab" id="lab-skew">
+    <div class="lab-h"><span class="t">Lab · Bias and a simple pairwise deskewer</span><span class="pill mk">from Problem 8.9</span></div>
+    <div class="lab-b">
+      <p class="src">Problem 8.9’s conditioner: read non-overlapping pairs, discard 00 and 11, map 01 → 0 and 10 → 1. For independent bits, 01 and 10 are equally likely, so the output is unbiased — at the cost of discarding many bits. (Simulated with your browser’s random generator.)</p>
+      <div class="controls"><label>P(1) = 0.5 + ε<input type="range" id="sk-p" min="0.5" max="0.95" step="0.01" value="0.8"></label><span class="mono" id="sk-pv">0.80</span><label>input bits<select id="sk-n"><option>64</option><option selected>2000</option><option>20000</option></select></label><button class="ghost" id="sk-go" type="button">Resample</button></div>
+      <div id="sk-out" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <h3>Health testing</h3>
+  <div class="figure" aria-label="NRBG model">
+    <svg viewBox="0 0 620 130" role="img" aria-labelledby="nr-t"><title id="nr-t">Noise source, digitization (point A), conditioning (point B), output; health testing monitors points A and B.</title>
+      <defs><marker id="ar8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink)"/></marker></defs>
+      <g font-size="12" text-anchor="middle">
+        <rect x="10" y="22" width="300" height="56" rx="8" fill="none" stroke="var(--line)" stroke-dasharray="4 4"/><text x="160" y="16" fill="var(--muted)" font-size="10.5">nondeterministic bit source</text>
+        <rect x="24" y="34" width="120" height="32" rx="6" fill="var(--mark-soft)" stroke="var(--mark)"/><text x="84" y="54" fill="var(--ink)">noise source</text>
+        <line x1="144" y1="50" x2="172" y2="50" stroke="var(--ink)" marker-end="url(#ar8)"/>
+        <rect x="174" y="34" width="120" height="32" rx="6" fill="var(--paper)" stroke="var(--accent)"/><text x="234" y="54" fill="var(--ink)">digitization</text>
+        <line x1="294" y1="50" x2="348" y2="50" stroke="var(--ink)" marker-end="url(#ar8)"/><circle cx="322" cy="50" r="3" fill="var(--bad)"/><text x="322" y="40" fill="var(--bad)" font-weight="600">A</text>
+        <rect x="350" y="34" width="120" height="32" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="410" y="54" fill="var(--ink)">conditioning</text>
+        <line x1="470" y1="50" x2="560" y2="50" stroke="var(--ink)" marker-end="url(#ar8)"/><circle cx="500" cy="50" r="3" fill="var(--bad)"/><text x="500" y="40" fill="var(--bad)" font-weight="600">B</text><text x="590" y="54" fill="var(--ink)">output</text>
+        <rect x="250" y="94" width="180" height="28" rx="6" fill="var(--bg)" stroke="var(--bad)"/><text x="340" y="112" fill="var(--ink)">health testing</text>
+        <line x1="322" y1="53" x2="322" y2="92" stroke="var(--bad)" stroke-dasharray="3 3"/><line x1="500" y1="53" x2="420" y2="94" stroke="var(--bad)" stroke-dasharray="3 3"/>
+      </g></svg>
+    <div class="cap">Redrawn from Figure 8.9 (nondeterministic random bit generator, NRBG).</div>
+  </div>
+  <p>Health testing checks that the noise source works as expected and that the conditioner’s output has the desired characteristics; SP 800-90B recommends both.</p>
+  <p><b>On the noise source (point A).</b> Digitized noise is expected to be biased, so SP 800-22 randomness tests would always fail; tests are tailored to the expected behaviour of a correctly working source, checking that it produces entropy at the expected rate. SP 800-90B mandates two continuous tests:</p>
+  <ul class="props">
+    <li><b>Repetition Count Test</b> — quickly detects a catastrophic failure where the source gets “stuck” on one value. For min-entropy H bits per sample, Pr[C identical samples in a row] ≤ (2⁻ᴴ)^(C−1). Choose a tiny false-positive probability W and the smallest cutoff C with W ≥ (2⁻ᴴ)^(C−1):
+      <div class="eq">C = ⌈1 + (−log<sub>2</sub> W) / H⌉
+e.g. W = 2⁻³⁰, H = 7.3  →  C = ⌈1 + 30/7.3⌉ = 6</div>
+      Count repetitions of the current sample value; reset to 1 when the value changes; report an error at C.</li>
+    <li><b>Adaptive Proportion Test</b> — detects a large loss of entropy (physical failure, environmental change): record a sample value, observe the next N samples, and report an error if the value occurs at least C times. SP 800-90B recommends W = 2⁻³⁰ and gives guidance on N and C.</li>
+  </ul>
+  <div class="lab" id="lab-rct">
+    <div class="lab-h"><span class="t">Lab · Repetition Count cutoff</span></div>
+    <div class="lab-b">
+      <div class="controls"><label>−log<sub>2</sub> W<input type="number" id="rt-w" value="30" min="1" step="1"></label><label>H (bits/sample)<input type="number" id="rt-h" value="7.3" min="0.1" step="0.1"></label></div>
+      <div class="out" id="rt-out" aria-live="polite"></div>
+    </div>
+  </div>
+  <p><b>On the conditioner (point B).</b> SP 800-90B requires tests but does not name them; since the output should behave as a true random stream, the SP 800-22 tests are reasonable.</p>
+
+  <h3>Intel Digital Random Number Generator</h3>
+  <p>A hardware TRNG whose bit rate is comparable to PRNGs (an NRBG, despite the “DRNG” name). It is implemented entirely in hardware (more secure and faster than designs with a software component) and on the same multicore chip as the processors (no I/O delays).</p>
+  <div class="figure" aria-label="Intel DRNG structure">
+    <svg viewBox="0 0 700 170" role="img" aria-labelledby="dr-t"><title id="dr-t">Hardware entropy source of two cross-coupled inverters produces 512-bit chunks; an AES CBC-MAC conditioner outputs 256 bits; these seed an AES-CTR DRBG whose 128-bit outputs reach cores via RDRAND; conditioner output also feeds an ENRNG reached via RDSEED.</title>
+      <defs><marker id="ar9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink)"/></marker></defs>
+      <g font-size="11.5" text-anchor="middle">
+        <rect x="10" y="30" width="140" height="70" rx="8" fill="var(--mark-soft)" stroke="var(--mark)"/><text x="80" y="54" fill="var(--ink)" font-weight="600">entropy source</text><text x="80" y="72" fill="var(--muted)" font-size="10.5">2 inverters</text><text x="80" y="88" fill="var(--muted)" font-size="10.5">thermal noise</text>
+        <line x1="150" y1="65" x2="196" y2="65" stroke="var(--ink)" marker-end="url(#ar9)"/><text x="173" y="58" fill="var(--muted)" font-size="10">512 b</text>
+        <rect x="198" y="30" width="150" height="70" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="273" y="54" fill="var(--ink)" font-weight="600">conditioner</text><text x="273" y="72" fill="var(--muted)" font-size="10.5">AES CBC-MAC</text><text x="273" y="88" fill="var(--muted)" font-size="10.5">(SP 800-38B)</text>
+        <line x1="348" y1="65" x2="394" y2="65" stroke="var(--ink)" marker-end="url(#ar9)"/><text x="371" y="58" fill="var(--muted)" font-size="10">256 b</text>
+        <rect x="396" y="30" width="150" height="70" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="471" y="54" fill="var(--ink)" font-weight="600">DRBG</text><text x="471" y="72" fill="var(--muted)" font-size="10.5">AES CTR_DRBG</text><text x="471" y="88" fill="var(--muted)" font-size="10.5">≤ 511 × 128 b per seed</text>
+        <line x1="546" y1="65" x2="592" y2="65" stroke="var(--ink)" marker-end="url(#ar9)"/>
+        <rect x="594" y="44" width="96" height="42" rx="8" fill="var(--paper)" stroke="var(--ink)"/><text x="642" y="62" fill="var(--ink)" font-weight="600">RDRAND</text><text x="642" y="78" fill="var(--muted)" font-size="10">16/32/64-bit</text>
+        <path d="M273 100 V140 H394" fill="none" stroke="var(--ink)" marker-end="url(#ar9)"/>
+        <rect x="396" y="120" width="150" height="40" rx="8" fill="var(--paper)" stroke="var(--accent)"/><text x="471" y="144" fill="var(--ink)">ENRNG (90B &amp; 90C)</text>
+        <line x1="546" y1="140" x2="592" y2="140" stroke="var(--ink)" marker-end="url(#ar9)"/>
+        <rect x="594" y="120" width="96" height="40" rx="8" fill="var(--paper)" stroke="var(--ink)"/><text x="642" y="144" fill="var(--ink)" font-weight="600">RDSEED</text>
+        <path d="M471 30 V14 H273 V28" fill="none" stroke="var(--mark)" stroke-dasharray="4 3" marker-end="url(#ar9)"/><text x="372" y="10" fill="var(--mark)" font-size="10">DRBG output later becomes the conditioner key</text>
+      </g></svg>
+    <div class="cap">Combined and simplified from Figures 8.10 and 8.11.</div>
+  </div>
+  <ul class="props">
+    <li><b>Entropy source</b> — two inverters (NOT gates), each output feeding the other’s input, have two stable states. Clocked transistors force both into the same indeterminate state (all logical 1); thermal noise then settles them randomly into one stable state, giving one random bit per clock. Extra circuitry compensates for bias or correlation.</li>
+    <li><b>Conditioner</b> — 512 bits at a time go through two hardware AES CBC implementations (two 128-bit blocks each; the second output kept), initially with an all-zero key; later the PRNG stage’s output becomes the key. Output: 256 bits, intended to have no skew or bias.</li>
+    <li><b>DRBG</b> — the 256 bits enter the CTR_DRBG update function (initialized with Key = 0, V = 0, iterated twice and XORed in) to give a 128-bit key and 128-bit V; the generate function then outputs 128-bit blocks, faster than the entropy source. Cores read them with <b>RDRAND</b>.</li>
+    <li><b>ENRNG</b> (enhanced nondeterministic random number generator) — provides seeds for other cryptographic algorithms, compliant with SP 800-90B and 90C; cores read them with <b>RDSEED</b>.</li>
+  </ul>
+</section>
+
+<!-- ============ Key terms ============ -->
+<section class="unit" id="terms">
+  <h2><span class="sec">7.9 · 8.7</span>Key Terms</h2>
+  <p class="why">The key-term lists from both chapters, plus the intermediate terms they depend on, one line each.</p>
+  <dl class="gloss">
+    <dt>Triple DES (3DES, TDEA)</dt><dd>DES applied three times (EDE) with two keys (K1, K2, K1) or three keys.</dd>
+    <dt>Meet-in-the-middle attack</dt><dd>Known-plaintext attack on double encryption: match E(K1, P) against D(K2, C); about 2⁵⁶ work for double DES.</dd>
+    <dt>Block cipher modes of operation</dt><dd>Ways to apply a block cipher to sequences of blocks or streams: ECB, CBC, CFB, OFB, CTR (SP 800-38A), plus XTS-AES and FPE.</dd>
+    <dt>Electronic codebook mode (ECB)</dt><dd>Each block encrypted independently with the same key; equal blocks give equal ciphertext.</dd>
+    <dt>Cipher block chaining mode (CBC)</dt><dd>C<sub>j</sub> = E(K, P<sub>j</sub> <span class="op">⊕</span> C<sub>j−1</sub>), starting from an IV.</dd>
+    <dt>Initialization vector (IV)</dt><dd>Block-sized starting value known to both parties and unpredictable to others.</dd>
+    <dt>Nonce</dt><dd>Value with at most a negligible chance of repeating (random value, timestamp, sequence number).</dd>
+    <dt>Cipher feedback mode (CFB)</dt><dd>Encrypt a shift register of past ciphertext; XOR the leftmost s bits with s plaintext bits.</dd>
+    <dt>Output feedback mode (OFB)</dt><dd>Encryption output fed back as the next input; outputs XORed with full blocks; IV must be a nonce.</dd>
+    <dt>Counter mode (CTR)</dt><dd>C<sub>j</sub> = P<sub>j</sub> <span class="op">⊕</span> E(K, T<sub>j</sub>) with unique counters; parallel, random access, encryption only.</dd>
+    <dt>Tweak</dt><dd>Non-secret extra input that makes the same plaintext and key give different outputs.</dd>
+    <dt>Tweakable block cipher</dt><dd>C = E(K, T, P), e.g. C = H(T) <span class="op">⊕</span> E(K, H(T) <span class="op">⊕</span> P).</dd>
+    <dt>XTS-AES mode</dt><dd>Storage mode with T = E(Key2, i) <span class="op">⊗</span> αʲ XORed before and after AES under Key1.</dd>
+    <dt>Ciphertext stealing</dt><dd>Handling a short last block by borrowing the tail of the previous block’s ciphertext, so no padding is needed.</dd>
+    <dt>Format-preserving encryption (FPE)</dt><dd>Ciphertext has the same format as plaintext; NIST FF1/FF3 use Feistel rounds with addition mod radixᵐ.</dd>
+    <dt>Radix</dt><dd>Number of characters in an alphabet; numerals are 0 … radix − 1.</dd>
+    <dt>Randomness</dt><dd>Statistical randomness: uniform distribution and independence.</dd>
+    <dt>Unpredictability</dt><dd>Later outputs cannot be predicted from earlier ones.</dd>
+    <dt>Forward / backward unpredictability</dt><dd>Next bit unpredictable without the seed / seed not recoverable from outputs.</dd>
+    <dt>Seed</dt><dd>Input that determines a deterministic generator’s output; must be unpredictable.</dd>
+    <dt>Entropy source</dt><dd>Physical source of unpredictable randomness feeding a TRNG.</dd>
+    <dt>True random number generator (TRNG)</dt><dd>Converts a nondeterministic source into random bits.</dd>
+    <dt>Pseudorandom number generator (PRNG)</dt><dd>Deterministic algorithm producing an open-ended pseudorandom bit sequence from a seed.</dd>
+    <dt>Pseudorandom function (PRF)</dt><dd>Deterministic algorithm producing a fixed-length pseudorandom value from a seed and context values.</dd>
+    <dt>Linear congruential generator</dt><dd>X<sub>n+1</sub> = (aX<sub>n</sub> + c) mod m; predictable from a few outputs.</dd>
+    <dt>Blum Blum Shub generator</dt><dd>X<sub>i</sub> = X<sub>i−1</sub>² mod pq with p ≡ q ≡ 3 (mod 4); output the LSB; a CSPRBG.</dd>
+    <dt>Next-bit test / CSPRBG</dt><dd>No polynomial-time predictor of bit k + 1 beats 1/2 significantly / a generator passing that test.</dd>
+    <dt>Stream cipher</dt><dd>Encrypts bits or bytes by XOR with a pseudorandom keystream.</dd>
+    <dt>Keystream</dt><dd>The pseudorandom stream a stream cipher XORs with the data.</dd>
+    <dt>RC4</dt><dd>Byte-oriented stream cipher using a 256-byte permutation; now prohibited in TLS.</dd>
+    <dt>Skew (bias)</dt><dd>Some outcomes (e.g. 1s) more probable than others.</dd>
+    <dt>Deskewing</dt><dd>Conditioning raw random bits (hash, block cipher, or simple pair rules) to remove bias and raise entropy.</dd>
+    <dt>Entropy rate / min-entropy</dt><dd>Assessed entropy per output bit (0–1) / measure of the number of random bits.</dd>
+  </dl>
+</section>
+
+<!-- ============ Review ============ -->
+<section class="unit" id="review">
+  <h2><span class="sec">7.9 · 8.7</span>Review Questions</h2>
+  <p class="why">Review questions 7.1–7.5 and 8.1–8.4 from the book. Answer first, then open to check.</p>
+  <h3>Chapter 7</h3>
+  <details><summary>7.1 What is triple encryption?</summary><p>Encrypting with a block cipher three times in sequence using two or three keys. For DES the standard form is EDE: C = E(K3, D(K2, E(K1, P))), with K3 = K1 in the two-key version.</p></details>
+  <details><summary>7.2 What is a meet-in-the-middle attack?</summary><p>A known-plaintext attack on double encryption C = E(K2, E(K1, P)). Encrypt P under every K1 and store the results; decrypt C under every K2 and look for a match X = E(K1, P) = D(K2, C); confirm candidate key pairs on a second (P, C) pair. Against double DES it costs about 2⁵⁶ instead of 2¹¹².</p></details>
+  <details><summary>7.3 How many keys are used in triple encryption?</summary><p>Two (K1, K2, K1) or three (K1, K2, K3). Three-key 3DES has a 168-bit key but, because of meet-in-the-middle, about 112 bits of strength.</p></details>
+  <details><summary>7.4 List and briefly define the block cipher modes of operation.</summary><p><b>ECB</b>: each block encrypted independently with the same key. <b>CBC</b>: each plaintext block XORed with the previous ciphertext block (the IV for the first) before encryption. <b>CFB</b>: s bits at a time; encrypt a shift register of previous ciphertext and XOR its leftmost s bits with the plaintext. <b>OFB</b>: like CFB but the encryption output is fed back and full blocks are XORed. <b>CTR</b>: XOR each block with the encryption of a counter that changes for every block. (Also XTS-AES for storage and FPE methods.)</p></details>
+  <details><summary>7.5 Why do some block cipher modes of operation only use encryption while others use both encryption and decryption?</summary><p>In CFB, OFB and CTR the cipher only produces a pseudorandom stream that is XORed with the data; XORing the same stream again recovers it, so both sides run the forward (encryption) function. In ECB and CBC the data itself passes through the cipher, so the receiver needs the inverse (decryption) function.</p></details>
+  <h3>Chapter 8</h3>
+  <details><summary>8.1 List two criteria to validate the randomness of a sequence of numbers.</summary><p>Uniform distribution (ones and zeros about equally frequent) and independence (no subsequence can be inferred from the others).</p></details>
+  <details><summary>8.2 What is ANSI X9.17 PRNG?</summary><p>A PRNG built from two-key triple DES (three EDE units with keys K1, K2). Inputs: a 64-bit date/time DT<sub>i</sub> and a 64-bit seed V<sub>i</sub>. Outputs: R<sub>i</sub> = EDE(V<sub>i</sub> <span class="op">⊕</span> EDE(DT<sub>i</sub>)) and the next seed V<sub>i+1</sub> = EDE(R<sub>i</sub> <span class="op">⊕</span> EDE(DT<sub>i</sub>)). Used in financial applications and PGP.</p></details>
+  <details><summary>8.3 What is the difference between a one-time pad and a stream cipher?</summary><p>A one-time pad XORs the data with a truly random key stream as long as the message, used once. A stream cipher XORs it with a pseudorandom keystream generated from a short key, so only the key must be shared.</p></details>
+  <details><summary>8.4 List a few applications of stream ciphers and block ciphers.</summary><p>Stream ciphers: streams of data such as a data communications channel or a browser/Web link (e.g. character-by-character, real-time traffic). Block ciphers: blocks of data such as file transfer, email and databases. Either can serve virtually any application.</p></details>
+</section>
+
+<!-- ============ References ============ -->
+<section class="unit" id="res">
+  <h2><span class="sec">References</span>Sources</h2>
+  <ul>
+    <li>W. Stallings, <i>Cryptography and Network Security: Principles and Practice</i>, 7th ed., Global Edition, Pearson, 2017. Chapters 7–8, pp. 207–282. All content not marked otherwise.</li>
+    <li><b>In the book:</b> Appendix B.7 (Sage examples: Blum Blum Shub and linear congruential generators) and online Appendix F (entropy and min-entropy). Online Appendix C lists Sage exercises for BBS, LCG and the ANSI X9.17 PRNG.</li>
+    <li><a href="https://csrc.nist.gov/pubs/sp/800/38/a/final" target="_blank" rel="noopener">NIST SP 800-38A, Recommendation for Block Cipher Modes of Operation</a> — the five modes; its AES-128 key and IV are the defaults of the modes lab, whose output was checked against independent implementations.</li>
+    <li><a href="https://csrc.nist.gov/pubs/sp/800/38/e/final" target="_blank" rel="noopener">NIST SP 800-38E, the XTS-AES Mode</a> (approves IEEE Std 1619) — the XTS lab reproduces IEEE 1619 test vector 1 and implements ciphertext stealing.</li>
+    <li><a href="https://csrc.nist.gov/pubs/sp/800/38/g/upd1/final" target="_blank" rel="noopener">NIST SP 800-38G, Methods for Format-Preserving Encryption</a> (2016, FF1 and FF3) and <a href="https://csrc.nist.gov/pubs/sp/800/38/g/r1/2pd" target="_blank" rel="noopener">SP 800-38G Rev. 1, 2nd public draft</a> (2025, FF1 only) — source of the FPE status note.</li>
+    <li><a href="https://csrc.nist.gov/projects/cryptographic-standards-and-guidelines/example-values" target="_blank" rel="noopener">NIST Examples with Intermediate Values</a> — FF1 samples used to check the FF1 lab.</li>
+    <li><a href="https://csrc.nist.gov/News/2023/nist-to-withdraw-sp-800-67-rev-2" target="_blank" rel="noopener">NIST, “NIST to Withdraw Special Publication 800-67 Revision 2”</a> (2023) — source of the 3DES status note.</li>
+    <li><a href="https://csrc.nist.gov/pubs/sp/800/90/a/r1/final" target="_blank" rel="noopener">NIST SP 800-90A Rev. 1</a> (DRBGs, including CTR_DRBG and Hash_df), <a href="https://csrc.nist.gov/pubs/sp/800/90/b/final" target="_blank" rel="noopener">SP 800-90B</a> (entropy sources and health tests) and <a href="https://csrc.nist.gov/pubs/sp/800/22/r1/upd1/final" target="_blank" rel="noopener">SP 800-22 Rev. 1a</a> (statistical test suite) — current versions of the documents the chapter is based on.</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc6229" target="_blank" rel="noopener">RFC 6229, Test Vectors for the Stream Cipher RC4</a> — used to check the RC4 lab. <a href="https://www.rfc-editor.org/rfc/rfc7465" target="_blank" rel="noopener">RFC 7465, Prohibiting RC4 Cipher Suites</a>.</li>
+    <li><a href="https://csrc.nist.gov/pubs/fips/197/final" target="_blank" rel="noopener">NIST FIPS 197, AES</a> — the AES-128 used by every lab; it also reproduces the book’s Chapter 6 example and Tables 8.2–8.3.</li>
+  </ul>
+  <footer>Content follows W. Stallings, <i>Cryptography and Network Security: Principles and Practice</i>, 7th ed., Global Edition, Chapters 7–8. Interactive tools compute results live in your browser; nothing is sent anywhere. The toy cipher in the meet-in-the-middle lab is invented for illustration only.</footer>
+</section>
+</main>
+</div>
+<script>
+/* ===== Unit 5 engine: AES-128, modes of operation, XTS-AES, FF1, PRNGs, RC4 ===== */
+const U5=(function(){
+  /* --- AES-128 (FIPS 197), S-box built from GF(2^8) inverse + affine map as in Unit 4 --- */
+  const xt=a=>((a<<1)^((a&0x80)?0x1b:0))&0xff;
+  const gmul=(a,b)=>{let r=0;while(b){if(b&1)r^=a;a=xt(a);b>>=1}return r};
+  const SB=new Uint8Array(256),ISB=new Uint8Array(256);
+  (function(){for(let i=0;i<256;i++){let inv=0;if(i)for(let j=1;j<256;j++)if(gmul(i,j)===1){inv=j;break}
+      let r=0;for(let k=0;k<8;k++){const bit=((inv>>k)^(inv>>((k+4)%8))^(inv>>((k+5)%8))^(inv>>((k+6)%8))^(inv>>((k+7)%8))^(0x63>>k))&1;r|=bit<<k}
+      SB[i]=r}
+    for(let i=0;i<256;i++)ISB[SB[i]]=i})();
+  function expand(key){/* key: Uint8Array(16) -> 176-byte schedule */
+    const w=new Uint8Array(176);w.set(key);let rc=1;
+    for(let i=16;i<176;i+=4){let t=[w[i-4],w[i-3],w[i-2],w[i-1]];
+      if(i%16===0){t=[SB[t[1]]^rc,SB[t[2]],SB[t[3]],SB[t[0]]];rc=xt(rc)}
+      for(let j=0;j<4;j++)w[i+j]=w[i-16+j]^t[j]}
+    return w}
+  function encBlock(p,w){const s=new Uint8Array(16);for(let i=0;i<16;i++)s[i]=p[i]^w[i];
+    for(let r=1;r<=10;r++){
+      const t=new Uint8Array(16);
+      for(let c=0;c<4;c++)for(let row=0;row<4;row++)t[4*c+row]=SB[s[4*((c+row)%4)+row]];
+      if(r<10){for(let c=0;c<4;c++){const a0=t[4*c],a1=t[4*c+1],a2=t[4*c+2],a3=t[4*c+3];
+        t[4*c]=xt(a0)^xt(a1)^a1^a2^a3;t[4*c+1]=a0^xt(a1)^xt(a2)^a2^a3;t[4*c+2]=a0^a1^xt(a2)^xt(a3)^a3;t[4*c+3]=xt(a0)^a0^a1^a2^xt(a3)}}
+      for(let i=0;i<16;i++)s[i]=t[i]^w[16*r+i]}
+    return s}
+  function decBlock(c0,w){let s=new Uint8Array(16);for(let i=0;i<16;i++)s[i]=c0[i]^w[160+i];
+    for(let r=9;r>=0;r--){const t=new Uint8Array(16);
+      for(let c=0;c<4;c++)for(let row=0;row<4;row++)t[4*((c+row)%4)+row]=ISB[s[4*c+row]];
+      for(let i=0;i<16;i++)t[i]^=w[16*r+i];
+      if(r>0){for(let c=0;c<4;c++){const a0=t[4*c],a1=t[4*c+1],a2=t[4*c+2],a3=t[4*c+3];
+        t[4*c]=gmul(a0,14)^gmul(a1,11)^gmul(a2,13)^gmul(a3,9);t[4*c+1]=gmul(a0,9)^gmul(a1,14)^gmul(a2,11)^gmul(a3,13);
+        t[4*c+2]=gmul(a0,13)^gmul(a1,9)^gmul(a2,14)^gmul(a3,11);t[4*c+3]=gmul(a0,11)^gmul(a1,13)^gmul(a2,9)^gmul(a3,14)}}
+      s=t}
+    return s}
+  const hex=b=>Array.from(b,v=>v.toString(16).padStart(2,'0')).join('');
+  const unhex=h=>{h=String(h).replace(/[^0-9a-fA-F]/g,'');if(h.length%2)throw new Error('odd number of hex digits');const b=new Uint8Array(h.length/2);for(let i=0;i<b.length;i++)b[i]=parseInt(h.substr(2*i,2),16);return b};
+  const xor=(a,b)=>{const o=new Uint8Array(a.length);for(let i=0;i<a.length;i++)o[i]=a[i]^b[i];return o};
+  const inc=v=>{const o=Uint8Array.from(v);for(let i=15;i>=0;i--){o[i]=(o[i]+1)&255;if(o[i])break}return o};
+
+  /* --- Modes of operation (SP 800-38A as described in Sections 7.2–7.6); b = 128, CFB uses s = 8 --- */
+  function blocks(d){const o=[];for(let i=0;i<d.length;i+=16)o.push(d.slice(i,i+16));return o}
+  function padZero(d){const n=Math.ceil(Math.max(d.length,1)/16)*16;const o=new Uint8Array(n);o.set(d);return o}
+  const modes={
+    ECB:{enc(p,w){return concat(blocks(padZero(p)).map(b=>encBlock(b,w)))},dec(c,w){return concat(blocks(c).map(b=>decBlock(b,w)))},pad:true},
+    CBC:{enc(p,w,iv){let prev=iv;return concat(blocks(padZero(p)).map(b=>prev=encBlock(xor(b,prev),w)))},
+         dec(c,w,iv){let prev=iv;return concat(blocks(c).map(b=>{const o=xor(decBlock(b,w),prev);prev=b;return o}))},pad:true},
+    CFB:{enc(p,w,iv){let sr=Uint8Array.from(iv);const o=new Uint8Array(p.length);for(let i=0;i<p.length;i++){const O=encBlock(sr,w);o[i]=p[i]^O[0];sr=shift8(sr,o[i])}return o},
+         dec(c,w,iv){let sr=Uint8Array.from(iv);const o=new Uint8Array(c.length);for(let i=0;i<c.length;i++){const O=encBlock(sr,w);o[i]=c[i]^O[0];sr=shift8(sr,c[i])}return o}},
+    OFB:{enc(p,w,iv){let I=iv;const o=new Uint8Array(p.length);for(let i=0;i<p.length;i+=16){I=encBlock(I,w);for(let j=i;j<Math.min(i+16,p.length);j++)o[j]=p[j]^I[j-i]}return o}},
+    CTR:{enc(p,w,iv){let T=iv;const o=new Uint8Array(p.length);for(let i=0;i<p.length;i+=16){const O=encBlock(T,w);for(let j=i;j<Math.min(i+16,p.length);j++)o[j]=p[j]^O[j-i];T=inc(T)}return o}}
+  };
+  modes.OFB.dec=modes.OFB.enc;modes.CTR.dec=modes.CTR.enc;
+  function shift8(sr,c){const o=new Uint8Array(16);o.set(sr.slice(1));o[15]=c;return o}
+  function concat(arr){const n=arr.reduce((a,b)=>a+b.length,0);const o=new Uint8Array(n);let k=0;for(const b of arr){o.set(b,k);k+=b.length}return o}
+
+  /* --- XTS-AES (Section 7.7; IEEE 1619): 256-bit key = Key1 || Key2, tweak i, block number j --- */
+  function mulAlpha(t){/* multiply by alpha (x) in GF(2^128) mod x^128+x^7+x^2+x+1, little-endian byte order as in IEEE 1619 */
+    const o=new Uint8Array(16);let carry=0;for(let k=0;k<16;k++){o[k]=((t[k]<<1)|carry)&255;carry=t[k]>>7}if(carry)o[0]^=0x87;return o}
+  function tweakBytes(i){const b=new Uint8Array(16);let x=BigInt(i);for(let k=0;k<16;k++){b[k]=Number(x&255n);x>>=8n}return b}
+  function xtsT(w2,i,j){let T=encBlock(tweakBytes(i),w2);for(let k=0;k<j;k++)T=mulAlpha(T);return T}
+  function xtsBlockEnc(w1,w2,P,i,j){const T=xtsT(w2,i,j);const PP=xor(P,T);const CC=encBlock(PP,w1);return {T,PP,CC,C:xor(CC,T)}}
+  function xtsBlockDec(w1,w2,C,i,j){const T=xtsT(w2,i,j);const CC=xor(C,T);const PP=decBlock(CC,w1);return {T,CC,PP,P:xor(PP,T)}}
+  function xtsEnc(key32,i,P){/* sector encryption with ciphertext stealing (Figure 7.11) */
+    const w1=expand(key32.slice(0,16)),w2=expand(key32.slice(16,32));const m=Math.floor(P.length/16),s=P.length%16;
+    if(P.length<16)throw new Error('XTS needs at least one full 128-bit block');
+    const out=new Uint8Array(P.length);
+    if(s===0){for(let j=0;j<m;j++)out.set(xtsBlockEnc(w1,w2,P.slice(16*j,16*j+16),i,j).C,16*j);return out}
+    for(let j=0;j<m-1;j++)out.set(xtsBlockEnc(w1,w2,P.slice(16*j,16*j+16),i,j).C,16*j);
+    const XX=xtsBlockEnc(w1,w2,P.slice(16*(m-1),16*m),i,m-1).C;
+    const Pm=P.slice(16*m),CP=XX.slice(s),YY=concat([Pm,CP]);
+    out.set(xtsBlockEnc(w1,w2,YY,i,m).C,16*(m-1));out.set(XX.slice(0,s),16*m);return out}
+  function xtsDec(key32,i,C){const w1=expand(key32.slice(0,16)),w2=expand(key32.slice(16,32));const m=Math.floor(C.length/16),s=C.length%16;
+    const out=new Uint8Array(C.length);
+    if(s===0){for(let j=0;j<m;j++)out.set(xtsBlockDec(w1,w2,C.slice(16*j,16*j+16),i,j).P,16*j);return out}
+    for(let j=0;j<m-1;j++)out.set(xtsBlockDec(w1,w2,C.slice(16*j,16*j+16),i,j).P,16*j);
+    const YY=xtsBlockDec(w1,w2,C.slice(16*(m-1),16*m),i,m).P;
+    const Cm=C.slice(16*m),CP=YY.slice(s),XX=concat([Cm,CP]);
+    out.set(xtsBlockDec(w1,w2,XX,i,m-1).P,16*(m-1));out.set(YY.slice(0,s),16*m);return out}
+
+  /* --- FF1 (Figure 7.14) with AES-128, BigInt arithmetic --- */
+  const be=(x,s)=>{const b=new Uint8Array(s);let v=BigInt(x);for(let k=s-1;k>=0;k--){b[k]=Number(v&255n);v>>=8n}return b};
+  const num=(X,radix)=>{let x=0n;const R=BigInt(radix);for(const d of X)x=x*R+BigInt(d);return x};
+  const num2=b=>{let x=0n;for(const v of b)x=(x<<8n)+BigInt(v);return x};
+  const str=(x,radix,m)=>{const R=BigInt(radix);const o=new Array(m);for(let k=m-1;k>=0;k--){o[k]=Number(x%R);x/=R}return o};
+  function prf(w,X){let Y=new Uint8Array(16);for(let k=0;k<X.length;k+=16)Y=encBlock(xor(Y,X.slice(k,k+16)),w);return Y}
+  function ff1(keyBytes,T,X,radix,decrypt){
+    const w=expand(keyBytes);const n=X.length,t=T.length;const u=Math.floor(n/2),v=n-u;
+    let A=X.slice(0,u),B=X.slice(u);
+    const b=Math.ceil(Math.ceil(v*Math.log2(radix))/8),d=4*Math.ceil(b/4)+4;
+    const P=concat([be(1,1),be(2,1),be(1,1),be(radix,3),be(10,1),be(u%256,1),be(n,4),be(t,4)]);
+    const rounds=[];
+    const F=(i,Bx)=>{const pad=((-t-b-1)%16+16)%16;
+      const Q=concat([T,new Uint8Array(pad),be(i,1),be(num(Bx,radix),b)]);
+      const R=prf(w,concat([P,Q]));
+      let S=R;for(let j=1;S.length<d;j++)S=concat([S,encBlock(xor(R,be(j,16)),w)]);
+      return num2(S.slice(0,d))};
+    if(!decrypt){
+      for(let i=0;i<10;i++){const m=i%2===0?u:v;const y=F(i,B);const c=(num(A,radix)+y)%(BigInt(radix)**BigInt(m));
+        const C=str(c,radix,m);rounds.push({i,A:A.slice(),B:B.slice(),C});A=B;B=C}
+    }else{
+      for(let i=9;i>=0;i--){const m=i%2===0?u:v;const y=F(i,A);const R=BigInt(radix)**BigInt(m);
+        const c=((num(B,radix)-y)%R+R)%R;const C=str(c,radix,m);rounds.push({i,A:A.slice(),B:B.slice(),C});B=A;A=C}
+    }
+    return {Y:A.concat(B),rounds,P}}
+
+  /* --- PRNGs (Sections 8.2–8.3) --- */
+  function lcg(a,c,m,x0,limit){const seen=new Map();const seq=[];let x=x0;
+    for(let k=0;k<limit;k++){x=(a*x+c)%m;if(seen.has(x)){return {seq,period:k-seen.get(x),repeatAt:x}}seen.set(x,k);seq.push(x)}
+    return {seq,period:null}}
+  function bbs(p,q,s,count){const n=BigInt(p)*BigInt(q);let x=(BigInt(s)*BigInt(s))%n;const rows=[{i:0,x:x,b:null}];
+    for(let i=1;i<=count;i++){x=(x*x)%n;rows.push({i,x,b:Number(x&1n)})}return {n,rows}}
+  function blockPrng(keyHex,vHex,mode,nBlocks){const w=expand(unhex(keyHex));let V=unhex(vHex);const out=[];
+    for(let k=0;k<nBlocks;k++){if(mode==='OFB'){V=encBlock(V,w);out.push(V)}else{out.push(encBlock(V,w));V=inc(V)}}return out}
+  const ones=b=>{let c=0;for(const v of b){let x=v;while(x){c+=x&1;x>>=1}}return c};
+
+  /* --- RC4 (Section 8.5) --- */
+  function rc4(key,n){const S=[];for(let i=0;i<256;i++)S[i]=i;let j=0;
+    for(let i=0;i<256;i++){j=(j+S[i]+key[i%key.length])&255;[S[i],S[j]]=[S[j],S[i]]}
+    let i=0;j=0;const out=[];for(let k=0;k<n;k++){i=(i+1)&255;j=(j+S[i])&255;[S[i],S[j]]=[S[j],S[i]];out.push(S[(S[i]+S[j])&255])}
+    return out}
+
+  return {SB,expand,encBlock,decBlock,hex,unhex,xor,inc,modes,blocks,padZero,concat,mulAlpha,tweakBytes,xtsT,xtsBlockEnc,xtsBlockDec,xtsEnc,xtsDec,ff1,num,str,lcg,bbs,blockPrng,ones,rc4}
+})();
+(function(){
+  const $=id=>document.getElementById(id);
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const H=U5.hex,X=U5.unhex;
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const rnd=n=>{const b=new Uint8Array(n);(window.crypto||window.msCrypto).getRandomValues(b);return b};
+  const key16=(v,what)=>{const b=X(v);if(b.length!==16)throw new Error(what+' must be 32 hex digits (128 bits)');return b};
+  const err=(el,e)=>{el.innerHTML='<span class="err">'+esc(e.message||e)+'</span>'};
+  const printable=b=>Array.from(b,v=>v>=32&&v<127?String.fromCharCode(v):'·').join('');
+
+  /* ===== Mode diagrams (Figures 7.3–7.7) ===== */
+  let uid=0;
+  function modeSVG(mode,dec){
+    const id='m'+(++uid),cx=[120,360,600],idx=['1','2','N'],prevIdx=['','1','N−1'];
+    const sub=(n,i)=>`${n}<tspan font-size="9" dy="3">${i}</tspan>`;
+    const T=(x,y,t,cls='lb',a='middle')=>`<text class="${cls}" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
+    const A=(x1,y1,x2,y2,f)=>`<line class="${f?'fb':'ln'}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#${f?'f':'k'}${id})"/>`;
+    const P=(d,f)=>`<path class="${f?'fb':'ln'}" d="${d}" marker-end="url(#${f?'f':'k'}${id})"/>`;
+    const Bx=(c,y,w,h,t,enc)=>`<rect class="box${enc?' enc':''}" x="${c-w/2}" y="${y}" width="${w}" height="${h}" rx="6"/>`+T(c,y+h/2+4,t);
+    const Kin=(c,y,w)=>T(c-w/2-26,y+4,'K','lbm')+A(c-w/2-18,y,c-w/2-2,y);
+    const Xo=(c,y)=>`<circle class="xo" cx="${c}" cy="${y}" r="11"/>`+T(c,y+5,'⊕');
+    const E=dec?'Decrypt':'Encrypt';
+    let h=0,cols=['','',''];
+    for(let k=0;k<3;k++){const c=cx[k],nx=k<2?cx[k+1]:null;let s='';
+      const top=dec?'C':'P',bot=dec?'P':'C';
+      if(mode==='ECB'){h=140;
+        s+=T(c,16,sub(top,idx[k]))+A(c,22,c,44)+Bx(c,46,110,34,E,true)+Kin(c,63,110)+A(c,80,c,106)+T(c,122,sub(bot,idx[k]))}
+      if(mode==='CBC'){h=200;
+        if(!dec){s+=T(c,16,sub('P',idx[k]))+A(c,22,c,51)+Xo(c,63)+A(c,74,c,96)+Bx(c,98,110,34,'Encrypt',true)+Kin(c,115,110)+A(c,132,c,160)+T(c,176,sub('C',idx[k]));
+          if(nx)s+=P(`M${c} 148 H${c+120} V63 H${nx-13}`,1);
+          if(k===0)s+=T(c-96,67,'IV','lbf')+A(c-82,63,c-13,63,1);else s+=T(c-62,55,sub('C',prevIdx[k]),'lbf')}
+        else{s+=T(c,16,sub('C',idx[k]))+A(c,22,c,38)+Bx(c,40,110,34,'Decrypt',true)+Kin(c,57,110)+A(c,74,c,97)+Xo(c,109)+A(c,120,c,150)+T(c,166,sub('P',idx[k]));
+          if(nx)s+=`<circle cx="${c}" cy="30" r="2.5" fill="var(--mark)"/>`+P(`M${c} 30 H${c+120} V109 H${nx-13}`,1);
+          if(k===0)s+=T(c-96,113,'IV','lbf')+A(c-82,109,c-13,109,1);else s+=T(c-62,101,sub('C',prevIdx[k]),'lbf')}}
+      if(mode==='CFB'){h=272;
+        s+=`<rect class="box" x="${c-75}" y="22" width="150" height="26" rx="5"/><line class="ln" x1="${c+35}" y1="22" x2="${c+35}" y2="48"/>`+T(c-20,39,'b − s','lbm')+T(c+55,39,'s','lbm')+T(c,15,k===0?'I₁ = IV':sub('I',idx[k])+' shift register','lbm');
+        if(k===0)s+=T(c-104,39,'IV','lbf')+A(c-94,35,c-77,35,1);
+        s+=A(c,48,c,70)+Bx(c,72,110,32,'Encrypt',true)+Kin(c,88,110)+A(c,104,c,124);
+        s+=`<rect class="box" x="${c-75}" y="126" width="150" height="24" rx="5"/><line class="ln" x1="${c-35}" y1="126" x2="${c-35}" y2="150"/>`+T(c-55,142,'s','lb')+T(c+20,142,'discard b − s','lbm');
+        s+=P(`M${c-55} 150 V156 H${c} V180`)+Xo(c,192);
+        const inL=dec?'C':'P',outL=dec?'P':'C';
+        s+=T(c-88,196,sub(inL,idx[k]))+A(c-74,192,c-13,192)+A(c,203,c,232)+T(c,248,sub(outL,idx[k]));
+        if(nx){if(!dec)s+=P(`M${c} 218 H${c+120} V35 H${nx-77}`,1);else s+=`<circle cx="${c-58}" cy="192" r="2.5" fill="var(--mark)"/>`+P(`M${c-58} 192 V262 H${c+120} V35 H${nx-77}`,1)}}
+      if(mode==='OFB'){h=222;
+        if(k===0)s+=T(c,16,'Nonce','lbf')+A(c,22,c,38,1);
+        s+=Bx(c,40,110,32,'Encrypt',true)+Kin(c,56,110)+A(c,72,c,118)+T(c-10,100,sub('O',idx[k]),'lbm','end')+Xo(c,130);
+        const inL=dec?'C':'P',outL=dec?'P':'C';
+        s+=T(c-88,134,sub(inL,idx[k]))+A(c-74,130,c-13,130)+A(c,141,c,170)+T(c,186,sub(outL,idx[k]));
+        if(nx)s+=`<circle cx="${c}" cy="96" r="2.5" fill="var(--mark)"/>`+P(`M${c} 96 H${c+120} V24 H${nx} V38`,1)}
+      if(mode==='CTR'){h=200;
+        s+=`<rect class="box" x="${c-55}" y="14" width="110" height="26" rx="5"/>`+T(c,31,'Counter '+idx[k],'lb');
+        s+=A(c,40,c,60)+Bx(c,62,110,32,'Encrypt',true)+Kin(c,78,110)+A(c,94,c,113)+Xo(c,125);
+        const inL=dec?'C':'P',outL=dec?'P':'C';
+        s+=T(c-88,129,sub(inL,idx[k]))+A(c-74,125,c-13,125)+A(c,136,c,162)+T(c,178,sub(outL,idx[k]))}
+      cols[k]=`<g class="col" data-c="${k}">${s}</g>`}
+    const dots=`<text class="lbm" x="480" y="${mode==='CFB'?92:h/2}" text-anchor="middle">· · ·</text>`;
+    return `<svg viewBox="0 0 720 ${h}" role="img" aria-label="${mode} mode ${dec?'decryption':'encryption'}"><defs>
+      <marker id="k${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink)"/></marker>
+      <marker id="f${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--mark)"/></marker></defs>${cols.join('')}${dots}</svg>`}
+  const FIGN={ECB:'7.3',CBC:'7.4',CFB:'7.5',OFB:'7.6',CTR:'7.7'};
+  const CAPS={ECB:'Each block is independent.',CBC:'Orange: chaining of the previous ciphertext block (the IV for block 1).',CFB:'Orange: each ciphertext segment is shifted into the next register. s-bit segments.',OFB:'Orange: each encryption output becomes the next input; the stream never depends on the data.',CTR:'No feedback: each counter is encrypted independently.'};
+  document.querySelectorAll('.mf[data-mode]').forEach(el=>{
+    const mode=el.dataset.mode;let dec=false,timer=null,step=0;
+    el.innerHTML=`<div class="figbar"><span class="seg" role="group" aria-label="Direction"><button type="button" aria-pressed="true" data-d="0">Encryption</button><button type="button" aria-pressed="false" data-d="1">Decryption</button></span><button class="ghost" type="button" data-anim>▶ Animate blocks</button></div><div class="svgbox"></div><div class="cap">Redrawn from Figure ${FIGN[mode]}. ${CAPS[mode]}${mode!=='ECB'&&mode!=='CBC'?' Decryption also uses the Encrypt function.':''}</div>`;
+    const box=el.querySelector('.svgbox'),ab=el.querySelector('[data-anim]');
+    const draw=()=>{box.innerHTML=modeSVG(mode,dec);mark()};
+    const mark=()=>{el.querySelectorAll('.col').forEach(g=>g.classList.toggle('on',+g.dataset.c===step))};
+    const stop=()=>{clearInterval(timer);timer=null;el.classList.remove('anim');ab.textContent='▶ Animate blocks'};
+    el.querySelectorAll('[data-d]').forEach(b=>b.addEventListener('click',()=>{dec=b.dataset.d==='1';el.querySelectorAll('[data-d]').forEach(x=>x.setAttribute('aria-pressed',x===b));draw()}));
+    ab.addEventListener('click',()=>{if(timer){stop();return}el.classList.add('anim');step=0;mark();ab.textContent='■ Stop';
+      timer=setInterval(()=>{step=(step+1)%3;mark()},reduce?1600:1100)});
+    draw()});
+
+  /* ===== 7.1 Meet-in-the-middle on a toy cipher ===== */
+  const ISB=new Uint8Array(256);for(let i=0;i<256;i++)ISB[U5.SB[i]]=i;
+  const rotl=x=>((x<<1)|(x>>7))&255,rotr=x=>((x>>1)|(x<<7))&255;
+  const tE=(k,p)=>rotl(U5.SB[p^k])^k,tD=(k,c)=>ISB[rotr(c^k)]^k;
+  function mitm(){const o=$('mm-out');try{
+    const g=id=>{const v=+$(id).value;if(!Number.isInteger(v)||v<0||v>255)throw new Error('values must be integers 0–255');return v};
+    const k1=g('mm-k1'),k2=g('mm-k2'),p1=g('mm-p1'),p2=g('mm-p2');if(p1===p2)throw new Error('use two different plaintexts');
+    const c1=tE(k2,tE(k1,p1)),c2=tE(k2,tE(k1,p2));
+    const fwd=new Map();for(let a=0;a<256;a++){const x=tE(a,p1);if(!fwd.has(x))fwd.set(x,[]);fwd.get(x).push(a)}
+    const cand=[];for(let b=0;b<256;b++){const x=tD(b,c1);(fwd.get(x)||[]).forEach(a=>cand.push([a,b]))}
+    const surv=cand.filter(([a,b])=>tE(b,tE(a,p2))===c2);
+    o.innerHTML=`<div class="kv">
+      <span class="k">Known pairs</span><span class="v">(P₁, C₁) = (${p1}, ${c1})   (P₂, C₂) = (${p2}, ${c2})</span>
+      <span class="k">Step 1</span><span class="v">256 encryptions of P₁ → table of X = E(K1, P₁)</span>
+      <span class="k">Step 2</span><span class="v">256 decryptions of C₁ → <b>${cand.length}</b> matches = candidate (K1, K2) pairs (expect ≈ 2¹⁶ / 2⁸ = 256 false alarms)</span>
+      <span class="k">Step 3</span><span class="v">test candidates on (P₂, C₂) → <b>${surv.length}</b> survivor${surv.length===1?'':'s'}: ${surv.map(([a,b])=>`<span class="pill${a===k1&&b===k2?'':' mk'}">(${a}, ${b})</span>`).join(' ')}</span>
+      <span class="k">Work</span><span class="v">≈ ${512+cand.length} cipher operations vs. up to 65 536 key pairs for brute force (2⁸⁺¹ vs 2¹⁶ — like 2⁵⁷ vs 2¹¹² for double DES)</span></div>`;
+  }catch(e){err(o,e)}}
+  $('mm-run').addEventListener('click',mitm);mitm();
+
+  /* ===== 7.2 ECB image ===== */
+  let pxKey=rnd(16);
+  function pxImage(kind){const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');
+    g.fillStyle='#e8e8e8';g.fillRect(0,0,128,128);
+    if(kind==='lock'){g.strokeStyle='#202020';g.lineWidth=14;g.beginPath();g.arc(64,52,26,Math.PI,0);g.stroke();g.fillStyle='#202020';g.fillRect(24,52,80,60);g.fillStyle='#8a8a8a';g.beginPath();g.arc(64,76,9,0,2*Math.PI);g.fill();g.fillRect(60,78,8,20)}
+    else if(kind==='text'){g.fillStyle='#202020';g.font='bold 52px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('ECB',64,66);g.fillStyle='#8a8a8a';g.fillRect(10,100,108,8)}
+    else{for(let r=60;r>0;r-=12){g.fillStyle=(r/12)%2?'#202020':'#8a8a8a';g.beginPath();g.arc(64,64,r,0,2*Math.PI);g.fill()}}
+    const d=g.getImageData(0,0,128,128).data,b=new Uint8Array(16384);
+    for(let i=0;i<16384;i++){const v=d[4*i];b[i]=v<80?32:v<180?138:232}return b}
+  function pxDraw(id,bytes){const cv=$(id),g=cv.getContext('2d'),im=g.createImageData(128,128);
+    for(let i=0;i<16384;i++){const v=bytes[i];im.data[4*i]=im.data[4*i+1]=im.data[4*i+2]=v;im.data[4*i+3]=255}g.putImageData(im,0,0)}
+  function px(){const p=pxImage($('px-shape').value),w=U5.expand(pxKey);
+    pxDraw('px-p',p);pxDraw('px-ecb',U5.modes.ECB.enc(p,w));pxDraw('px-cbc',U5.modes.CBC.enc(p,w,rnd(16)))}
+  $('px-shape').addEventListener('change',px);$('px-key').addEventListener('click',()=>{pxKey=rnd(16);px()});px();
+
+  /* ===== 7.6 Modes lab ===== */
+  let mdFlip=true;
+  function byteRow(label,b,cls){let s=`<div class="blkrow"><span class="h">${label}</span><div class="bytes">`;
+    for(let i=0;i<b.length;i++)s+=`<span class="${cls(i)}${i%16===0&&i?' gap':''}">${b[i].toString(16).padStart(2,'0')}</span>`;return s+'</div></div>'}
+  function md(){const o=$('md-out');try{
+    const m=$('md-mode').value,mode=U5.modes[m],w=U5.expand(key16($('md-k').value,'Key')),iv=key16($('md-iv').value,'IV');
+    const pt=new TextEncoder().encode($('md-pt').value);if(!pt.length)throw new Error('enter some plaintext');
+    const P=mode.pad?U5.padZero(pt):pt,C=mode.enc(pt,w,iv);
+    const bit=Math.max(0,Math.min(C.length*8-1,Math.floor(+$('md-bit').value||0)));$('md-bit').max=C.length*8-1;
+    const C2=Uint8Array.from(C);let fb=-1;if(mdFlip){fb=bit>>3;C2[fb]^=0x80>>(bit&7)}
+    const D=mode.dec(C2,w,iv);
+    const bad=[];for(let i=0;i<P.length;i++)if(D[i]!==P[i])bad.push(i);
+    const blocksHit=[...new Set(bad.map(i=>Math.floor(i/16)+1))];
+    const eq=[];const cb=U5.blocks(C);for(let a=0;a<cb.length;a++)for(let b=a+1;b<cb.length;b++)if(cb[a].length===16&&H(cb[a])===H(cb[b]))eq.push(`${a+1} = ${b+1}`);
+    o.innerHTML=(mode.pad&&P.length>pt.length?`<p class="src">Plaintext zero-padded from ${pt.length} to ${P.length} bytes.</p>`:'')+
+      byteRow('plaintext',P,()=>'')+byteRow('ciphertext',C2,i=>i===fb?'flip':'')+byteRow('decrypted',D,i=>bad.includes(i)?'bad':'')+
+      `<p class="out">Decrypted text: <span class="mono">${esc(printable(D))}</span></p>
+       <p class="out">${mdFlip?`Flipped bit ${bit} (byte ${fb}, block ${Math.floor(fb/16)+1}) → <b>${bad.length}</b> plaintext byte${bad.length===1?'':'s'} damaged${blocksHit.length?' in block'+(blocksHit.length>1?'s ':' ')+blocksHit.join(', '):''}.`:'No bit flipped: decryption recovers the plaintext exactly.'}</p>`+
+      (eq.length?`<p class="out"><span class="pill no">pattern leak</span> identical ciphertext blocks: ${eq.join(', ')}</p>`:'');
+  }catch(e){err(o,e)}}
+  ['md-mode','md-pt','md-k','md-iv','md-bit'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='md-bit')mdFlip=true;md()}));
+  $('md-noflip').addEventListener('click',()=>{mdFlip=false;md()});md();
+
+  /* ===== 7.7 XTS lab ===== */
+  const V1='917cf69ebd68b2ec9b9fe9a3eadda692cd43d2f59598ed858c02c2652fbf922e';
+  function xts(){const o=$('xt-out');try{
+    const key=X($('xt-k').value);if(key.length!==32)throw new Error('Key must be 64 hex digits (Key1 ‖ Key2, 2 × 128 bits)');
+    const i=Math.floor(+$('xt-i').value);if(!(i>=0)||i>2**40)throw new Error('tweak i must be a nonnegative integer');
+    const L=+$('xt-len').value;$('xt-lenv').textContent=L;const P=new Uint8Array(L);
+    const w1=U5.expand(key.slice(0,16)),w2=U5.expand(key.slice(16));const C=U5.xtsEnc(key,i,P),D=U5.xtsDec(key,i,C);
+    const m=Math.floor(L/16),s=L%16;let rows='';
+    const full=s?m-1:m;for(let j=0;j<full;j++){const r=U5.xtsBlockEnc(w1,w2,P.slice(16*j,16*j+16),i,j);rows+=`<tr><td>${j}</td><td class="mono">${H(r.T)}</td><td class="mono">${H(r.C)}</td></tr>`}
+    let cts='';
+    if(s){const XX=U5.xtsBlockEnc(w1,w2,P.slice(16*(m-1),16*m),i,m-1).C;const CP=XX.slice(s),YY=U5.concat([P.slice(16*m),CP]);
+      cts=`<h4 style="margin:12px 0 4px">Ciphertext stealing (last block has s = ${s*8} bits)</h4><div class="kv">
+      <span class="k">XX = blockEnc(P<sub>${m-1}</sub>, j=${m-1})</span><span class="v">${H(XX.slice(0,s))}<b style="color:var(--mark)">${H(CP)}</b></span>
+      <span class="k">YY = P<sub>${m}</sub> ‖ CP</span><span class="v">${H(P.slice(16*m))}<b style="color:var(--mark)">${H(CP)}</b></span>
+      <span class="k">C<sub>${m-1}</sub> = blockEnc(YY, j=${m})</span><span class="v">${H(C.slice(16*(m-1),16*m))}</span>
+      <span class="k">C<sub>${m}</sub> = MSB<sub>s</sub>(XX)</span><span class="v">${H(C.slice(16*m))}</span></div>`}
+    const v1=H(key)==='0'.repeat(64)&&i===0&&L===32;
+    o.innerHTML=`<div class="tbl"><table><thead><tr><th>j</th><th>T = E(Key2, i) ⊗ αʲ</th><th>Cⱼ (Pⱼ = 00…00)</th></tr></thead><tbody>${rows}</tbody></table></div>${cts}
+      <div class="kv" style="margin-top:10px"><span class="k">sector ciphertext (${L} bytes)</span><span class="v">${H(C)}</span>
+      <span class="k">decrypts back</span><span class="v">${H(D)===H(P)?'<span class="pill">yes</span>':'<span class="pill no">no</span>'} ${v1?(H(C)===V1?'<span class="pill">matches IEEE 1619 vector 1</span>':'<span class="pill no">vector mismatch</span>'):''}</span></div>`;
+  }catch(e){err(o,e)}}
+  ['xt-k','xt-i','xt-len'].forEach(id=>$(id).addEventListener('input',xts));xts();
+
+  /* ===== 7.8 NUM / STR ===== */
+  function nm(){const o=$('nm-out');try{
+    const s=$('nm-s').value.trim();if(!/^[a-z]{1,20}$/.test(s))throw new Error('use 1–20 lowercase letters a–z');
+    const Xn=[...s].map(c=>c.charCodeAt(0)-97),x=U5.num(Xn,26);
+    let bytes=Math.max(4,Math.ceil(x.toString(16).length/2));const bh=x.toString(16).padStart(bytes*2,'0');
+    const le=bh.match(/../g).reverse().join(' ');const back=U5.str(x,26,Xn.length).map(d=>String.fromCharCode(97+d)).join('');
+    o.innerHTML=`<span class="k">numeral string X</span><span class="v">${Xn.join(' ')}</span>
+      <span class="k">x = NUM₂₆(X)</span><span class="v">${x} (hex ${x.toString(16).toUpperCase()})</span>
+      <span class="k">[x]^${bytes} (big-endian)</span><span class="v">${bh.match(/../g).join(' ')}</span>
+      <span class="k">x as stored little-endian</span><span class="v">${le}</span>
+      <span class="k">STR^${Xn.length}₂₆(x)</span><span class="v">${Xn.length} numerals → “${back}”</span>
+      <span class="k">bitlen = ⌈len·log₂26⌉</span><span class="v">${Math.ceil(Xn.length*Math.log2(26))} bits</span>`}catch(e){err(o,e)}}
+  $('nm-s').addEventListener('input',nm);nm();
+
+  /* ===== 7.8 FF1 ===== */
+  function ff(){const o=$('ff-out');try{
+    const xs=$('ff-x').value.replace(/\s/g,'');if(!/^[0-9]{2,30}$/.test(xs))throw new Error('enter 2–30 decimal digits');
+    const Xd=[...xs].map(Number),K=key16($('ff-k').value,'Key'),T=X($('ff-t').value);
+    const r=U5.ff1(K,T,Xd,10),back=U5.ff1(K,T,r.Y,10,true).Y.join('');
+    const known={'':'2433477484','39383736353433323130':'6124200773'};const th=H(T);
+    o.innerHTML=`<div class="kv"><span class="k">P (16 bytes)</span><span class="v">${H(r.P)}</span>
+      <span class="k">ciphertext Y</span><span class="v"><b>${r.Y.join('')}</b> ${xs==='0123456789'&&H(K)==='2b7e151628aed2a6abf7158809cf4f3c'&&th in known?(r.Y.join('')===known[th]?'<span class="pill">matches NIST sample</span>':'<span class="pill no">mismatch</span>'):''}</span>
+      <span class="k">decrypts to</span><span class="v">${back} ${back===xs?'<span class="pill">yes</span>':''}</span></div>
+      <div class="tbl"><table><thead><tr><th>round i</th><th>A</th><th>B</th><th>m</th><th>C = A + F<sub>K</sub>(B) mod 10ᵐ</th></tr></thead><tbody>${r.rounds.map(x=>`<tr><td>${x.i}</td><td class="mono">${x.A.join('')}</td><td class="mono">${x.B.join('')}</td><td>${x.C.length}</td><td class="mono">${x.C.join('')}</td></tr>`).join('')}</tbody></table></div>`;
+  }catch(e){err(o,e)}}
+  ['ff-x','ff-t','ff-k'].forEach(id=>$(id).addEventListener('input',ff));ff();
+
+  /* ===== 8.1 ones and runs ===== */
+  function fr(){const o=$('fr-out');const b=$('fr-b').value.replace(/[^01]/g,'');if(b.length<2){o.innerHTML='<span class="err">enter at least 2 bits</span>';return}
+    const n=b.length,ones=[...b].filter(c=>c==='1').length;const runs=[];let cur=1;for(let i=1;i<n;i++){if(b[i]===b[i-1])cur++;else{runs.push(cur);cur=1}}runs.push(cur);
+    const hist={};runs.forEach(l=>{const k=l>=6?'6+':String(l);hist[k]=(hist[k]||0)+1});
+    o.innerHTML=`<div class="kv"><span class="k">length n</span><span class="v">${n}</span>
+      <span class="k">ones / zeros</span><span class="v">${ones} / ${n-ones}  (fraction of ones ${(ones/n).toFixed(3)}; a random sequence: about n/2 = ${n/2})</span>
+      <span class="k">runs</span><span class="v">${runs.length} in total (for random bits each neighbour pair differs with probability ½, so about 1 + (n − 1)/2 = ${(1+(n-1)/2).toFixed(1)})</span>
+      <span class="k">runs by length</span><span class="v">${['1','2','3','4','5','6+'].map(k=>`${k}: ${hist[k]||0}`).join(' · ')}</span></div>`}
+  $('fr-b').addEventListener('input',fr);
+  $('fr-bad').addEventListener('click',()=>{$('fr-b').value='1110111101111110110111111011101111110111011111101111011111110111';fr()});
+  $('fr-alt').addEventListener('click',()=>{$('fr-b').value='01'.repeat(32);fr()});
+  $('fr-rnd').addEventListener('click',()=>{$('fr-b').value=Array.from(rnd(16),v=>v.toString(2).padStart(8,'0')).join('');fr()});fr();
+
+  /* ===== 8.2 LCG ===== */
+  function lc(){const o=$('lc-out');try{
+    const a=+$('lc-a').value,c=+$('lc-c').value,m=+$('lc-m').value,x=+$('lc-x').value;
+    if(![a,c,m,x].every(Number.isInteger))throw new Error('all parameters must be integers');
+    if(!(m>0&&m<=4096))throw new Error('m must be 1 … 4096 here');if(!(a>0&&a<m))throw new Error('need 0 < a < m');if(!(c>=0&&c<m))throw new Error('need 0 ≤ c < m');if(!(x>=0&&x<m))throw new Error('need 0 ≤ X₀ < m');
+    const r=U5.lcg(a,c,m,x,m+2);const tail=r.seq.length-r.period;
+    o.innerHTML=`<p class="out">X₁, X₂, …: <span class="mono">${r.seq.slice(0,48).join(', ')}${r.seq.length>48?', …':''}</span></p>
+      <p class="out">Period <b>${r.period}</b> of ${m} possible values${tail>0?` (after ${tail} non-repeating value${tail>1?'s':''})`:''}. ${r.period===m?'<span class="pill">full period</span>':r.period===m-1&&c===0?'<span class="pill">maximum for c = 0 (all except 0)</span>':'<span class="pill no">not full period</span>'}</p>`;
+  }catch(e){err(o,e)}}
+  ['lc-a','lc-c','lc-m','lc-x'].forEach(id=>$(id).addEventListener('input',lc));
+  document.querySelectorAll('[data-lc]').forEach(b=>b.addEventListener('click',()=>{const[a,c,m,x]=b.dataset.lc.split(',');$('lc-a').value=a;$('lc-c').value=c;$('lc-m').value=m;$('lc-x').value=x;lc()}));lc();
+
+  /* ===== 8.2 BBS ===== */
+  const isPrime=n=>{if(n<2)return false;for(let d=2;d*d<=n;d++)if(n%d===0)return false;return true};
+  const gcd=(a,b)=>{while(b)[a,b]=[b,a%b];return a};
+  function bb(){const o=$('bb-out');try{
+    const p=+$('bb-p').value,q=+$('bb-q').value,s=+$('bb-s').value,n=Math.min(64,Math.max(1,+$('bb-n').value|0));
+    if(!(isPrime(p)&&isPrime(q)))throw new Error('p and q must be prime');if(p%4!==3||q%4!==3)throw new Error('need p ≡ q ≡ 3 (mod 4)');if(p===q)throw new Error('use two different primes');if(p*q>1e9)throw new Error('keep p × q below 10⁹ for this lab');
+    if(gcd(s,p*q)!==1)throw new Error('s must be relatively prime to n = pq');
+    const r=U5.bbs(p,q,s,n);const half=Math.ceil((n+1)/2);
+    const tbl=rows=>`<table><thead><tr><th>i</th><th>Xᵢ</th><th>Bᵢ</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x.i}</td><td class="mono">${x.x}</td><td>${x.b===null?'':x.b}</td></tr>`).join('')}</tbody></table>`;
+    o.innerHTML=`<p class="out">n = ${p} × ${q} = ${r.n};  X₀ = s² mod n = ${r.rows[0].x}</p><div class="grid2"><div class="tbl">${tbl(r.rows.slice(0,half))}</div><div class="tbl">${tbl(r.rows.slice(half))}</div></div>
+      <p class="out">Bits: <span class="mono">${r.rows.slice(1).map(x=>x.b).join('')}</span></p>`;
+  }catch(e){err(o,e)}}
+  ['bb-p','bb-q','bb-s','bb-n'].forEach(id=>$(id).addEventListener('input',bb));bb();
+
+  /* ===== 8.3 PRNG tables ===== */
+  function pr(){const o=$('pr-out');try{key16($('pr-k').value,'Key');key16($('pr-v').value,'V');
+    const out=U5.blockPrng($('pr-k').value,$('pr-v').value,$('pr-m').value,8);
+    o.innerHTML=`<table><thead><tr><th>Output block</th><th>Fraction of one bits</th><th>Fraction of bits matching preceding block</th></tr></thead><tbody>${out.map((b,k)=>`<tr><td class="mono">${H(b)}</td><td>${(U5.ones(b)/128).toFixed(2)}</td><td>${k?(1-U5.ones(U5.xor(b,out[k-1]))/128).toFixed(2):'—'}</td></tr>`).join('')}</tbody></table>`;
+  }catch(e){err(o,e)}}
+  ['pr-k','pr-v','pr-m'].forEach(id=>$(id).addEventListener('input',pr));pr();
+
+  /* ===== 8.4 keystream reuse ===== */
+  const ks=rnd(64);
+  function ru(){const o=$('ru-out');const enc=new TextEncoder();
+    const p1=enc.encode($('ru-p1').value),p2=enc.encode($('ru-p2').value),g=enc.encode($('ru-g').value);const L=Math.min(p1.length,p2.length,64);
+    if(!L){o.innerHTML='<span class="err">enter two plaintexts</span>';return}
+    const c1=U5.xor(p1.slice(0,L),ks.slice(0,L)),c2=U5.xor(p2.slice(0,L),ks.slice(0,L)),x=U5.xor(c1,c2);
+    let drag='';if(g.length&&g.length<=L){for(let pos=0;pos+g.length<=L;pos++){const frag=U5.xor(x.slice(pos,pos+g.length),g);const ok=[...frag].every(v=>(v>=65&&v<=90)||(v>=97&&v<=122)||(v>=48&&v<=57)||v===32);
+        if(ok)drag+=`<span class="k">position ${pos}</span><span class="v"><b>${esc(printable(frag))}</b></span>`}}
+    o.innerHTML=`<div class="kv"><span class="k">keystream k (random, reused!)</span><span class="v">${H(ks.slice(0,L))}</span>
+      <span class="k">C₁ = P₁ ⊕ k</span><span class="v">${H(c1)}</span><span class="k">C₂ = P₂ ⊕ k</span><span class="v">${H(c2)}</span>
+      <span class="k">C₁ ⊕ C₂ = P₁ ⊕ P₂</span><span class="v">${H(x)}  — the key has cancelled out</span></div>
+      ${drag?`<p class="out" style="margin-top:10px">Slide the guessed word along C₁ ⊕ C₂; where it really is in P₁, the matching part of P₂ appears. Positions where the result is only letters, digits and spaces:</p><div class="kv">${drag}</div>`:''}`}
+  ['ru-p1','ru-p2','ru-g'].forEach(id=>$(id).addEventListener('input',ru));ru();
+
+  /* ===== 8.5 RC4 step-by-step ===== */
+  const grid=$('rc-grid');const cells=[];for(let k=0;k<256;k++){const d=document.createElement('div');grid.appendChild(d);cells.push(d)}
+  let R=null,play=null;
+  function rcInit(){try{const key=X($('rc-k').value);if(!key.length||key.length>256)throw new Error('key must be 1–256 bytes of hex');
+      const S=[];for(let i=0;i<256;i++)S[i]=i;let j=0;for(let i=0;i<256;i++){j=(j+S[i]+key[i%key.length])&255;[S[i],S[j]]=[S[j],S[i]]}
+      R={S,i:0,j:0,ks:[],ct:[],last:null};rcDraw()}catch(e){R=null;err($('rc-out'),e)}}
+  function rcStep(){if(!R)return;const S=R.S;R.i=(R.i+1)&255;R.j=(R.j+S[R.i])&255;[S[R.i],S[R.j]]=[S[R.j],S[R.i]];const t=(S[R.i]+S[R.j])&255;const k=S[t];
+    const pt=new TextEncoder().encode($('rc-p').value);const n=R.ks.length;R.ks.push(k);if(n<pt.length)R.ct.push(pt[n]^k);R.last={i:R.i,j:R.j,t,k};rcDraw()}
+  function rcDraw(){const S=R.S,L=R.last;cells.forEach((d,k)=>{d.textContent=S[k].toString(16).padStart(2,'0');d.className=L?(k===L.i?'i':k===L.j?'j':'')+(k===L.t?' t':''):'';d.title='S['+k+'] = '+S[k]});
+    const pt=new TextEncoder().encode($('rc-p').value);
+    $('rc-out').innerHTML=L?`<div class="kv"><span class="k">step</span><span class="v">i = ${L.i}, j = ${L.j}, swap S[i] ↔ S[j];  t = (S[i] + S[j]) mod 256 = ${L.t};  k = S[t] = ${L.k.toString(16).padStart(2,'0')}</span>
+      <span class="k">keystream so far</span><span class="v">${R.ks.map(v=>v.toString(16).padStart(2,'0')).join(' ')}</span>
+      <span class="k">ciphertext</span><span class="v">${R.ct.map(v=>v.toString(16).padStart(2,'0')).join(' ')}${R.ct.length<pt.length?' …':` (${pt.length} bytes)`}</span></div>`:'<span class="src">S is initialized (key scheduling done). Press “Generate next byte”.</span>'}
+  $('rc-step').addEventListener('click',rcStep);
+  $('rc-reset').addEventListener('click',()=>{stopPlay();rcInit()});
+  const stopPlay=()=>{clearInterval(play);play=null;$('rc-play').textContent='Play'};
+  $('rc-play').addEventListener('click',()=>{if(play){stopPlay();return}$('rc-play').textContent='Pause';play=setInterval(()=>{if(!R||R.ks.length>=32){stopPlay();return}rcStep()},reduce?900:450)});
+  ['rc-k','rc-p'].forEach(id=>$(id).addEventListener('input',()=>{stopPlay();rcInit()}));rcInit();
+
+  /* ===== 8.6 skew and deskewing ===== */
+  function sk(){const p=+$('sk-p').value;$('sk-pv').textContent=p.toFixed(2);const n=+$('sk-n').value;
+    const r=new Uint32Array(n);(window.crypto||window.msCrypto).getRandomValues(r);const bits=Array.from(r,v=>v/4294967296<p?1:0);
+    const out=[];let html='';for(let k=0;k+1<n;k+=2){const a=bits[k],b=bits[k+1];if(a!==b)out.push(a===0?0:1);if(k<64)html+=a!==b?`<b>${a}${b}</b> `:`<i>${a}${b}</i> `}
+    const o1=out.filter(v=>v).length;
+    $('sk-out').innerHTML=`<p class="bitstr">${html}…</p><div class="kv">
+      <span class="k">input</span><span class="v">${n} bits, fraction of ones ${(bits.filter(v=>v).length/n).toFixed(3)}</span>
+      <span class="k">output</span><span class="v">${out.length} bits (${(100*out.length/n).toFixed(1)}% of input kept), fraction of ones ${out.length?(o1/out.length).toFixed(3):'—'}</span></div>`}
+  $('sk-p').addEventListener('input',sk);$('sk-n').addEventListener('change',sk);$('sk-go').addEventListener('click',sk);sk();
+
+  /* ===== 8.6 Repetition Count cutoff ===== */
+  function rt(){const w=+$('rt-w').value,h=+$('rt-h').value;if(!(w>0&&h>0)){$('rt-out').innerHTML='<span class="err">enter positive values</span>';return}
+    const C=Math.ceil(1+w/h);$('rt-out').innerHTML=`C = ⌈1 + ${w}/${h}⌉ = ⌈${(1+w/h).toFixed(3)}⌉ = <b>${C}</b>. A healthy source repeats a value ${C} times in a row with probability ≤ 2^−${(h*(C-1)).toFixed(1)} ≤ W = 2^−${w}.`}
+  ['rt-w','rt-h'].forEach(id=>$(id).addEventListener('input',rt));rt();
+
+  /* ===== scroll-following contents ===== */
+  const links=[...document.querySelectorAll('nav.toc a')];
+  const secs=links.map(l=>document.querySelector(l.getAttribute('href'))).filter(Boolean);
+  const list=document.querySelector('nav.toc ol');let current=null,ticking=false;
+  function spy(){
+    ticking=false;const line=window.innerHeight*0.3;let idx=0;
+    secs.forEach((s,i)=>{if(s.getBoundingClientRect().top<=line)idx=i});
+    if((window.innerHeight+window.scrollY)>=document.documentElement.scrollHeight-4)idx=secs.length-1;
+    const l=links[idx];
+    if(l!==current){if(current){current.classList.remove('active');current.removeAttribute('aria-current')}
+      l.classList.add('active');l.setAttribute('aria-current','true');current=l;
+      if(list.scrollWidth>list.clientWidth){list.scrollTo({left:l.parentElement.offsetLeft-list.clientWidth/2+l.parentElement.offsetWidth/2,behavior:reduce?'auto':'smooth'})}}
+    const max=document.documentElement.scrollHeight-window.innerHeight;
+    $('toc-progress').style.width=(max>0?Math.min(100,window.scrollY/max*100):0)+'%'}
+  window.addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(spy)}},{passive:true});
+  window.addEventListener('resize',spy);spy();
+})();
+</script>
+<button class="to-top" id="to-top" type="button" aria-label="Back to top">↑ Top</button>
+
+<script>
+(function(){
+  var btn=document.getElementById('to-top');if(!btn)return;
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches,tick=false;
+  function upd(){tick=false;btn.classList.toggle('show',window.scrollY>600)}
+  window.addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(upd)}},{passive:true});
+  btn.addEventListener('click',function(){window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});var h=document.querySelector('.topbar a.home');if(h)h.focus({preventScroll:true})});
+  upd();
+})();
+</script>
+</body>
+</html>
