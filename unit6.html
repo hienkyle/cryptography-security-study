@@ -1,0 +1,1353 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unit 6 · Public-Key Cryptography</title>
+<meta name="description" content="Study guide for Stallings, Cryptography and Network Security, Chapters 9–10: public-key principles, trap-door one-way functions, RSA, fast exponentiation, CRT decryption, RSA attacks (factoring, timing, fault, chosen ciphertext, OAEP), Diffie–Hellman, man-in-the-middle, Elgamal, elliptic curve arithmetic, ECC, Micali–Schnorr and dual EC PRNGs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,700;1,400&family=Cousine:wght@400;700&family=Noto+Sans+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: graph-paper study notebook — sticky contents rail on desktop, single column on phones; each section = one book section */
+:root{
+  --bg:#f3f4f8; --paper:#ffffff; --ink:#191b2b; --muted:#585d78; --line:#d9dce8;
+  --grid:rgba(25,27,43,.045);
+  --accent:#3f46c4; --accent-soft:#e5e7fb; --mark:#b8580f; --mark-soft:#fcebdc;
+  --bad:#b4372f; --bad-soft:#f9e1de;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono:"Cousine", "Noto Sans Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10121c; --paper:#171a28; --ink:#e6e8f2; --muted:#9ca1bb; --line:#2c3048;
+  --grid:rgba(230,232,242,.04);
+  --accent:#9ea6ff; --accent-soft:#232955; --mark:#f6a25a; --mark-soft:#3b2615;
+  --bad:#f08c84; --bad-soft:#3c1d1a; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#10121c; --paper:#171a28; --ink:#e6e8f2; --muted:#9ca1bb; --line:#2c3048;
+  --grid:rgba(230,232,242,.04);
+  --accent:#9ea6ff; --accent-soft:#232955; --mark:#f6a25a; --mark-soft:#3b2615;
+  --bad:#f08c84; --bad-soft:#3c1d1a; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16.5px;line-height:1.6;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;padding-inline:16px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;padding-block:32px 80px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr);gap:16px}}
+
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;font-size:.88rem}
+nav.toc .lbl{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+nav.toc a{display:flex;gap:10px;padding:5px 8px;border-radius:6px;color:var(--ink);text-decoration:none}
+nav.toc a span{font-family:var(--mono);color:var(--accent);min-width:2.6em;font-size:.8rem;padding-top:2px}
+nav.toc a{position:relative;transition:background .15s,color .15s}
+nav.toc a:hover,nav.toc a:focus-visible{background:var(--accent-soft);outline:none}
+nav.toc a.active{background:var(--accent);color:var(--paper);font-weight:700}
+nav.toc a.active span{color:var(--paper)}
+nav.toc .bar{height:3px;background:var(--line);border-radius:2px;margin:12px 0 0;overflow:hidden}
+nav.toc .bar i{display:block;height:100%;width:0;background:var(--accent)}
+@media (max-width:900px){
+  nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border:1px solid var(--line);border-radius:0 0 10px 10px;padding:8px 10px;margin-inline:-4px}
+  nav.toc .lbl{display:none}
+  nav.toc ol{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth}
+  nav.toc ol::-webkit-scrollbar{display:none}
+  nav.toc li{flex:0 0 auto}
+  nav.toc a{white-space:nowrap;padding:5px 10px}
+  nav.toc .bar{margin-top:8px}
+  section.unit{scroll-margin-top:72px}}
+
+main{min-width:0}
+header.hero{padding-block:8px 28px;border-bottom:2px solid var(--ink);margin-bottom:28px}
+.eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,6vw,4rem);line-height:1;margin:.25em 0 .3em;letter-spacing:-.02em;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{max-width:65ch;color:var(--muted);margin:0}
+.formula-strip{font-family:var(--mono);font-size:.85rem;color:var(--muted);margin-top:18px;display:flex;flex-wrap:wrap;gap:8px 18px}
+.formula-strip b{color:var(--ink);font-weight:600}
+
+section.unit{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:28px clamp(18px,4vw,40px);margin-bottom:28px;scroll-margin-top:20px}
+h2{font-family:var(--display);font-weight:700;font-size:1.75rem;line-height:1.15;margin:0 0 4px;text-wrap:balance;display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
+h2 .sec{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:600}
+h3{font-family:var(--display);font-weight:700;font-size:1.2rem;margin:28px 0 8px}
+.why{color:var(--muted);font-size:.95rem;margin:0 0 18px;max-width:70ch}
+p,li{max-width:70ch}
+code,.m{font-family:var(--mono);font-size:.9em}
+.m{white-space:nowrap}
+.m.wr{white-space:normal;overflow-wrap:anywhere}
+.def,.ex,.warn{min-width:0;overflow-wrap:break-word}
+.gk{font-family:var(--mono);font-style:normal}
+
+.def{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+.def b:first-child{font-family:var(--display);font-weight:700}
+.eq{font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;overflow-x:auto;white-space:pre;line-height:1.7;font-size:.92rem}
+.eq .n{color:var(--muted)}
+.eqrows{display:grid;gap:8px;margin:12px 0}
+.eqrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px 14px;align-items:center;font-family:var(--mono);font-size:.92rem;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.eqrow .ex1{min-width:0;line-height:1.6}
+.eqrow .n{color:var(--muted)}
+.eqrow .tag{font-size:.75rem;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--accent-soft);color:var(--accent)}
+.tag.no{background:var(--bad-soft);color:var(--bad)}
+@media (max-width:560px){.eqrow{grid-template-columns:minmax(0,1fr) auto}.eqrow .ex1{grid-column:1 / -1}}
+.ex{border:1px dashed var(--mark);background:var(--mark-soft);border-radius:8px;padding:10px 16px;margin:12px 0}
+.ex .t{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mark);font-weight:600}
+.ex .eq{background:transparent;border:0;padding:4px 0;margin:2px 0}
+.warn{border-left:3px solid var(--bad);background:var(--bad-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+ul.props{padding-left:1.2em}
+ul.props li{margin:4px 0}
+
+/* tables */
+.tbl{overflow-x:auto;margin:12px 0}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.9rem}
+th,td{border:1px solid var(--line);padding:5px 9px;text-align:center}
+th{background:var(--bg);font-family:var(--mono);font-weight:600;font-size:.8rem}
+td.l,th.l{text-align:left}
+td.hi{background:var(--accent-soft);font-weight:700}
+td.one{background:var(--mark-soft);font-weight:700}
+td.dim{color:var(--muted)}
+
+/* interactive lab */
+.lab{border:1px solid var(--line);border-radius:12px;margin:18px 0;overflow:hidden}
+.lab-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--line)}
+.lab-h .t{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.lab-b{padding:14px}
+.controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:end;margin-bottom:12px}
+.controls label{display:grid;gap:3px;font-size:.78rem;font-family:var(--mono);color:var(--muted)}
+input[type=number]{width:9.5em;font:inherit;font-family:var(--mono);font-size:.95rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+button{font-family:var(--mono);font-size:.82rem;padding:7px 12px;border:1px solid var(--accent);background:var(--accent);color:var(--paper);border-radius:6px;cursor:pointer}
+button.ghost{background:transparent;color:var(--accent)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.out{font-family:var(--mono);font-size:.9rem}
+.out .res{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:600}
+.res.ok{background:var(--accent-soft);color:var(--accent)}
+.res.no{background:var(--bad-soft);color:var(--bad)}
+.err{color:var(--bad);font-family:var(--mono);font-size:.85rem}
+svg text{font-family:var(--mono)}
+.figure{margin:16px 0;overflow-x:auto}
+.figure svg{display:block;max-width:100%;height:auto}
+.cap{font-size:.82rem;color:var(--muted);margin-top:6px}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.grid2>*{min-width:0}
+
+/* totient grid */
+.cells{display:flex;flex-wrap:wrap;gap:4px}
+.cells span{font-family:var(--mono);font-size:.78rem;width:2.6em;text-align:center;padding:4px 0;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.cells span.on{background:var(--accent);border-color:var(--accent);color:var(--paper);font-weight:600}
+
+/* mapping row */
+.maprow{display:grid;grid-template-columns:7.5em repeat(8,minmax(2.2em,1fr));gap:4px;font-family:var(--mono);font-size:.85rem;min-width:420px}
+.maprow div{padding:5px 0;text-align:center;border-radius:4px}
+.maprow .h{text-align:left;color:var(--muted);font-size:.75rem;padding-top:7px}
+.maprow .c{background:var(--bg)}
+.maprow .dup{background:var(--bad-soft);color:var(--bad);font-weight:600}
+.maprow .uni{background:var(--accent-soft);color:var(--accent);font-weight:600}
+
+/* glossary & review */
+dl.gloss{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr);gap:0;margin:0}
+dl.gloss dt,dl.gloss dd{padding:9px 0;border-bottom:1px solid var(--line);margin:0}
+dl.gloss dt{font-family:var(--display);font-weight:700;padding-right:16px}
+@media (max-width:560px){dl.gloss{grid-template-columns:minmax(0,1fr)} dl.gloss dt{border-bottom:0;padding-bottom:0}}
+details{border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:8px 0;background:var(--paper)}
+summary{cursor:pointer;font-weight:700}
+details p{margin:.6em 0 0}
+.src{font-size:.85rem;color:var(--muted)}
+.src a,a{color:var(--accent)}
+footer{font-size:.82rem;color:var(--muted);margin-top:24px}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---- Sticky "All units" bar + back-to-top (shared across unit pages) ---- */
+:root{--topbar-h:52px}
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.topbar-in{max-width:1180px;margin:0 auto;height:var(--topbar-h);padding-inline:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.topbar a.home{flex:0 0 auto;font-family:var(--f-mono,var(--mono));font-size:.84rem;font-weight:600;color:var(--ink);text-decoration:none;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface,var(--paper))}
+.topbar a.home:hover{border-color:var(--accent);color:var(--accent)}
+.topbar a.home:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.topbar .where{min-width:0;font-family:var(--f-mono,var(--mono));font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.to-top{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono,var(--mono));font-size:.82rem;font-weight:600;padding:10px 14px;border:1px solid var(--accent);border-radius:999px;background:var(--accent);color:var(--surface,var(--paper));cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.18);opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .2s,transform .2s,visibility 0s linear .2s}
+.to-top.show{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .2s}
+.to-top:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.to-top{transition:none}}
+
+.topbar{margin-inline:-16px}
+.topbar-in{padding-inline:16px}
+nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h) + 20px)}
+section.unit{scroll-margin-top:calc(20px + var(--topbar-h))}
+@media (max-width:900px){nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h))}section.unit{scroll-margin-top:calc(72px + var(--topbar-h))}}
+
+input[type=text],textarea,select{font:inherit;font-family:var(--mono);font-size:.92rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);max-width:100%}
+input[type=text]{width:18em}
+input.wide{width:min(34em,100%)}
+textarea{width:100%;min-height:4.6em;resize:vertical}
+input[type=range]{accent-color:var(--accent)}
+.controls label.grow{flex:1 1 280px}
+.controls label.grow input,.controls label.grow textarea{width:100%}
+.mono{font-family:var(--mono)}
+.big{font-family:var(--mono);font-size:1.05rem;letter-spacing:.06em;overflow-wrap:anywhere}
+.hlrow td{background:var(--accent-soft);font-weight:700;color:var(--accent)}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:12px 0}
+.cmp>div{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--paper);min-width:0}
+.cmp h4{margin:0 0 6px;font-family:var(--display);font-size:1.02rem}
+.cmp p{margin:0;font-size:.95rem}
+.diffbit{color:var(--bad);font-weight:700}
+@media (max-width:560px){input[type=text]{width:100%}}
+.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;font-family:var(--mono);font-size:.84rem;align-items:baseline}
+.kv .k{color:var(--muted)}
+.kv .v{overflow-wrap:anywhere}
+.pill{display:inline-block;font-family:var(--mono);font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.pill.no{background:var(--bad-soft);color:var(--bad)}
+.pill.mk{background:var(--mark-soft);color:var(--mark)}
+.note{border-left:3px solid var(--mark);background:var(--mark-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0;font-size:.95rem}
+.note .t{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mark);font-weight:600;display:block;margin-bottom:2px}
+.modes td,.modes th{text-align:left;vertical-align:top}
+.modes td.c{text-align:center}
+.bitstr{font-family:var(--mono);font-size:.8rem;overflow-wrap:anywhere;line-height:1.5}
+.bitstr b{color:var(--accent)}
+.bitstr i{font-style:normal;color:var(--muted);text-decoration:line-through}
+select{font:inherit;font-family:var(--mono);font-size:.88rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+@media (max-width:560px){.blkrow{grid-template-columns:minmax(0,1fr)}.blkrow .h{padding-top:0}canvas.px{width:150px;height:150px}.kv{grid-template-columns:minmax(0,1fr)}.kv .k{margin-top:4px}}
+.op{font-family:var(--mono);font-size:.92em}
+.seg{display:inline-flex;border:1px solid var(--accent);border-radius:6px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent;color:var(--accent)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--paper)}
+.eq sub,.kv sub{font-size:.75em}
+.pseudo{font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;overflow-x:auto;white-space:pre;line-height:1.55;font-size:.86rem}
+.pseudo .kw{color:var(--accent);font-weight:600}
+.pseudo .cm{color:var(--muted)}
+sub{line-height:0;font-size:.75em}
+/* justified prose (wider screens only: narrow columns get large word gaps) */
+@media (min-width:600px){
+section.unit p,section.unit li,.def,.note,.warn,.why,.lede,details p{text-align:justify;hyphens:auto;-webkit-hyphens:auto}
+section.unit .out,section.unit .cap,section.unit td,section.unit th,.lab-h,.kv{text-align:left;hyphens:manual;-webkit-hyphens:manual}
+section.unit .grid2 *,section.unit .cmp *,section.unit .src{text-align:left;hyphens:manual;-webkit-hyphens:manual}}
+
+/* ---- Unit 6 additions ---- */
+nav.toc li.sub a{padding-left:calc(18px + 2.08rem);font-size:.84rem;color:var(--muted)}
+nav.toc li.sub a.active{color:var(--paper)}
+@media (max-width:900px){nav.toc li.sub a{padding-left:10px}}
+.lab-h .seg button{font-size:.76rem;padding:6px 10px}
+.controls output{color:var(--ink);font-weight:600}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);margin:6px 0}
+input[type=range]{width:150px}
+#er-svg,#ez-svg{background:var(--bg);border:1px solid var(--line);border-radius:8px}
+#ez-svg{max-width:520px}
+.ezp:hover{stroke:var(--ink)}
+.kv .v .res{font-size:.78rem;padding:1px 8px}
+@media (max-width:560px){.m{white-space:normal;overflow-wrap:anywhere}input[type=range]{width:100%}}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-in"><a class="home" href="./">← All units</a><span class="where">Unit 6 · Public-Key Cryptography</span></div></header>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <div class="lbl">Contents</div>
+  <ol>
+    <li><a href="#s91"><span>9.1</span>Public-key principles</a></li>
+    <li><a href="#s92"><span>9.2</span>The RSA algorithm</a></li>
+    <li class="sub"><a href="#s92c">RSA computation</a></li>
+    <li class="sub"><a href="#s92s">Security of RSA</a></li>
+    <li><a href="#s101"><span>10.1</span>Diffie–Hellman</a></li>
+    <li><a href="#s102"><span>10.2</span>Elgamal</a></li>
+    <li><a href="#s103"><span>10.3</span>Elliptic curve arithmetic</a></li>
+    <li><a href="#s104"><span>10.4</span>Elliptic curve cryptography</a></li>
+    <li><a href="#s105"><span>10.5</span>Asymmetric PRNGs</a></li>
+    <li><a href="#terms">Key terms</a></li>
+    <li><a href="#review">Review</a></li>
+    <li><a href="#res"><span>Ref</span>Sources</a></li>
+  </ol>
+  <div class="bar" aria-hidden="true"><i id="toc-progress"></i></div>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Unit 6 · Stallings, Chapters 9–10</div>
+  <h1>Public-Key <em>Cryptography</em></h1>
+  <p class="lede">Symmetric ciphers use one shared key. Public-key (asymmetric) cryptography uses a pair of related keys: one published, one kept private. Chapter 9 sets out the model and its requirements and covers RSA, whose security rests on factoring. Chapter 10 covers Diffie–Hellman and Elgamal (discrete logarithms), elliptic curve cryptography (the elliptic curve logarithm problem) and PRNGs built from asymmetric ciphers.</p>
+  <div class="formula-strip">
+    <span><b>RSA: C = M<sup>e</sup> mod n,  M = C<sup>d</sup> mod n</b></span>
+    <span><b>ed ≡ 1 (mod <span class="gk">φ</span>(n))</b></span>
+    <span><b>DH: K = Y<sub>B</sub><sup>X<sub>A</sub></sup> mod q</b></span>
+    <span><b>ECC: Q = kP</b></span>
+  </div>
+</header>
+
+<!-- ============ 9.1 ============ -->
+<section class="unit" id="s91">
+  <h2><span class="sec">9.1</span>Principles of Public-Key Cryptosystems</h2>
+  <p class="why">Public-key cryptography addresses two problems symmetric encryption handles badly: <b>key distribution</b> (symmetric keys must already be shared, or handed out by a key distribution center that then has to be trusted) and <b>digital signatures</b> (proving that a particular person sent a message).</p>
+
+  <h3>Terminology (Table 9.1, from NIST IR 7298)</h3>
+  <div class="def"><b>Asymmetric keys</b> — two related keys, a public key and a private key, used for complementary operations such as encryption and decryption, or signature generation and verification.</div>
+  <div class="def"><b>Public-key (asymmetric) cryptographic algorithm</b> — an algorithm using such a key pair, chosen so that deriving the private key from the public key is computationally infeasible.</div>
+  <div class="def"><b>Public key certificate</b> — a digital document, issued and digitally signed with the private key of a Certification Authority, that binds a subscriber’s name to a public key and states that the subscriber alone controls the matching private key.</div>
+  <div class="def"><b>Public key infrastructure (PKI)</b> — the policies, processes, server platforms, software and workstations used to administer certificates and key pairs, including issuing, maintaining and revoking certificates.</div>
+
+  <h3>Three misconceptions the chapter corrects</h3>
+  <ul class="props">
+    <li>Public-key encryption is <b>not</b> inherently more secure than symmetric encryption. Security depends on key length and the work needed to break the cipher.</li>
+    <li>It has <b>not</b> made symmetric encryption obsolete. Its computational overhead keeps it to key management and signatures.</li>
+    <li>Key distribution is <b>not</b> trivial with public keys. A protocol, usually with a central agent, is still needed (Unit 9).</li>
+  </ul>
+
+  <h3>The model</h3>
+  <p>Public-key algorithms are built on mathematical functions rather than substitution and permutation. They use one key for encryption and a different, related key for decryption, with two characteristics:</p>
+  <ul class="props">
+    <li>It is computationally infeasible to find the decryption key knowing only the algorithm and the encryption key.</li>
+    <li>(Some algorithms, such as RSA) either key can encrypt, with the other one decrypting.</li>
+  </ul>
+  <p>A public-key encryption scheme has six ingredients: <b>plaintext</b>, an <b>encryption algorithm</b>, a <b>public key</b> and a <b>private key</b> (selected so that if one encrypts, the other decrypts), <b>ciphertext</b>, and a <b>decryption algorithm</b>. The essential steps:</p>
+  <ol>
+    <li>Each user generates a key pair.</li>
+    <li>Each user places one key (the <b>public key</b>) in a public register or file and keeps the other (the <b>private key</b>) secret. Users collect the public keys of others.</li>
+    <li>To send Alice a confidential message, Bob encrypts it with Alice’s public key.</li>
+    <li>Alice decrypts with her private key. No one else can, because only Alice knows it.</li>
+  </ol>
+  <p>Private keys are generated locally and never distributed. A user can change key pair at any time by publishing a new public key. Notation used throughout: <span class="m">PU<sub>a</sub></span>, <span class="m">PR<sub>a</sub></span> for user A’s public and private key; <span class="m">K</span> for a symmetric <b>secret key</b>. “Private” rather than “secret” is used for the asymmetric key to avoid confusion.</p>
+
+  <div class="lab" id="lab-pk">
+    <div class="lab-h"><span class="t">Figure · Which key does what</span>
+      <span class="seg" role="group" aria-label="Scheme"><button type="button" data-pk="conf" aria-pressed="true">Confidentiality</button><button type="button" data-pk="auth" aria-pressed="false">Authentication</button><button type="button" data-pk="both" aria-pressed="false">Both</button></span></div>
+    <div class="lab-b">
+      <div class="figure" id="pk-fig"></div>
+      <div class="cap" id="pk-cap"></div>
+      <div class="cap">Redrawn from Figures 9.2–9.4. The orange packet shows which key transforms the message at each stage.</div>
+    </div>
+  </div>
+
+  <ul class="props">
+    <li><b>Confidentiality</b> (Figure 9.2): <span class="m">Y = E(PU<sub>b</sub>, X)</span>, <span class="m">X = D(PR<sub>b</sub>, Y)</span>. Only B can decrypt.</li>
+    <li><b>Authentication</b> (Figure 9.3): <span class="m">Y = E(PR<sub>a</sub>, X)</span>, <span class="m">X = D(PU<sub>a</sub>, Y)</span>. Only A could have produced Y, so the whole ciphertext acts as a <b>digital signature</b>, authenticating both source and data integrity. It gives <b>no confidentiality</b>: anyone with A’s public key can decrypt.</li>
+    <li><b>Both</b> (Figure 9.4): <span class="m">Z = E(PU<sub>b</sub>, E(PR<sub>a</sub>, X))</span>, <span class="m">X = D(PU<sub>a</sub>, D(PR<sub>b</sub>, Z))</span>. Costs four public-key operations per message instead of two.</li>
+  </ul>
+  <div class="def"><b>Authenticator</b> — a small block of bits computed from a document such that the document cannot be changed without changing it. Encrypting the authenticator (instead of the whole message) with the sender’s private key gives a signature that verifies origin, content and sequencing at much lower storage cost (Chapter 13, Unit 8).</div>
+
+  <h3>Conventional vs public-key encryption (Table 9.2)</h3>
+  <div class="cmp">
+    <div><h4>Conventional (symmetric)</h4><p><b>To work:</b> the same algorithm and the same key encrypt and decrypt; sender and receiver share both.<br><b>For security:</b> the key is kept secret; deciphering without the key is impossible or impractical; the algorithm plus ciphertext samples do not reveal the key.</p></div>
+    <div><h4>Public-key (asymmetric)</h4><p><b>To work:</b> one algorithm encrypts and a related one decrypts, using a key pair; sender and receiver each hold one key of the pair (not the same one).<br><b>For security:</b> one of the two keys is kept secret; deciphering without it is impossible or impractical; the algorithm plus one key plus ciphertext samples do not reveal the other key.</p></div>
+  </div>
+
+  <h3>Applications (Table 9.3)</h3>
+  <ul class="props">
+    <li><b>Encryption/decryption</b> — encrypt with the recipient’s public key.</li>
+    <li><b>Digital signature</b> — sign with the sender’s private key, applied to the message or to a small block that is a function of it.</li>
+    <li><b>Key exchange</b> — two sides cooperate to exchange a <b>session key</b>: a symmetric secret key generated for one transaction (session) and valid for a short time.</li>
+  </ul>
+  <div class="tbl"><table>
+    <tr><th class="l">Algorithm</th><th>Encryption/decryption</th><th>Digital signature</th><th>Key exchange</th></tr>
+    <tr><td class="l">RSA</td><td class="hi">Yes</td><td class="hi">Yes</td><td class="hi">Yes</td></tr>
+    <tr><td class="l">Elliptic curve</td><td class="hi">Yes</td><td class="hi">Yes</td><td class="hi">Yes</td></tr>
+    <tr><td class="l">Diffie–Hellman</td><td class="dim">No</td><td class="dim">No</td><td class="hi">Yes</td></tr>
+    <tr><td class="l">DSS</td><td class="dim">No</td><td class="hi">Yes</td><td class="dim">No</td></tr>
+  </table></div>
+
+  <h3>Requirements for public-key cryptography</h3>
+  <ol>
+    <li>Computationally easy for B to generate a key pair (PU<sub>b</sub>, PR<sub>b</sub>).</li>
+    <li>Easy for sender A, knowing PU<sub>b</sub> and message M, to compute <span class="m">C = E(PU<sub>b</sub>, M)</span>.</li>
+    <li>Easy for B to decrypt: <span class="m">M = D(PR<sub>b</sub>, C) = D[PR<sub>b</sub>, E(PU<sub>b</sub>, M)]</span>.</li>
+    <li>Infeasible for an adversary knowing PU<sub>b</sub> to determine PR<sub>b</sub>.</li>
+    <li>Infeasible for an adversary knowing PU<sub>b</sub> and C to recover M.</li>
+    <li>(Useful, not always needed) the keys work in either order: <span class="m">M = D[PU<sub>b</sub>, E(PR<sub>b</sub>, M)] = D[PR<sub>b</sub>, E(PU<sub>b</sub>, M)]</span>.</li>
+  </ol>
+  <p>These requirements boil down to needing a trap-door one-way function.</p>
+  <div class="def"><b>Easy</b> — solvable in <b>polynomial time</b>: for an n-bit input, time proportional to n<sup>a</sup> for a fixed constant a (the class <b>P</b>). <b>Infeasible</b> — effort grows faster than polynomial, e.g. proportional to 2<sup>n</sup>. Cryptography needs inversion to be infeasible for virtually <i>all</i> inputs, not just the worst or average case.</div>
+  <div class="def"><b>One-way function</b> — maps a domain into a range so that every value has a unique inverse, computing the function is easy and computing the inverse is infeasible: <span class="m">Y = f(X)</span> easy, <span class="m">X = f<sup>−1</sup>(Y)</span> infeasible. (Not the same as a one-way <i>hash</i> function, Unit 7.)</div>
+  <div class="def"><b>Trap-door one-way function</b> — a family of invertible functions f<sub>k</sub> that is easy one way and infeasible the other way unless extra information (the trap door k) is known:
+    <span class="m wr">Y = f<sub>k</sub>(X) easy if k and X known; X = f<sub>k</sub><sup>−1</sup>(Y) easy if k and Y known; infeasible if only Y known.</span></div>
+  <div class="figure">
+    <svg viewBox="0 0 640 150" role="img" aria-labelledby="td-t"><title id="td-t">X maps to Y easily for anyone. Going back from Y to X is infeasible without the trap door k, easy with it.</title>
+      <defs><marker id="ar-td" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink)"/></marker>
+            <marker id="ar-td2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--accent)"/></marker></defs>
+      <rect x="20" y="45" width="90" height="56" rx="10" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="65" y="79" text-anchor="middle" fill="var(--ink)" font-size="16" font-weight="700">X</text>
+      <rect x="530" y="45" width="90" height="56" rx="10" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="575" y="79" text-anchor="middle" fill="var(--ink)" font-size="16" font-weight="700">Y</text>
+      <path d="M115,58 C250,22 390,22 525,58" stroke="var(--ink)" stroke-width="1.6" fill="none" marker-end="url(#ar-td)"/><text x="320" y="24" text-anchor="middle" fill="var(--ink)" font-size="12">Y = f<tspan baseline-shift="sub" font-size="9">k</tspan>(X): easy for anyone</text>
+      <path d="M525,92 C390,128 250,128 115,92" stroke="var(--accent)" stroke-width="1.6" fill="none" marker-end="url(#ar-td2)"/><text x="320" y="140" text-anchor="middle" fill="var(--accent)" font-size="12">X = f<tspan baseline-shift="sub" font-size="9">k</tspan>⁻¹(Y): easy only with trap door k</text>
+      <g transform="translate(305,72)"><rect x="-7" y="-2" width="30" height="22" rx="4" fill="var(--mark-soft)" stroke="var(--mark)"/><path d="M0,-2 v-7 a8,8 0 0 1 16,0 v7" fill="none" stroke="var(--mark)" stroke-width="2"/><text x="8" y="14" text-anchor="middle" fill="var(--mark)" font-size="10" font-weight="700">k</text></g>
+    </svg>
+  </div>
+
+  <h3>Public-key cryptanalysis</h3>
+  <ul class="props">
+    <li><b>Brute force</b> — same countermeasure as symmetric ciphers: large keys. But the cost of the underlying functions grows faster than linearly with key size, so keys big enough to stop brute force make public-key encryption too slow for general-purpose use.</li>
+    <li><b>Computing the private key from the public key</b> — not proven infeasible for any public-key algorithm, RSA included.</li>
+    <li><b>Probable-message attack</b> — specific to public-key systems. If a message is, say, only a 56-bit DES key, an adversary encrypts all 2<sup>56</sup> possible keys with the public key and matches the ciphertext, so the attack is a 56-bit brute force regardless of the public key’s size. <b>Defense:</b> append random bits to such short messages.</li>
+  </ul>
+</section>
+
+<!-- ============ 9.2 ============ -->
+<section class="unit" id="s92">
+  <h2><span class="sec">9.2</span>The RSA Algorithm</h2>
+  <p class="why">RSA is the most widely accepted and implemented general-purpose public-key algorithm. Plaintext and ciphertext are integers between 0 and n − 1; a typical n is 1024 bits (309 decimal digits).</p>
+
+  <h3>Number theory needed (from Unit 2)</h3>
+  <div class="grid2">
+    <div class="def"><b>Relatively prime</b> — a and b share no positive common factor except 1: gcd(a, b) = 1.</div>
+    <div class="def"><b>Multiplicative inverse mod m</b> — the d with <span class="m">e·d ≡ 1 (mod m)</span>; exists only if gcd(e, m) = 1. Found with the extended Euclidean algorithm.</div>
+    <div class="def"><b>Euler’s totient <span class="gk">φ</span></span>(n)</b> — the number of positive integers less than n and relatively prime to n. For distinct primes p, q: <span class="m"><span class="gk">φ</span></span>(pq) = (p − 1)(q − 1)</span>.</div>
+    <div class="def"><b>Euler’s theorem</b> — <span class="m">a<sup><span class="gk">φ</span></span>(n)</sup> ≡ 1 (mod n)</span> when gcd(a, n) = 1. This is what makes RSA decryption undo encryption.</div>
+  </div>
+
+  <h3>Description of the algorithm</h3>
+  <p>Plaintext is encrypted in blocks, each with a binary value less than n; in practice the block size is i bits where 2<sup>i</sup> &lt; n ≤ 2<sup>i+1</sup>.</p>
+  <div class="eq">C = M<sup>e</sup> mod n
+M = C<sup>d</sup> mod n = (M<sup>e</sup>)<sup>d</sup> mod n = M<sup>ed</sup> mod n</div>
+  <p>Both sides know n; the sender knows e; only the receiver knows d. So <span class="m">PU = {e, n}</span> and <span class="m">PR = {d, n}</span>. Three requirements must hold:</p>
+  <ol>
+    <li>Values e, d, n exist with <span class="m">M<sup>ed</sup> mod n = M</span> for all M &lt; n.</li>
+    <li><span class="m">M<sup>e</sup> mod n</span> and <span class="m">C<sup>d</sup> mod n</span> are relatively easy to compute.</li>
+    <li>It is infeasible to determine d given e and n.</li>
+  </ol>
+  <p>Requirement 1 holds when e and d are multiplicative inverses modulo <span class="gk">φ</span></span>(n) (proof in online Appendix R):</p>
+  <div class="eq">ed mod <span class="gk">φ</span>(n) = 1    ⇔    ed ≡ 1 (mod <span class="gk">φ</span>(n))    ⇔    d ≡ e<sup>−1</sup> (mod <span class="gk">φ</span>(n))        <span class="n">(9.1)</span></div>
+  <p>This is only possible if d (and so e) is relatively prime to <span class="gk">φ</span></span>(n).</p>
+
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Ingredient</th><th class="l">How it is obtained</th><th>Public / private</th></tr>
+    <tr><td class="l mono">p, q</td><td class="l">two primes, p ≠ q</td><td><span class="pill no">private, chosen</span></td></tr>
+    <tr><td class="l mono">n = pq</td><td class="l">calculated</td><td><span class="pill">public</span></td></tr>
+    <tr><td class="l mono">e</td><td class="l">gcd(<span class="gk">φ</span></span>(n), e) = 1, 1 &lt; e &lt; <span class="gk">φ</span></span>(n)</td><td><span class="pill">public, chosen</span></td></tr>
+    <tr><td class="l mono">d</td><td class="l">d ≡ e<sup>−1</sup> (mod <span class="gk">φ</span></span>(n))</td><td><span class="pill no">private, calculated</span></td></tr>
+  </table></div>
+  <p>Figure 9.5 summary: Alice generates the pair and publishes {e, n}; Bob encrypts <span class="m">C = M<sup>e</sup> mod n</span> for <span class="m">M &lt; n</span>; Alice decrypts <span class="m">M = C<sup>d</sup> mod n</span>.</p>
+
+  <div class="ex"><span class="t">Example · Figure 9.6</span>
+    <div class="eq">p = 17, q = 11      n = 187      <span class="gk">φ</span>(n) = 16 × 10 = 160
+e = 7  (gcd(7, 160) = 1)      d = 23  because 23 × 7 = 161 = 1 × 160 + 1
+PU = {7, 187}      PR = {23, 187}
+M = 88:  C = 88<sup>7</sup> mod 187 = 11      decrypt: 11<sup>23</sup> mod 187 = 88</div>
+    <p>Intermediate results are reduced mod 187 as they go: <span class="m wr">88<sup>7</sup> = 88<sup>4</sup>·88<sup>2</sup>·88<sup>1</sup> → (132 × 77 × 88) mod 187 = 11</span>.</p>
+  </div>
+  <p><b>Multiple blocks</b> (Figure 9.7, example from the book): each character becomes two decimal digits, a block is four digits (two characters), and each block is encrypted separately. With p = 73, q = 151: n = 11023, <span class="gk">φ</span></span>(n) = 10800, e = 11, d = 5891; “How_are_you?” → blocks 3314, 2262, 0017, 0462, 2414, 2066 → ciphertext 10260, 9489, 1782, 727, 10032, 2253.</p>
+
+  <div class="lab" id="lab-rsa">
+    <div class="lab-h"><span class="t">Lab · RSA key generation, encryption and decryption</span><span class="pill">BigInt, live</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>Preset<select id="rsa-pre"><option value="b1">Figure 9.6 (17, 11)</option><option value="b2">Figure 9.7 (73, 151)</option><option value="r64">Random 64-bit primes</option><option value="r512">Random 512-bit primes</option></select></label>
+        <button class="ghost" id="rsa-new" type="button">Load preset</button>
+      </div>
+      <div class="controls">
+        <label class="grow">p<input type="text" id="rsa-p" value="17"></label>
+        <label class="grow">q<input type="text" id="rsa-q" value="11"></label>
+      </div>
+      <div class="controls">
+        <label>e<input type="text" id="rsa-e" value="7"></label>
+        <label class="grow">Message M (integer &lt; n)<input type="text" id="rsa-m" value="88"></label>
+        <button id="rsa-go" type="button">Compute</button>
+      </div>
+      <div class="out" id="rsa-out" aria-live="polite"></div>
+      <p class="src">Primality is checked with Miller–Rabin (Unit 2). The CRT decryption line is explained in the next section; the attack lab in “Security of RSA” uses whatever key is loaded here.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9.2 computational ============ -->
+<section class="unit" id="s92c">
+  <h2>Computational Aspects of RSA</h2>
+  <p class="why">Two costs matter: encryption/decryption (modular exponentiation with large exponents) and key generation (finding large primes and an e, d pair).</p>
+
+  <h3>Exponentiation in modular arithmetic</h3>
+  <p>Exponentiating over the integers first and reducing at the end would give gigantic intermediate values. Instead, use <span class="m">[(a mod n) × (b mod n)] mod n = (a × b) mod n</span> and reduce after every multiplication.</p>
+  <p>Repeated squaring cuts the number of multiplications: x<sup>16</sup> takes 15 multiplications directly but only 4 as x<sup>2</sup>, x<sup>4</sup>, x<sup>8</sup>, x<sup>16</sup>. In general, write b in binary <span class="m">b<sub>k</sub>b<sub>k−1</sub>…b<sub>0</sub></span>; then</p>
+  <div class="eq">a<sup>b</sup> mod n = [ ∏<sub>b<sub>i</sub>≠0</sub> (a<sup>2<sup>i</sup></sup> mod n) ] mod n          e.g. x<sup>11</sup> = x<sup>1+2+8</sup> = (x)(x<sup>2</sup>)(x<sup>8</sup>)</div>
+  <div class="pseudo"><span class="cm">// Figure 9.8 — computes a^b mod n; b = b_k b_(k−1) … b_0</span>
+c ← 0; f ← 1
+<span class="kw">for</span> i ← k <span class="kw">downto</span> 0
+    <span class="kw">do</span> c ← 2 × c
+       f ← (f × f) mod n          <span class="cm">// square: every bit</span>
+    <span class="kw">if</span> b_i = 1
+       <span class="kw">then</span> c ← c + 1
+            f ← (f × a) mod n     <span class="cm">// multiply: only for 1 bits</span>
+<span class="kw">return</span> f                        <span class="cm">// c (explanatory only) ends equal to b</span></div>
+
+  <div class="lab" id="lab-sm">
+    <div class="lab-h"><span class="t">Lab · Square-and-multiply, step by step</span><span class="pill mk">default = Table 9.4</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>a<input type="text" id="sm-a" value="7"></label>
+        <label>b<input type="text" id="sm-b" value="560"></label>
+        <label>n<input type="text" id="sm-n" value="561"></label>
+        <button id="sm-step" type="button">Step</button>
+        <button class="ghost" id="sm-play" type="button">Play</button>
+        <button class="ghost" id="sm-reset" type="button">Reset</button>
+      </div>
+      <div class="tbl" id="sm-tbl"></div>
+      <div class="bitstr" id="sm-trace" aria-label="Operation trace"></div>
+      <div class="out" id="sm-out" aria-live="polite"></div>
+    </div>
+  </div>
+  <p class="src">The trace shows S (square) for every bit and M (multiply) only for 1 bits. The amount of work therefore depends on the exponent’s bits, which is what the timing attack in the next section exploits.</p>
+
+  <h3>Efficient operation using the public key</h3>
+  <p>e is usually chosen as <b>65537 (2<sup>16</sup> + 1)</b>, or 3 or 17. Each has only two 1 bits, minimizing multiplications. If e is fixed first and p, q later turn out to give gcd(<span class="gk">φ</span></span>(n), e) ≠ 1, reject p, q and generate a new pair.</p>
+  <div class="warn"><b>Small-e attack (e = 3).</b> If the same M is sent to three users with e = 3 and moduli n<sub>1</sub>, n<sub>2</sub>, n<sub>3</sub> (very likely pairwise relatively prime), the attacker uses the <b>Chinese remainder theorem (CRT)</b> on C<sub>i</sub> = M<sup>3</sup> mod n<sub>i</sub> to get M<sup>3</sup> mod (n<sub>1</sub>n<sub>2</sub>n<sub>3</sub>). Because M &lt; each n<sub>i</sub>, M<sup>3</sup> &lt; n<sub>1</sub>n<sub>2</sub>n<sub>3</sub>, so this equals M<sup>3</sup> itself; an ordinary cube root gives M. <b>Countermeasure:</b> add a unique pseudorandom padding string to each M before encrypting.</div>
+  <div class="def"><b>Chinese remainder theorem (CRT)</b> — for pairwise relatively prime moduli m<sub>1</sub>, …, m<sub>k</sub> with product M, every integer A in Z<sub>M</sub> is uniquely determined by its residues (A mod m<sub>1</sub>, …, A mod m<sub>k</sub>), and A can be rebuilt from them (Unit 2).</div>
+
+  <div class="lab" id="lab-e3">
+    <div class="lab-h"><span class="t">Lab · Breaking e = 3 with the CRT</span><span class="pill no">attack demo</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label class="grow">Message M (integer)<input type="text" id="e3-m" value="123456789012345"></label>
+        <button id="e3-go" type="button">New keys &amp; attack</button>
+      </div>
+      <div class="out" id="e3-out" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <h3>Efficient operation using the private key</h3>
+  <p>d cannot be chosen small: a small d is open to brute force and other cryptanalysis (if e &lt; n and d &lt; n<sup>1/4</sup>, d is easily found). Decryption is sped up with the CRT instead:</p>
+  <div class="eq">V<sub>p</sub> = C<sup>d</sup> mod p          V<sub>q</sub> = C<sup>d</sup> mod q
+X<sub>p</sub> = q × (q<sup>−1</sup> mod p)    X<sub>q</sub> = p × (p<sup>−1</sup> mod q)
+M  = (V<sub>p</sub>X<sub>p</sub> + V<sub>q</sub>X<sub>q</sub>) mod n</div>
+  <p>By Fermat’s theorem (a<sup>p−1</sup> ≡ 1 mod p for gcd(a, p) = 1) the exponents shrink: <span class="m wr">V<sub>p</sub> = C<sup>d mod (p−1)</sup> mod p</span>, <span class="m wr">V<sub>q</sub> = C<sup>d mod (q−1)</sup> mod q</span>, where d mod (p − 1) and d mod (q − 1) are precomputed. The result is about <b>four times faster</b> than computing C<sup>d</sup> mod n directly. The RSA lab above shows these values for the loaded key.</p>
+
+  <h3>Key generation</h3>
+  <p>Each participant must (1) find two primes p and q, and (2) choose e or d and compute the other.</p>
+  <ul class="props">
+    <li><b>Large p, q.</b> n is public, so p and q must come from a large enough set to prevent exhaustive search, yet be found efficiently. No method produces arbitrarily large primes directly.</li>
+    <li><b>Procedure:</b> pick a random odd number of the right size, test it for primality; if it fails, try the next random number.</li>
+    <li><b>Probabilistic tests</b> such as Miller–Rabin say only that n is “probably prime”, but repeating with t random bases a makes the probability as close to 1 as desired. Since primes near N are on average ln(N) apart, about ln(N)/2 odd candidates are tried; for a 200-bit prime, ln(2<sup>200</sup>)/2 ≈ 69.</li>
+    <li><b>e and d.</b> Pick e, check gcd(<span class="gk">φ</span></span>(n), e) = 1, and compute d = e<sup>−1</sup> mod <span class="gk">φ</span></span>(n) with the extended Euclidean algorithm, which does both at once. Two random numbers are relatively prime with probability about 0.6, so few e values need testing.</li>
+  </ul>
+</section>
+
+<!-- ============ 9.2 security ============ -->
+<section class="unit" id="s92s">
+  <h2>The Security of RSA</h2>
+  <p class="why">Five approaches to attacking RSA, with their defenses.</p>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Attack</th><th class="l">Idea</th><th class="l">Defense</th></tr>
+    <tr><td class="l"><b>Brute force</b></td><td class="l">Try all private keys.</td><td class="l">Large key space (more bits in d), at the cost of slower operation.</td></tr>
+    <tr><td class="l"><b>Mathematical</b></td><td class="l">Several approaches, all equivalent in effort to factoring n.</td><td class="l">Large n with well-chosen p, q.</td></tr>
+    <tr><td class="l"><b>Timing</b></td><td class="l">Use the running time of decryption.</td><td class="l">Constant time, random delay, blinding.</td></tr>
+    <tr><td class="l"><b>Hardware fault-based</b></td><td class="l">Induce faults in a processor generating signatures.</td><td class="l">Requires physical access and power control; not seen as a serious threat.</td></tr>
+    <tr><td class="l"><b>Chosen ciphertext</b></td><td class="l">Exploit algebraic properties of RSA.</td><td class="l">Padding: OAEP.</td></tr>
+  </table></div>
+
+  <h3>The factoring problem</h3>
+  <p>Three mathematical approaches:</p>
+  <ol>
+    <li>Factor n into p and q, giving <span class="gk">φ</span></span>(n) = (p − 1)(q − 1) and then d ≡ e<sup>−1</sup> (mod <span class="gk">φ</span></span>(n)).</li>
+    <li>Find <span class="gk">φ</span></span>(n) directly, which is equivalent to factoring n.</li>
+    <li>Find d directly, which appears to be at least as hard as factoring.</li>
+  </ol>
+  <p>So factoring performance is the benchmark for RSA security. The threat to larger keys is twofold: growing computing power and better factoring algorithms. The <b>quadratic sieve</b> was superseded by the <b>generalized number field sieve (GNFS)</b>, which is much faster; the <b>special number field sieve (SNFS)</b> is faster still for numbers of special form, and a general algorithm that fast may appear. A 768-bit modulus has been factored; factoring a 1024-bit modulus is about 1000 times harder, and the book recommends phasing out 1024-bit RSA.</p>
+  <p>Constraints on p and q to avoid easily factored n:</p>
+  <ul class="props">
+    <li>p and q differ in length by only a few digits (for a 1024-bit key, both about 10<sup>75</sup>–10<sup>100</sup>).</li>
+    <li>Both p − 1 and q − 1 contain a large prime factor.</li>
+    <li>gcd(p − 1, q − 1) is small.</li>
+  </ul>
+
+  <h3>Timing attacks</h3>
+  <div class="def"><b>Timing attack</b> — determining a private key by measuring how long a computer takes to decrypt messages. It applies to other public-key systems too, comes from an unexpected direction, and is <b>ciphertext-only</b>.</div>
+  <p>With the algorithm of Figure 9.8 there is one modular multiplication per bit plus an extra one for each 1 bit. The attack recovers the exponent bit by bit from the leftmost bit b<sub>k</sub>: knowing the first j bits, the attacker can run the first j iterations for a chosen ciphertext. Suppose that for a few known values the modular multiplication is very slow. If total decryption time is always slow when this iteration would be slow with a 1 bit, the bit is 1; if many observed times are fast, it is 0. Real implementations vary less than this extreme case, but enough to make the attack practical.</p>
+  <ul class="props">
+    <li><b>Constant exponentiation time</b> — every exponentiation takes the same time before returning. Simple, but degrades performance.</li>
+    <li><b>Random delay</b> — add a random delay to confuse timing. If too little noise is added, the attacker compensates with more measurements.</li>
+    <li><b>Blinding</b> — multiply the ciphertext by a random number before exponentiating, so the attacker does not know which ciphertext bits are being processed. Steps for <span class="m">M = C<sup>d</sup> mod n</span>: pick secret random r, 0 ≤ r ≤ n − 1; compute <span class="m">C′ = C(r<sup>e</sup>) mod n</span>; compute <span class="m">M′ = (C′)<sup>d</sup> mod n</span>; compute <span class="m">M = M′r<sup>−1</sup> mod n</span>. It works because <span class="m">r<sup>ed</sup> mod n = r mod n</span>. Reported cost: 2–10%.</li>
+  </ul>
+
+  <h3>Fault-based attack</h3>
+  <p>Faults are induced in RSA signature computation by reducing the processor’s power. The resulting invalid signatures (from single-bit errors) are analyzed to recover the private key; a 1024-bit key was extracted in about 100 hours on a commercial microprocessor. It needs physical access and direct control of the processor’s input power, including on-chip power-supply control hardware.</p>
+
+  <h3>Chosen ciphertext attack and OAEP</h3>
+  <div class="def"><b>Chosen ciphertext attack (CCA)</b> — the adversary chooses ciphertexts and is given the plaintexts decrypted with the target’s private key. Rather than learning nothing new, the adversary picks blocks that, once processed with the private key, give information needed for cryptanalysis.</div>
+  <p>Basic RSA is vulnerable because of its multiplicative property:</p>
+  <div class="eq">E(PU, M<sub>1</sub>) × E(PU, M<sub>2</sub>) = E(PU, [M<sub>1</sub> × M<sub>2</sub>])        <span class="n">(9.2)</span></div>
+  <ol>
+    <li>Compute <span class="m">X = (C × 2<sup>e</sup>) mod n</span>.</li>
+    <li>Submit X as a chosen ciphertext and receive <span class="m">Y = X<sup>d</sup> mod n</span>.</li>
+    <li>Since <span class="m">X = (M<sup>e</sup> mod n)(2<sup>e</sup> mod n) = (2M)<sup>e</sup> mod n</span>, Y = 2M mod n, and M follows.</li>
+  </ol>
+
+  <div class="lab" id="lab-cca">
+    <div class="lab-h"><span class="t">Lab · CCA and blinding on the loaded RSA key</span><span class="pill mk">uses the key from §9.2 lab</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <span class="seg" role="group" aria-label="Demo"><button type="button" data-cca="cca" aria-pressed="true">Chosen ciphertext attack</button><button type="button" data-cca="blind" aria-pressed="false">Blinding</button></span>
+        <button id="cca-go" type="button">Run</button>
+      </div>
+      <div class="out" id="cca-out" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <p>Random padding of the plaintext breaks Equation 9.2, but simple random padding has been shown to be insufficient against more sophisticated CCAs. RSA Security Inc. recommends <b>optimal asymmetric encryption padding (OAEP)</b>.</p>
+  <div class="def"><b>Hash function</b> — maps a variable-length data block to a fixed-length value, the hash code (Unit 7). <b>Mask generating function (MGF)</b> — a hash-based function used here to produce masks of the required length.</div>
+  <div class="figure">
+    <svg viewBox="0 0 640 330" role="img" aria-labelledby="oaep-t"><title id="oaep-t">OAEP: the hash of parameters P plus padding plus message M forms DB. A random seed passes through MGF and is XORed with DB to give maskedDB. maskedDB passes through MGF and is XORed with the seed to give maskedseed. EM is maskedseed concatenated with maskedDB.</title>
+      <defs><marker id="ar-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink)"/></marker></defs>
+      <g font-size="12">
+        <rect x="40" y="20" width="110" height="34" rx="6" fill="var(--mark-soft)" stroke="var(--mark)"/><text x="95" y="42" text-anchor="middle" fill="var(--ink)" font-weight="700">Seed</text>
+        <rect x="250" y="20" width="110" height="34" rx="6" fill="var(--bg)" stroke="var(--line)"/><text x="305" y="42" text-anchor="middle" fill="var(--ink)">H(P)</text>
+        <rect x="360" y="20" width="110" height="34" fill="var(--bg)" stroke="var(--line)"/><text x="415" y="42" text-anchor="middle" fill="var(--ink)">Padding</text>
+        <rect x="470" y="20" width="130" height="34" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="535" y="42" text-anchor="middle" fill="var(--ink)" font-weight="700">M</text>
+        <text x="425" y="74" text-anchor="middle" fill="var(--muted)" font-size="11">DB (data block)</text>
+        <line x1="425" y1="80" x2="425" y2="150" stroke="var(--ink)" marker-end="url(#ar-o)"/>
+        <line x1="95" y1="54" x2="95" y2="100" stroke="var(--ink)"/><line x1="95" y1="100" x2="215" y2="100" stroke="var(--ink)" marker-end="url(#ar-o)"/>
+        <rect x="218" y="84" width="70" height="32" rx="6" fill="var(--paper)" stroke="var(--accent)"/><text x="253" y="105" text-anchor="middle" fill="var(--ink)">MGF</text>
+        <line x1="288" y1="100" x2="425" y2="100" stroke="var(--ink)"/><line x1="425" y1="100" x2="425" y2="150" stroke="var(--ink)"/>
+        <circle cx="425" cy="162" r="12" fill="var(--paper)" stroke="var(--ink)"/><text x="425" y="167" text-anchor="middle" fill="var(--ink)" font-size="14">⊕</text>
+        <line x1="425" y1="174" x2="425" y2="268" stroke="var(--ink)" marker-end="url(#ar-o)"/>
+        <line x1="95" y1="100" x2="95" y2="210" stroke="var(--ink)" marker-end="url(#ar-o)"/>
+        <line x1="425" y1="210" x2="292" y2="210" stroke="var(--ink)" marker-end="url(#ar-o)"/>
+        <rect x="218" y="194" width="70" height="32" rx="6" fill="var(--paper)" stroke="var(--accent)"/><text x="253" y="215" text-anchor="middle" fill="var(--ink)">MGF</text>
+        <line x1="218" y1="210" x2="109" y2="222" stroke="var(--ink)" marker-end="url(#ar-o)"/>
+        <circle cx="95" cy="222" r="12" fill="var(--paper)" stroke="var(--ink)"/><text x="95" y="227" text-anchor="middle" fill="var(--ink)" font-size="14">⊕</text>
+        <line x1="95" y1="234" x2="95" y2="268" stroke="var(--ink)" marker-end="url(#ar-o)"/>
+        <rect x="40" y="270" width="110" height="34" rx="6" fill="var(--mark-soft)" stroke="var(--mark)"/><text x="95" y="292" text-anchor="middle" fill="var(--ink)">maskedseed</text>
+        <rect x="150" y="270" width="450" height="34" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="375" y="292" text-anchor="middle" fill="var(--ink)">maskedDB</text>
+        <text x="320" y="322" text-anchor="middle" fill="var(--muted)" font-size="11">EM (encoded message) = maskedseed ‖ maskedDB  →  RSA-encrypted</text>
+      </g>
+    </svg>
+    <div class="cap">Redrawn from Figure 9.10.</div>
+  </div>
+  <ol>
+    <li>Pass optional encoding parameters P through hash H; pad the output with zeros and append M to get the data block <b>DB</b>.</li>
+    <li>Generate a random <b>seed</b>; MGF(seed) XOR DB = <b>maskedDB</b>.</li>
+    <li>MGF(maskedDB) XOR seed = <b>maskedseed</b>.</li>
+    <li><b>EM</b> = maskedseed ‖ maskedDB is encrypted with RSA. EM holds the padded message masked by the seed, and the seed masked by maskedDB.</li>
+  </ol>
+</section>
+
+<!-- ============ 10.1 ============ -->
+<section class="unit" id="s101">
+  <h2><span class="sec">10.1</span>Diffie–Hellman Key Exchange</h2>
+  <p class="why">Diffie–Hellman lets two users securely agree on a secret value, typically used as a symmetric key for later encryption. The algorithm only exchanges secret values; it does not encrypt messages or sign. Its security rests on the difficulty of computing discrete logarithms.</p>
+  <div class="def"><b>Primitive root</b> — a is a primitive root of prime p if its powers <span class="m">a mod p, a<sup>2</sup> mod p, …, a<sup>p−1</sup> mod p</span> are distinct and are exactly the integers 1 … p − 1 in some order.</div>
+  <div class="def"><b>Discrete logarithm</b> — for an integer b and primitive root a of prime p there is a unique exponent i, 0 ≤ i ≤ p − 2, with <span class="m">b = a<sup>i</sup> mod p</span>. i is the discrete logarithm of b for base a, mod p: <span class="m">dlog<sub>a,p</sub>(b)</span>. Computing a<sup>i</sup> mod p is easy; finding i from b is, for large primes, infeasible.</div>
+
+  <h3>The algorithm</h3>
+  <div class="eq">Global public:  prime q,  <span class="gk">α</span> a primitive root of q  (<span class="gk">α</span> &lt; q)
+
+User A:  private X<sub>A</sub> &lt; q        public Y<sub>A</sub> = <span class="gk">α</span><sup>X<sub>A</sub></sup> mod q
+User B:  private X<sub>B</sub> &lt; q        public Y<sub>B</sub> = <span class="gk">α</span><sup>X<sub>B</sub></sup> mod q
+
+A computes  K = (Y<sub>B</sub>)<sup>X<sub>A</sub></sup> mod q        B computes  K = (Y<sub>A</sub>)<sup>X<sub>B</sub></sup> mod q</div>
+  <p>Both get the same K, by the rules of modular arithmetic:</p>
+  <div class="eq">K = (Y<sub>B</sub>)<sup>X<sub>A</sub></sup> mod q = (<span class="gk">α</span><sup>X<sub>B</sub></sup>)<sup>X<sub>A</sub></sup> mod q = <span class="gk">α</span><sup>X<sub>B</sub>X<sub>A</sub></sup> mod q = (<span class="gk">α</span><sup>X<sub>A</sub></sup>)<sup>X<sub>B</sub></sup> mod q = (Y<sub>A</sub>)<sup>X<sub>B</sub></sup> mod q</div>
+  <p>An adversary sees only q, <span class="gk">α</span>, Y<sub>A</sub>, Y<sub>B</sub>. To get the key it must take a discrete logarithm, e.g. <span class="m">X<sub>B</sub> = dlog<sub><span class="gk">α</span>,q</sub>(Y<sub>B</sub>)</span>, then compute K as B does.</p>
+  <div class="ex"><span class="t">Example · book</span>
+    <div class="eq">q = 353, <span class="gk">α</span> = 3, X<sub>A</sub> = 97, X<sub>B</sub> = 233
+Y<sub>A</sub> = 3<sup>97</sup> mod 353 = 40        Y<sub>B</sub> = 3<sup>233</sup> mod 353 = 248
+K = 248<sup>97</sup> mod 353 = 40<sup>233</sup> mod 353 = 160</div>
+    <p>Numbers this small fall to brute force: compute powers of 3 mod 353 until 40 or 248 appears (exponent 97 gives 40). With large numbers this is impractical.</p>
+  </div>
+
+  <div class="lab" id="lab-dh">
+    <div class="lab-h"><span class="t">Lab · Diffie–Hellman exchange and a brute-force attacker</span><span class="pill">BigInt, live</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>q (prime)<input type="text" id="dh-q" value="353"></label>
+        <label><span class="gk">α</span><input type="text" id="dh-a" value="3"></label>
+        <label>X<sub>A</sub><input type="text" id="dh-xa" value="97"></label>
+        <label>X<sub>B</sub><input type="text" id="dh-xb" value="233"></label>
+        <button id="dh-go" type="button">Exchange</button>
+        <button class="ghost" id="dh-rnd" type="button">Random private keys</button>
+      </div>
+      <div class="out" id="dh-out" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <h3>Key exchange protocols</h3>
+  <ul class="props">
+    <li><b>One-time keys</b> (Figure 10.1): A generates a one-time X<sub>A</sub>, sends Y<sub>A</sub>; B generates X<sub>B</sub>, replies with Y<sub>B</sub>; both compute K. q and <span class="gk">α</span> are known in advance, or A picks them and sends them in the first message.</li>
+    <li><b>Directory of long-lasting keys</b>: each user i stores a long-lasting public Y<sub>i</sub> (with global q, <span class="gk">α</span>) in a central directory. User j fetches Y<sub>i</sub>, computes the shared key and sends an encrypted message. With a trusted directory this gives confidentiality (only i and j can compute the key) and a degree of authentication (only j could have made the key), but no protection against replay attacks.</li>
+  </ul>
+
+  <h3>Man-in-the-middle attack</h3>
+  <p>The basic protocol does not authenticate the participants, so an adversary Darth who can intercept messages can sit between Alice and Bob. Step through it:</p>
+  <div class="lab" id="lab-mitm">
+    <div class="lab-h"><span class="t">Animation · Man-in-the-middle (Figure 10.2)</span>
+      <span><button id="mi-step" type="button">Next step</button> <button class="ghost" id="mi-play" type="button">Play</button> <button class="ghost" id="mi-reset" type="button">Reset</button></span></div>
+    <div class="lab-b">
+      <div class="figure" id="mi-fig"></div>
+      <div class="out" id="mi-txt" aria-live="polite"></div>
+    </div>
+  </div>
+  <p>Afterwards Alice and Bob believe they share a key, but Alice shares K2 with Darth and Bob shares K1 with Darth. When Alice sends E(K2, M), Darth decrypts it and sends Bob E(K1, M) (to eavesdrop) or E(K1, M′) (to alter it). <b>Countermeasure:</b> digital signatures and public-key certificates (Units 8 and 9).</p>
+</section>
+
+<!-- ============ 10.2 ============ -->
+<section class="unit" id="s102">
+  <h2><span class="sec">10.2</span>Elgamal Cryptographic System</h2>
+  <p class="why">A public-key encryption scheme based on discrete logarithms, closely related to Diffie–Hellman. It is used in some form in the Digital Signature Standard (Unit 8) and S/MIME (Unit 12).</p>
+  <div class="eq">Global public:  prime q,  <span class="gk">α</span> a primitive root of q
+
+Key generation (Alice):  private X<sub>A</sub>, 1 &lt; X<sub>A</sub> &lt; q − 1      Y<sub>A</sub> = <span class="gk">α</span><sup>X<sub>A</sub></sup> mod q
+                         public key {q, <span class="gk">α</span>, Y<sub>A</sub>}
+
+Encryption (Bob), message 0 ≤ M ≤ q − 1:
+   random k, 1 ≤ k ≤ q − 1
+   one-time key  K  = (Y<sub>A</sub>)<sup>k</sup> mod q
+   C<sub>1</sub> = <span class="gk">α</span><sup>k</sup> mod q        C<sub>2</sub> = K·M mod q        ciphertext (C<sub>1</sub>, C<sub>2</sub>)
+
+Decryption (Alice):
+   K = (C<sub>1</sub>)<sup>X<sub>A</sub></sup> mod q        M = (C<sub>2</sub>K<sup>−1</sup>) mod q</div>
+  <p><b>Why it works:</b> <span class="m wr">K = (Y<sub>A</sub>)<sup>k</sup> = (<span class="gk">α</span><sup>X<sub>A</sub></sup>)<sup>k</sup> = <span class="gk">α</span><sup>kX<sub>A</sub></sup> = (C<sub>1</sub>)<sup>X<sub>A</sub></sup> mod q</span>, and <span class="m">C<sub>2</sub>K<sup>−1</sup> = KMK<sup>−1</sup> = M mod q</span>. In words: Bob makes a one-time key K from Alice’s public values and his random k; C<sub>1</sub> = <span class="gk">α</span><sup>k</sup> is the “clue” that lets Alice rebuild K with her private key; C<sub>2</sub> is M masked by K. Messages longer than q are sent as blocks, each less than q.</p>
+  <div class="ex"><span class="t">Example · book (GF(19))</span>
+    <div class="eq">q = 19, <span class="gk">α</span> = 10 (primitive roots of 19: 2, 3, 10, 13, 14, 15)
+X<sub>A</sub> = 5:  Y<sub>A</sub> = 10<sup>5</sup> mod 19 = 3        public {19, 10, 3}
+M = 17, k = 6:  K = 3<sup>6</sup> mod 19 = 7    C<sub>1</sub> = 10<sup>6</sup> mod 19 = 11    C<sub>2</sub> = 7 × 17 mod 19 = 5
+Decrypt (11, 5):  K = 11<sup>5</sup> mod 19 = 7    K<sup>−1</sup> = 11    M = 5 × 11 mod 19 = 17</div>
+  </div>
+  <div class="warn"><b>Use a new k for every block.</b> If k is reused, C<sub>2,1</sub>/C<sub>2,2</sub> = KM<sub>1</sub>/KM<sub>2</sub> = M<sub>1</sub>/M<sub>2</sub> mod q, so knowing one block M<sub>1</sub> gives <span class="m">M<sub>2</sub> = (C<sub>2,1</sub>)<sup>−1</sup>C<sub>2,2</sub>M<sub>1</sub> mod q</span>.</div>
+  <p><b>Security:</b> recovering the private key needs <span class="m">X<sub>A</sub> = dlog<sub><span class="gk">α</span>,q</sub>(Y<sub>A</sub>)</span>; recovering K needs <span class="m">k = dlog<sub><span class="gk">α</span>,q</sub>(C<sub>1</sub>)</span>. These are considered infeasible if q is at least 300 decimal digits and q − 1 has at least one large prime factor.</p>
+
+  <div class="lab" id="lab-elg">
+    <div class="lab-h"><span class="t">Lab · Elgamal, and what reusing k leaks</span><span class="pill">BigInt, live</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>q<input type="text" id="el-q" value="19"></label>
+        <label><span class="gk">α</span><input type="text" id="el-a" value="10"></label>
+        <label>X<sub>A</sub><input type="text" id="el-x" value="5"></label>
+        <label>M<sub>1</sub><input type="text" id="el-m" value="17"></label>
+        <label>k<input type="text" id="el-k" value="6"></label>
+        <label>M<sub>2</sub> (same k)<input type="text" id="el-m2" value="8"></label>
+        <button id="el-go" type="button">Encrypt &amp; decrypt</button>
+      </div>
+      <div class="out" id="el-out" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10.3 ============ -->
+<section class="unit" id="s103">
+  <h2><span class="sec">10.3</span>Elliptic Curve Arithmetic</h2>
+  <p class="why">Elliptic curve cryptography (ECC) appears to give security equal to RSA with a far smaller key, reducing processing overhead. Its arithmetic is addition of points on a curve, which forms an abelian group.</p>
+
+  <h3>Abelian groups</h3>
+  <div class="def"><b>Abelian group</b> {G, ·} — a set G with a binary operation · that associates each ordered pair (a, b) with an element a · b in G, satisfying:
+    <span class="m wr">(A1) closure: a · b ∈ G; (A2) associative: a · (b · c) = (a · b) · c; (A3) identity e: a · e = e · a = a; (A4) inverse a′: a · a′ = a′ · a = e; (A5) commutative: a · b = b · a.</span></div>
+  <p>Diffie–Hellman works in the multiplicative group of nonzero integers mod q: “exponentiation” is repeated multiplication, and the attacker must find k from a and a<sup>k</sup> (discrete logarithm). ECC uses an operation called <b>addition</b> of points; “multiplication” is repeated addition, <span class="m">k × a = a + a + … + a</span> (k times), and the attacker must find k from a and k × a.</p>
+
+  <h3>Elliptic curves over real numbers</h3>
+  <p>Elliptic curves are not ellipses; the name comes from the cubic equations, similar to those used for an ellipse’s circumference. The general (Weierstrass) form is <span class="m wr">y<sup>2</sup> + axy + by = x<sup>3</sup> + cx<sup>2</sup> + dx + e</span>; it is enough to use</p>
+  <div class="eq">y<sup>2</sup> = x<sup>3</sup> + ax + b        <span class="n">(10.1)</span></div>
+  <div class="def"><b>Cubic equation</b> — an equation of degree 3 (highest exponent 3). <b>Point at infinity / zero point O</b> — an extra element included in every elliptic curve; it acts as the additive identity.</div>
+  <p><b>E(a, b)</b> is the set of all points (x, y) satisfying Eq. 10.1, plus O. Each curve is symmetric about y = 0. E(a, b) forms a group provided</p>
+  <div class="eq">4a<sup>3</sup> + 27b<sup>2</sup> ≠ 0        <span class="n">(10.2)</span></div>
+  <p><b>Geometric rule:</b> if three points on the curve lie on a straight line, their sum is O. From this:</p>
+  <ol>
+    <li>O is the additive identity: O = −O and P + O = P.</li>
+    <li>−P has the same x and negated y: if P = (x, y), −P = (x, −y). P + (−P) = O.</li>
+    <li>For P, Q with different x, draw the line through them; it meets the curve at a third point R. Then <b>P + Q = −R</b>, the mirror image of R in the x axis. (If the line is tangent at P or Q, take R = P or R = Q.)</li>
+    <li>P and −P lie on a vertical line, which is viewed as meeting the curve at O: P + (−P) = O.</li>
+    <li>To double Q, draw the tangent at Q; it meets the curve at S. Then Q + Q = 2Q = −S.</li>
+  </ol>
+  <p><b>Algebraic rule:</b> for distinct P = (x<sub>P</sub>, y<sub>P</sub>), Q = (x<sub>Q</sub>, y<sub>Q</sub>) that are not negatives, with slope <span class="m"><span class="gk">Δ</span> = (y<sub>Q</sub> − y<sub>P</sub>)/(x<sub>Q</sub> − x<sub>P</sub>)</span>:</p>
+  <div class="eq">x<sub>R</sub> = <span class="gk">Δ</span><sup>2</sup> − x<sub>P</sub> − x<sub>Q</sub>        y<sub>R</sub> = −y<sub>P</sub> + <span class="gk">Δ</span>(x<sub>P</sub> − x<sub>R</sub>)        <span class="n">(10.3)</span>
+Doubling (y<sub>P</sub> ≠ 0):  <span class="gk">Δ</span> = (3x<sub>P</sub><sup>2</sup> + a) / (2y<sub>P</sub>),  x<sub>R</sub> = <span class="gk">Δ</span><sup>2</sup> − 2x<sub>P</sub>,  y<sub>R</sub> = <span class="gk">Δ</span>(x<sub>P</sub> − x<sub>R</sub>) − y<sub>P</sub>   <span class="n">(10.4)</span></div>
+
+  <div class="lab" id="lab-ecr">
+    <div class="lab-h"><span class="t">Lab · Point addition on a real curve</span><span class="pill mk">default = Figure 10.4b, E(1, 1)</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>a <output id="er-av">1</output><input type="range" id="er-a" min="-3" max="3" step="0.25" value="1"></label>
+        <label>b <output id="er-bv">1</output><input type="range" id="er-b" min="-3" max="3" step="0.25" value="1"></label>
+        <label>P <output id="er-pv"></output><input type="range" id="er-p" min="0" max="1000" value="100"></label>
+        <label>Q <output id="er-qv"></output><input type="range" id="er-q" min="0" max="1000" value="300"></label>
+        <label><span>Double P</span><input type="checkbox" id="er-dbl"></label>
+      </div>
+      <div class="figure"><svg id="er-svg" viewBox="0 0 640 420" role="img" aria-label="Elliptic curve with points P, Q, the line through them, the third intersection and P plus Q"></svg></div>
+      <div class="out" id="er-out" aria-live="polite"></div>
+      <p class="src">The P and Q sliders move each point along the curve (upper branch, then the lower branch). The orange line is the chord (or tangent when doubling); the dashed line reflects the third intersection to P + Q.</p>
+    </div>
+  </div>
+
+  <h3>Elliptic curves over Z<sub>p</sub> (prime curves)</h3>
+  <p>For cryptography, variables and coefficients are restricted to a finite field, giving a finite abelian group. Two families are used: <b>prime curves over Z<sub>p</sub></b> (best for software, no bit-fiddling) and <b>binary curves over GF(2<sup>m</sup>)</b> (best for hardware, very few logic gates). There is no obvious geometric picture over finite fields; the algebraic rules carry over.</p>
+  <div class="eq">y<sup>2</sup> mod p = (x<sup>3</sup> + ax + b) mod p        <span class="n">(10.5)</span>
+group condition:  (4a<sup>3</sup> + 27b<sup>2</sup>) mod p ≠ 0 mod p        <span class="n">(10.6)</span></div>
+  <p><b>E<sub>p</sub>(a, b)</b> is the set of integer pairs (x, y), 0 ≤ x, y ≤ p − 1, satisfying Eq. 10.5, plus O. Example: (9, 7) is on E<sub>23</sub>(1, 1) because 7<sup>2</sup> mod 23 = 3 and (9<sup>3</sup> + 9 + 1) mod 23 = 739 mod 23 = 3. Rules for all P, Q in E<sub>p</sub>(a, b):</p>
+  <ol>
+    <li>P + O = P.</li>
+    <li>−(x<sub>P</sub>, y<sub>P</sub>) = (x<sub>P</sub>, −y<sub>P</sub> mod p); e.g. on E<sub>23</sub>(1, 1), −(13, 7) = (13, 16).</li>
+    <li>For P ≠ −Q, R = P + Q with
+      <div class="eq">x<sub>R</sub> = (<span class="gk">λ</span><sup>2</sup> − x<sub>P</sub> − x<sub>Q</sub>) mod p        y<sub>R</sub> = (<span class="gk">λ</span>(x<sub>P</sub> − x<sub>R</sub>) − y<sub>P</sub>) mod p
+<span class="gk">λ</span> = (y<sub>Q</sub> − y<sub>P</sub>)/(x<sub>Q</sub> − x<sub>P</sub>) mod p   if P ≠ Q
+<span class="gk">λ</span> = (3x<sub>P</sub><sup>2</sup> + a)/(2y<sub>P</sub>) mod p          if P = Q</div>
+      Division means multiplying by the multiplicative inverse mod p.</li>
+    <li>Multiplication is repeated addition: 4P = P + P + P + P.</li>
+  </ol>
+  <div class="ex"><span class="t">Example · book, E<sub>23</sub>(1, 1)</span>
+    <div class="eq">P = (3, 10), Q = (9, 7):  <span class="gk">λ</span> = (−3/6) mod 23 = (−1/2) mod 23 = 11
+   x<sub>R</sub> = (121 − 3 − 9) mod 23 = 17      y<sub>R</sub> = (11(3 − 17) − 10) mod 23 = 20      P + Q = (17, 20)
+2P:  <span class="gk">λ</span> = (3·9 + 1)/(20) mod 23 = (1/4) mod 23 = 6   (6 × 4 = 24 ≡ 1)
+   x<sub>R</sub> = (36 − 6) mod 23 = 7      y<sub>R</sub> = (6(3 − 7) − 10) mod 23 = 12      2P = (7, 12)</div>
+  </div>
+  <p>The number of points N in E<sub>p</sub>(a, b) is bounded by <span class="m wr">p + 1 − 2√p ≤ N ≤ p + 1 + 2√p</span>, roughly p.</p>
+
+  <div class="lab" id="lab-ezp">
+    <div class="lab-h"><span class="t">Lab · Points of E<sub>p</sub>(a, b): click to add</span><span class="pill mk">default = Figure 10.5, E<sub>23</sub>(1, 1)</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>p (prime ≤ 101)<input type="number" id="ez-p" min="3" max="101" value="23"></label>
+        <label>a<input type="number" id="ez-a" value="1"></label>
+        <label>b<input type="number" id="ez-b" value="1"></label>
+        <button id="ez-go" type="button">Plot</button>
+        <button class="ghost" id="ez-mul" type="button">Animate multiples of P</button>
+        <button class="ghost" id="ez-clr" type="button">Clear</button>
+      </div>
+      <div class="figure"><svg id="ez-svg" viewBox="0 0 520 520" role="img" aria-label="Grid plot of the curve points"></svg></div>
+      <div class="out" id="ez-out" aria-live="polite"></div>
+      <p class="src">Click a point to choose P, a second point to choose Q (click P again to double it). Points are symmetric about y = p/2, except points with y = 0.</p>
+    </div>
+  </div>
+
+  <h3>Elliptic curves over GF(2<sup>m</sup>) (binary curves)</h3>
+  <p>GF(2<sup>m</sup>) has 2<sup>m</sup> elements with polynomial arithmetic (Unit 4). The form used is different from Z<sub>p</sub>:</p>
+  <div class="eq">y<sup>2</sup> + xy = x<sup>3</sup> + ax<sup>2</sup> + b        <span class="n">(10.7)</span></div>
+  <p>with x, y, a, b in GF(2<sup>m</sup>) and arithmetic in GF(2<sup>m</sup>). E<sub>2<sup>m</sup></sub>(a, b) (all solutions plus O) is a finite abelian group provided <b>b ≠ 0</b>. Rules:</p>
+  <ol>
+    <li>P + O = P.</li>
+    <li>−(x<sub>P</sub>, y<sub>P</sub>) = (x<sub>P</sub>, x<sub>P</sub> + y<sub>P</sub>).</li>
+    <li>P ≠ ±Q: <span class="m wr"><span class="gk">λ</span> = (y<sub>Q</sub> + y<sub>P</sub>)/(x<sub>Q</sub> + x<sub>P</sub>); x<sub>R</sub> = <span class="gk">λ</span><sup>2</sup> + <span class="gk">λ</span> + x<sub>P</sub> + x<sub>Q</sub> + a; y<sub>R</sub> = <span class="gk">λ</span>(x<sub>P</sub> + x<sub>R</sub>) + x<sub>R</sub> + y<sub>P</sub></span>.</li>
+    <li>2P: <span class="m wr"><span class="gk">λ</span> = x<sub>P</sub> + y<sub>P</sub>/x<sub>P</sub>; x<sub>R</sub> = <span class="gk">λ</span><sup>2</sup> + <span class="gk">λ</span> + a; y<sub>R</sub> = x<sub>P</sub><sup>2</sup> + (<span class="gk">λ</span> + 1)x<sub>R</sub></span>.</li>
+  </ol>
+  <div class="ex"><span class="t">Example · book, GF(2<sup>4</sup>)</span>
+    <p>Irreducible polynomial f(x) = x<sup>4</sup> + x + 1; generator g with g<sup>4</sup> = g + 1 (g = 0010). On y<sup>2</sup> + xy = x<sup>3</sup> + g<sup>4</sup>x<sup>2</sup> + 1 (a = g<sup>4</sup>, b = 1), the point (g<sup>5</sup>, g<sup>3</sup>) satisfies the equation: <span class="m wr">g<sup>6</sup> + g<sup>8</sup> = g<sup>15</sup> + g<sup>14</sup> + 1</span>, i.e. 1100 ⊕ 0101 = 0001 ⊕ 1001 ⊕ 0001 = 1001. (Addition in GF(2<sup>m</sup>) is bitwise XOR.)</p>
+  </div>
+</section>
+
+<!-- ============ 10.4 ============ -->
+<section class="unit" id="s104">
+  <h2><span class="sec">10.4</span>Elliptic Curve Cryptography</h2>
+  <p class="why">ECC point addition is the counterpart of modular multiplication in RSA, and repeated addition (kP) the counterpart of modular exponentiation. The hard problem is undoing kP.</p>
+  <div class="def"><b>Elliptic curve discrete logarithm problem</b> — for <span class="m">Q = kP</span> with Q, P ∈ E<sub>p</sub>(a, b) and k &lt; p, computing Q from k and P is relatively easy, but finding k from Q and P is hard.</div>
+  <div class="ex"><span class="t">Example · book, E<sub>23</sub>(9, 17)</span>
+    <p>Find k with kP = Q for P = (16, 5), Q = (4, 5). Brute force lists multiples: P = (16, 5), 2P = (20, 20), 3P = (14, 14), 4P = (19, 20), 5P = (13, 10), 6P = (7, 3), 7P = (8, 7), 8P = (12, 17), 9P = (4, 5). So k = 9. Real k values are far too large for this.</p>
+  </div>
+
+  <h3>Analog of Diffie–Hellman key exchange (Figure 10.7)</h3>
+  <div class="def"><b>Order n of a point G</b> — the smallest positive integer n such that nG = O.</div>
+  <div class="eq">Global public:  E<sub>q</sub>(a, b) with q a prime p or 2<sup>m</sup>;  base point G = (x<sub>1</sub>, y<sub>1</sub>) of large order n
+
+A:  private n<sub>A</sub> &lt; n      public P<sub>A</sub> = n<sub>A</sub> × G        (a point)
+B:  private n<sub>B</sub> &lt; n      public P<sub>B</sub> = n<sub>B</sub> × G
+
+A:  K = n<sub>A</sub> × P<sub>B</sub>          B:  K = n<sub>B</sub> × P<sub>A</sub>
+since  n<sub>A</sub> × (n<sub>B</sub> × G) = n<sub>B</sub> × (n<sub>A</sub> × G)</div>
+  <p>Breaking it requires k from G and kG. The shared secret is a <i>pair</i> of numbers; to use it as a session key, take the x coordinate or a simple function of it.</p>
+
+  <h3>Elliptic curve encryption/decryption</h3>
+  <p>First encode the message m as a curve point P<sub>m</sub> (not simply as a coordinate, since not every x or y is on the curve; straightforward encodings exist). Each user picks private n<sub>A</sub> and public P<sub>A</sub> = n<sub>A</sub> × G.</p>
+  <div class="eq">Encrypt for B (random k):   C<sub>m</sub> = { kG,  P<sub>m</sub> + kP<sub>B</sub> }
+Decrypt (B):   (P<sub>m</sub> + kP<sub>B</sub>) − n<sub>B</sub>(kG) = P<sub>m</sub> + k(n<sub>B</sub>G) − n<sub>B</sub>(kG) = P<sub>m</sub></div>
+  <p>A masks P<sub>m</sub> by adding kP<sub>B</sub>; only A knows k, so nobody can remove the mask from the public P<sub>B</sub> alone. kG is the “clue” that removes it for whoever knows n<sub>B</sub>. An attacker would need k from G and kG.</p>
+
+  <div class="lab" id="lab-ecc">
+    <div class="lab-h"><span class="t">Lab · ECC Diffie–Hellman and encryption</span><span class="pill">live</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>Preset<select id="ec-pre"><option value="dh">Book ECDH: E₂₁₁(0, −4)</option><option value="enc">Book encryption: E₂₅₇(0, −4)</option></select></label>
+        <button class="ghost" id="ec-load" type="button">Load preset</button>
+      </div>
+      <div class="controls">
+        <label>p<input type="number" id="ec-p" value="211"></label>
+        <label>a<input type="number" id="ec-a" value="0"></label>
+        <label>b<input type="number" id="ec-b" value="-4"></label>
+        <label>G<input type="text" id="ec-g" value="2, 2"></label>
+        <label>n<sub>A</sub><input type="number" id="ec-na" value="121"></label>
+        <label>n<sub>B</sub><input type="number" id="ec-nb" value="203"></label>
+      </div>
+      <div class="controls">
+        <label>Message point P<sub>m</sub><input type="text" id="ec-pm" value="112, 26"></label>
+        <label>k<input type="number" id="ec-k" value="41"></label>
+        <button id="ec-go" type="button">Compute</button>
+      </div>
+      <div class="out" id="ec-out" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="note"><span class="t">Check (computed here)</span>The book states 240G = O for G = (2, 2) on E<sub>211</sub>(0, −4). Computing it gives 240G = (2, 209) = −G, so the order of G is <b>241</b> and 241G = O. The book’s keys and shared secret, (115, 48), (130, 203) and (161, 69), are correct. The book also writes B’s public key as 203(2, 3); the base point is (2, 2).</div>
+  <div class="ex"><span class="t">Example · book encryption, E<sub>257</sub>(0, −4), G = (2, 2)</span>
+    <div class="eq">n<sub>B</sub> = 101:  P<sub>B</sub> = 101(2, 2) = (197, 167)
+P<sub>m</sub> = (112, 26), k = 41:  kG = (136, 128)   kP<sub>B</sub> = (68, 84)   P<sub>m</sub> + kP<sub>B</sub> = (246, 174)
+C<sub>m</sub> = {(136, 128), (246, 174)}
+Bob:  (246, 174) − 101(136, 128) = (246, 174) − (68, 84) = (112, 26)</div>
+  </div>
+
+  <h3>Security of ECC</h3>
+  <p>Security depends on the <b>elliptic curve logarithm problem</b>: finding k given kP and P. The fastest known technique is the <b>Pollard rho method</b>. For equal key lengths, ECC and RSA take comparable computational effort, so ECC’s much shorter keys for the same security are a computational advantage.</p>
+  <div class="tbl"><table>
+    <tr><th>Symmetric key (bits)</th><th>Diffie–Hellman, DSA</th><th>RSA (size of n, bits)</th><th>ECC (modulus size, bits)</th></tr>
+    <tr><td>80</td><td>L = 1024, N = 160</td><td>1024</td><td>160–223</td></tr>
+    <tr><td>112</td><td>L = 2048, N = 224</td><td>2048</td><td>224–255</td></tr>
+    <tr class="hlrow"><td>128</td><td>L = 3072, N = 256</td><td>3072</td><td>256–383</td></tr>
+    <tr><td>192</td><td>L = 7680, N = 384</td><td>7680</td><td>384–511</td></tr>
+    <tr><td>256</td><td>L = 15,360, N = 512</td><td>15,360</td><td>512+</td></tr>
+  </table></div>
+  <div class="cap">Table 10.3 (from NIST SP 800-57): comparable key sizes. L = public key size, N = private key size.</div>
+  <p>SP 800-57 recommends acceptable lengths through 2030 of 3072–14,360 bits for RSA and 256–512 bits for ECC; ENISA recommends minimums of 3072 bits (RSA) and 256 bits (ECC) for future systems.</p>
+  <div class="note"><span class="t">Current status (outside the book)</span>NIST’s draft transition plan to post-quantum cryptography (NIST IR 8547, initial public draft, 2024) proposes that RSA, Diffie–Hellman, ECDH and ECDSA at the 112-bit level be deprecated after 2030, and all of these algorithms be disallowed after 2035, because a large quantum computer could break them. See Sources.</div>
+</section>
+
+<!-- ============ 10.5 ============ -->
+<section class="unit" id="s105">
+  <h2><span class="sec">10.5</span>Pseudorandom Number Generation Based on an Asymmetric Cipher</h2>
+  <p class="why">An asymmetric cipher’s output looks random, so it can drive a PRNG. Because asymmetric algorithms are much slower than symmetric ones, they are used for a <b>pseudorandom function (PRF)</b> producing a short pseudorandom bit sequence, not open-ended bit streams.</p>
+
+  <h3>PRNG based on RSA: Micali–Schnorr</h3>
+  <p>Recommended in ANSI X9.82 and ISO 18031. Its structure is like OFB mode used as a PRNG (Unit 5), with RSA in place of a block cipher. Part of each output is fed back and the rest is output, so output bits never become the next input, which supports forward unpredictability.</p>
+  <div class="figure">
+    <svg viewBox="0 0 660 236" role="img" aria-labelledby="ms-t"><title id="ms-t">Seed x0 is encrypted: y1 = x0^e mod n. The r most significant bits x1 feed the next encryption; the k least significant bits z1 are output. This repeats.</title>
+      <defs><marker id="ar-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink)"/></marker><marker id="ar-m2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--mark)"/></marker></defs>
+      <g font-size="11.5">
+        <text x="10" y="70" fill="var(--ink)" font-weight="700">Seed x₀</text><line x1="70" y1="66" x2="98" y2="66" stroke="var(--ink)" marker-end="url(#ar-m)"/>
+        <g id="ms-units"></g>
+      </g>
+    </svg>
+    <div class="cap">Redrawn from Figure 10.8.</div>
+  </div>
+  <div class="eq">Setup:     RSA primes p, q;  n = pq;  e with gcd(e, <span class="gk">φ</span>(n)) = 1;  N = ⌊log<sub>2</sub>n⌋ + 1 (bit length of n);  r + k = N
+Seed:      random x<sub>0</sub> of r bits
+Generate:  for i = 1 … m:   y<sub>i</sub> = x<sub>i−1</sub><sup>e</sup> mod n
+                            x<sub>i</sub> = r most significant bits of y<sub>i</sub>
+                            z<sub>i</sub> = k least significant bits of y<sub>i</sub>
+Output:    z<sub>1</sub> ‖ z<sub>2</sub> ‖ … ‖ z<sub>m</sub></div>
+  <ul class="props">
+    <li>n = pq — RSA-strength modulus.</li>
+    <li>1 &lt; e &lt; <span class="gk">φ</span></span>(n), gcd(e, <span class="gk">φ</span></span>(n)) = 1 — the map s → s<sup>e</sup> mod n is one-to-one.</li>
+    <li>re ≥ 2N — the exponentiation needs a full modular reduction.</li>
+    <li>r ≥ 2 × strength — protects against cryptographic attacks. (<b>Strength</b>, NIST SP 800-90: the security strength in bits, one of 112, 128, 192, 256; breaking takes 2<sup>strength</sup> operations.)</li>
+    <li>k, r multiples of 8 — implementation convenience. k ≥ 8 and r + k = N — all bits are used.</li>
+  </ul>
+  <p><b>Trade-off:</b> a large k gives more output bits per (expensive) RSA operation, but a large r gives more strength. Example: e = 3, N = 1024 gives 3r &gt; 1024, so r ≥ 683 and k = 341 bits per exponentiation, each costing one modular squaring and one multiplication: <span class="m wr">(x<sub>i</sub> × (x<sub>i</sub><sup>2</sup> mod n)) mod n</span>.</p>
+
+  <div class="lab" id="lab-ms">
+    <div class="lab-h"><span class="t">Lab · Micali–Schnorr with a 512-bit modulus</span><span class="pill mk">toy size, e = 3</span></div>
+    <div class="lab-b">
+      <div class="controls"><button id="ms-go" type="button">New key &amp; seed, generate 4 blocks</button></div>
+      <div class="out" id="ms-out" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <h3>PRNG based on ECC: dual elliptic curve PRNG (DEC PRNG)</h3>
+  <p>With P, Q known points on a curve, x(·) the x coordinate of a point and lsb<sub>i</sub>(s) the i least significant bits of s, a random seed s<sub>0</sub> in {0, …, #E(GF(p)) − 1} (#E = number of curve points) is turned into 240k bits:</p>
+  <div class="pseudo"><span class="kw">for</span> i = 1 <span class="kw">to</span> k <span class="kw">do</span>
+    s<sub>i</sub> ← x(s<sub>i−1</sub> P)
+    r<sub>i</sub> ← lsb<sub>240</sub>(x(s<sub>i</sub> Q))
+<span class="kw">end for</span>
+<span class="kw">return</span> r<sub>1</sub>, …, r<sub>k</sub></div>
+  <p>Its security and efficiency compared with alternatives are disputed; the only motivation for using it would be a system that already implements ECC and no other symmetric, asymmetric or hash algorithm from which a PRNG could be built.</p>
+  <div class="note"><span class="t">Current status (outside the book)</span>NIST removed Dual_EC_DRBG from its recommendation: SP 800-90A Revision 1 (2015) no longer includes it, and NIST advised users to switch to the remaining approved DRBGs (Hash_DRBG, HMAC_DRBG, CTR_DRBG). See Sources.</div>
+</section>
+
+<!-- ============ Key terms ============ -->
+<section class="unit" id="terms">
+  <h2><span class="sec">9.3 · 10.6</span>Key Terms</h2>
+  <p class="why">The key-term lists from both chapters, plus the intermediate terms they depend on, one line each.</p>
+  <dl class="gloss">
+    <dt>Public-key cryptography</dt><dd>Cryptography with a related key pair, one public and one private; also called asymmetric cryptography.</dd>
+    <dt>Public-key cryptosystem</dt><dd>A system using a public-key algorithm for encryption, digital signatures and/or key exchange.</dd>
+    <dt>Public-key encryption</dt><dd>Encrypt with the recipient’s public key, decrypt with the recipient’s private key.</dd>
+    <dt>Public key</dt><dd>The key of the pair that is published (PU).</dd>
+    <dt>Private key</dt><dd>The key of the pair kept secret by its owner (PR); never distributed.</dd>
+    <dt>Secret key</dt><dd>The single shared key of symmetric encryption (K).</dd>
+    <dt>Public key certificate</dt><dd>Document signed by a Certification Authority binding a name to a public key.</dd>
+    <dt>Digital signature</dt><dd>Transformation with the sender’s private key that anyone can verify with the public key; authenticates source and data.</dd>
+    <dt>Key exchange</dt><dd>Two sides cooperate to establish a shared session key.</dd>
+    <dt>Session key</dt><dd>Symmetric key generated for one transaction and valid for a short time.</dd>
+    <dt>One-way function</dt><dd>Easy to compute, infeasible to invert.</dd>
+    <dt>Trap-door one-way function</dt><dd>One-way unless extra information (the trap door) is known, which makes inversion easy.</dd>
+    <dt>Probable-message attack</dt><dd>Encrypt every likely message with the public key and match the ciphertext; countered by appending random bits.</dd>
+    <dt>RSA</dt><dd>C = M<sup>e</sup> mod n, M = C<sup>d</sup> mod n, n = pq, ed ≡ 1 (mod <span class="gk">φ</span>(n)); security rests on factoring n.</dd>
+    <dt>Euler’s totient function <span class="gk">φ</span>(n)</dt><dd>Count of positive integers below n relatively prime to n; <span class="gk">φ</span>(pq) = (p − 1)(q − 1).</dd>
+    <dt>Timing attack</dt><dd>Recovering a private key from decryption times; countered by constant time, random delay or blinding.</dd>
+    <dt>Blinding</dt><dd>Decrypt C·r<sup>e</sup> and multiply by r<sup>−1</sup>, hiding which ciphertext is processed.</dd>
+    <dt>Chosen ciphertext attack (CCA)</dt><dd>Adversary picks ciphertexts and obtains their decryptions under the target’s private key.</dd>
+    <dt>Optimal asymmetric encryption padding (OAEP)</dt><dd>Seed-and-mask encoding of the message (with hash and MGF) before RSA encryption, against CCA.</dd>
+    <dt>Primitive root</dt><dd>a whose powers mod prime p produce every integer 1 … p − 1.</dd>
+    <dt>Discrete logarithm</dt><dd>The exponent i with b = a<sup>i</sup> mod p; infeasible to compute for large p.</dd>
+    <dt>Diffie–Hellman key exchange</dt><dd>Exchange Y = <span class="gk">α</span><sup>X</sup> mod q; both sides compute K = <span class="gk">α</span><sup>X<sub>A</sub>X<sub>B</sub></sup> mod q.</dd>
+    <dt>Man-in-the-middle attack</dt><dd>Adversary intercepts and replaces public values, sharing one key with each party.</dd>
+    <dt>Elgamal</dt><dd>Discrete-log encryption: ciphertext (<span class="gk">α</span><sup>k</sup> mod q, K·M mod q) with one-time key K = Y<sub>A</sub><sup>k</sup> mod q.</dd>
+    <dt>Abelian group</dt><dd>Set with an operation satisfying closure, associativity, identity, inverses and commutativity.</dd>
+    <dt>Finite field</dt><dd>A field with a finite number of elements, e.g. Z<sub>p</sub> or GF(2<sup>m</sup>).</dd>
+    <dt>Cubic equation</dt><dd>Equation of degree 3, such as y<sup>2</sup> = x<sup>3</sup> + ax + b.</dd>
+    <dt>Elliptic curve</dt><dd>Points satisfying such a cubic equation plus the point O; over a finite field, a finite abelian group.</dd>
+    <dt>Zero point (point at infinity) O</dt><dd>The identity element of elliptic curve addition.</dd>
+    <dt>Elliptic curve arithmetic</dt><dd>Point addition (three collinear points sum to O) and scalar multiplication kP as repeated addition.</dd>
+    <dt>Prime curve</dt><dd>Elliptic curve over Z<sub>p</sub>: y<sup>2</sup> mod p = (x<sup>3</sup> + ax + b) mod p; suited to software.</dd>
+    <dt>Binary curve</dt><dd>Elliptic curve over GF(2<sup>m</sup>): y<sup>2</sup> + xy = x<sup>3</sup> + ax<sup>2</sup> + b; suited to hardware.</dd>
+    <dt>Order of a point</dt><dd>Smallest n &gt; 0 with nG = O.</dd>
+    <dt>Elliptic curve cryptography (ECC)</dt><dd>Public-key schemes whose security rests on finding k from kP and P.</dd>
+    <dt>Micali–Schnorr</dt><dd>RSA-based PRNG: y<sub>i</sub> = x<sub>i−1</sub><sup>e</sup> mod n, feed back r high bits, output k low bits.</dd>
+  </dl>
+</section>
+
+<!-- ============ Review ============ -->
+<section class="unit" id="review">
+  <h2><span class="sec">9.3 · 10.6</span>Review Questions</h2>
+  <p class="why">Review questions 9.1–9.7 and 10.1–10.4 from the book. Answer first, then open to check.</p>
+  <h3>Chapter 9</h3>
+  <details><summary>9.1 What is a public key certificate?</summary><p>A digital document, issued and signed with a Certification Authority’s private key, that binds a subscriber’s name to a public key and states that the subscriber alone controls the corresponding private key.</p></details>
+  <details><summary>9.2 What are the roles of the public and private key?</summary><p>The public key is published; anyone uses it to encrypt messages for its owner or to verify the owner’s signatures. The private key is known only to its owner, who uses it to decrypt messages encrypted with the public key and to create signatures. What one key does, only the other can undo.</p></details>
+  <details><summary>9.3 What are three broad categories of applications of public-key cryptosystems?</summary><p>Encryption/decryption (with the recipient’s public key), digital signatures (with the sender’s private key), and key exchange (agreeing on a session key).</p></details>
+  <details><summary>9.4 What requirements must a public-key cryptosystem fulfill to be a secure algorithm?</summary><p>Easy for B to generate a key pair; easy for a sender to encrypt with PU<sub>b</sub>; easy for B to decrypt with PR<sub>b</sub>; infeasible to determine PR<sub>b</sub> from PU<sub>b</sub>; infeasible to recover M from PU<sub>b</sub> and C; and (optionally) the two keys can be applied in either order. Together these call for a trap-door one-way function.</p></details>
+  <details><summary>9.5 How can a probable-message attack be used for public-key cryptanalysis?</summary><p>If the plaintext comes from a small set (e.g. it is only a 56-bit DES key), the attacker encrypts every candidate with the public key and compares with the intercepted ciphertext. The attack costs a search of the message space regardless of the public key’s size. Appending random bits to short messages defeats it.</p></details>
+  <details><summary>9.6 List the different approaches to attack the RSA algorithm.</summary><p>Brute force (try all private keys); mathematical attacks, equivalent to factoring n; timing attacks on decryption time; hardware fault-based attacks on signature generation; and chosen ciphertext attacks exploiting RSA’s properties.</p></details>
+  <details><summary>9.7 Describe the countermeasures to be used against the timing attack.</summary><p>Constant exponentiation time (all exponentiations take the same time; costs performance); random delay (adds noise, but too little can be overcome with more measurements); blinding (multiply the ciphertext by r<sup>e</sup> for a secret random r before exponentiating and remove r afterwards, so the attacker does not know which bits are processed; about 2–10% overhead).</p></details>
+  <h3>Chapter 10</h3>
+  <details><summary>10.1 Briefly explain Diffie–Hellman key exchange.</summary><p>Users agree on a prime q and primitive root <span class="gk">α</span>. A picks secret X<sub>A</sub> and sends Y<sub>A</sub> = <span class="gk">α</span><sup>X<sub>A</sub></sup> mod q; B picks X<sub>B</sub> and sends Y<sub>B</sub> = <span class="gk">α</span><sup>X<sub>B</sub></sup> mod q. Each computes K = (other’s Y)<sup>own X</sup> mod q = <span class="gk">α</span><sup>X<sub>A</sub>X<sub>B</sub></sup> mod q. An eavesdropper must solve a discrete logarithm to find K. Without authentication it is open to man-in-the-middle attacks.</p></details>
+  <details><summary>10.2 What is an elliptic curve?</summary><p>The set of points (x, y) satisfying a cubic equation, in cryptography of the form y<sup>2</sup> = x<sup>3</sup> + ax + b (over the reals or Z<sub>p</sub>) or y<sup>2</sup> + xy = x<sup>3</sup> + ax<sup>2</sup> + b (over GF(2<sup>m</sup>)), together with a point at infinity O. With point addition, it forms an abelian group.</p></details>
+  <details><summary>10.3 What is the zero point of an elliptic curve?</summary><p>The point at infinity O, included in every elliptic curve. It is the additive identity: P + O = P, and P + (−P) = O.</p></details>
+  <details><summary>10.4 What is the sum of three points on an elliptic curve that lie on a straight line?</summary><p>O, the zero point. This is the geometric rule from which P + Q = −R follows.</p></details>
+</section>
+
+<!-- ============ Sources ============ -->
+<section class="unit" id="res">
+  <h2><span class="sec">Ref</span>References / Sources</h2>
+  <ul>
+    <li>W. Stallings, <i>Cryptography and Network Security: Principles and Practice</i>, 7th ed., Global Edition, Pearson, 2017. Chapters 9–10, pp. 283–338. All content not marked otherwise.</li>
+    <li><b>In the book:</b> Chapter 2 (totient, Euler’s and Fermat’s theorems, Miller–Rabin, CRT, primitive roots, discrete logarithms), Chapter 5 (groups, GF(2<sup>m</sup>)), Appendix B.8–B.9 (Sage examples for RSA, Diffie–Hellman and elliptic curves); online Appendix R (proof of RSA) and Appendix W (complexity of algorithms).</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc8017" target="_blank" rel="noopener">RFC 8017, PKCS #1: RSA Cryptography Specifications v2.2</a> — the standard specification of RSA, RSA-CRT decryption and RSAES-OAEP.</li>
+    <li><a href="https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final" target="_blank" rel="noopener">NIST SP 800-57 Part 1 Rev. 5, Recommendation for Key Management</a> — current version of the document behind Table 10.3.</li>
+    <li><a href="https://csrc.nist.gov/pubs/ir/8547/ipd" target="_blank" rel="noopener">NIST IR 8547 (initial public draft, 2024), Transition to Post-Quantum Cryptography Standards</a> — source of the post-quantum status note (Tables 3–4 of the draft).</li>
+    <li><a href="https://csrc.nist.gov/pubs/sp/800/90/a/r1/final" target="_blank" rel="noopener">NIST SP 800-90A Rev. 1, Recommendation for Random Number Generation Using Deterministic Random Bit Generators</a> (2015), and <a href="https://csrc.nist.gov/News/2014/Draft-Special-Publication-800-90A-Revision-1-(1)" target="_blank" rel="noopener">NIST’s announcement of the draft revision removing Dual_EC_DRBG</a> — source of the DEC PRNG status note.</li>
+    <li><a href="https://csrc.nist.gov/pubs/fips/186-5/final" target="_blank" rel="noopener">NIST FIPS 186-5, Digital Signature Standard</a> — current RSA and elliptic-curve key generation requirements.</li>
+  </ul>
+  <footer>Content follows W. Stallings, <i>Cryptography and Network Security: Principles and Practice</i>, 7th ed., Global Edition, Chapters 9–10. Labs compute in your browser with exact integer (BigInt) arithmetic; nothing is sent anywhere. Random keys come from <code>crypto.getRandomValues</code> and are for study only.</footer>
+</section>
+</main>
+</div>
+<script>
+/* ===== Unit 6 engine: BigInt number theory, RSA, DH, Elgamal, elliptic curves ===== */
+(function(){
+const $=id=>document.getElementById(id);
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const err=m=>'<span class="err">'+esc(m)+'</span>';
+const fmt=t=>String(t).replace(/\^([A-Za-z]+)(?:_([A-Za-z0-9]+))?/g,(m,a,b)=>'<sup>'+a+(b?'<sub>'+b+'</sub>':'')+'</sup>').replace(/_([A-Za-z0-9]+)/g,'<sub>$1</sub>');
+const kv=rows=>'<div class="kv">'+rows.map(([k,v])=>'<span class="k">'+fmt(k)+'</span><span class="v">'+fmt(v)+'</span>').join('')+'</div>';
+const sfmt=t=>String(t).replace(/\^X_(\w+)/g,'<tspan dy="-6" font-size="9">X</tspan><tspan dy="2" font-size="7">$1</tspan><tspan dy="4">\u200b</tspan>').replace(/_(\w+)/g,'<tspan dy="3" font-size="9">$1</tspan><tspan dy="-3">\u200b</tspan>');
+const ok=(b,t,f)=>'<span class="res '+(b?'ok':'no')+'">'+(b?t:f)+'</span>';
+
+/* ---------- BigInt helpers ---------- */
+const B=s=>{s=String(s).trim().replace(/[\s,_]/g,'');if(!/^-?\d+$/.test(s))throw new Error('“'+s+'” is not an integer');return BigInt(s)};
+const mod=(a,m)=>{const r=a%m;return r<0n?r+m:r};
+function mpow(a,e,m){let r=1n;a=mod(a,m);while(e>0n){if(e&1n)r=r*a%m;a=a*a%m;e>>=1n}return r}
+function egcd(a,b){let [r0,r1,s0,s1,t0,t1]=[a,b,1n,0n,0n,1n];while(r1){const q=r0/r1;[r0,r1]=[r1,r0-q*r1];[s0,s1]=[s1,s0-q*s1];[t0,t1]=[t1,t0-q*t1]}return [r0,s0,t0]}
+const gcd=(a,b)=>egcd(a,b)[0];
+function inv(a,m){const [g,x]=egcd(mod(a,m),m);if(g!==1n)return null;return mod(x,m)}
+const bitlen=x=>x===0n?0:x.toString(2).length;
+function rnd(bits){const bytes=Math.ceil(bits/8),a=new Uint8Array(bytes);crypto.getRandomValues(a);let x=0n;for(const v of a)x=(x<<8n)|BigInt(v);return x>>BigInt(bytes*8-bits)}
+function rndBelow(n){const b=bitlen(n);let x;do x=rnd(b);while(x>=n);return x}
+const SMALLP=[2n,3n,5n,7n,11n,13n,17n,19n,23n,29n,31n,37n,41n,43n,47n,53n,59n,61n,67n,71n];
+function isPrime(n){if(n<2n)return false;for(const p of SMALLP){if(n===p)return true;if(n%p===0n)return false}
+  let d=n-1n,s=0;while(!(d&1n)){d>>=1n;s++}
+  const bases=n<3317044064679887385961981n?SMALLP.slice(0,13):SMALLP.slice(0,13).concat(Array.from({length:12},()=>2n+rndBelow(n-3n)));
+  for(const a of bases){let x=mpow(a,d,n);if(x===1n||x===n-1n)continue;let comp=true;for(let r=1;r<s;r++){x=x*x%n;if(x===n-1n){comp=false;break}}if(comp)return false}
+  return true}
+function rndPrime(bits,ok2){for(;;){let x=rnd(bits)|(1n<<BigInt(bits-1))|(1n<<BigInt(bits-2))|1n;if(isPrime(x)&&(!ok2||ok2(x)))return x}}
+function icbrt(n){if(n<2n)return n;let x=1n<<BigInt(Math.ceil(bitlen(n)/3)+1);for(;;){const y=(2n*x+n/(x*x))/3n;if(y>=x)break;x=y}while(x*x*x>n)x--;while((x+1n)**3n<=n)x++;return x}
+function crt(rs,ms){const M=ms.reduce((a,b)=>a*b,1n);let x=0n;rs.forEach((r,i)=>{const Mi=M/ms[i];x+=r*Mi*inv(Mi,ms[i])});return mod(x,M)}
+const hex=x=>x.toString(16);
+const short=(s,n=60)=>{s=String(s);return s.length>n?s.slice(0,n/2)+'…'+s.slice(-n/2)+' <span class="pill">'+s.length+' digits</span>':s};
+
+/* ---------- 9.1 public-key figure ---------- */
+const PKM={
+  conf:{st:[['E','PU','b','pub'],['D','PR','b','priv']],mid:['X','Y','X'],cap:'Confidentiality: Y = E(PUb, X), X = D(PRb, Y). An eavesdropper who has PUb still cannot decrypt Y; only B holds PRb.'},
+  auth:{st:[['E','PR','a','priv'],['D','PU','a','pub']],mid:['X','Y','X'],cap:'Authentication: Y = E(PRa, X), X = D(PUa, Y). Anyone can decrypt Y with PUa, so there is no confidentiality; but only A could have produced Y.'},
+  both:{st:[['E','PR','a','priv'],['E','PU','b','pub'],['D','PR','b','priv'],['D','PU','a','pub']],mid:['X','Y','Z','Y','X'],cap:'Authentication and secrecy: Z = E(PUb, E(PRa, X)), X = D(PUa, D(PRb, Z)). Four public-key operations per message.'}};
+function drawPK(m){
+  const c=PKM[m],n=c.st.length,W=720,y=80,bw=78,left=96,right=W-96,span=(right-left)/n;
+  let s='<svg viewBox="0 0 '+W+' 190" role="img" aria-label="'+esc(c.cap)+'"><defs><marker id="pka" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink)"/></marker></defs><g font-size="12">';
+  s+='<rect x="8" y="'+(y-26)+'" width="80" height="52" rx="8" fill="var(--bg)" stroke="var(--line)"/><text x="48" y="'+(y-4)+'" text-anchor="middle" fill="var(--ink)" font-weight="700">Source</text><text x="48" y="'+(y+13)+'" text-anchor="middle" fill="var(--ink)" font-weight="700">A</text>';
+  s+='<rect x="'+(W-88)+'" y="'+(y-26)+'" width="80" height="52" rx="8" fill="var(--bg)" stroke="var(--line)"/><text x="'+(W-48)+'" y="'+(y-4)+'" text-anchor="middle" fill="var(--ink)" font-weight="700">Dest.</text><text x="'+(W-48)+'" y="'+(y+13)+'" text-anchor="middle" fill="var(--ink)" font-weight="700">B</text>';
+  const cx=i=>left+span*(i+.5);
+  if(!reduce){s+='<circle r="6" fill="var(--mark)"><animateMotion dur="'+(1.6+n*.6)+'s" repeatCount="indefinite" path="M60,'+(y)+' L'+(W-60)+','+(y)+'"/></circle>'}
+  const pts=[88].concat(c.st.map((_,i)=>cx(i))).concat([W-88]);
+  for(let i=0;i<=n;i++){const x1=i===0?88:cx(i-1)+bw/2,x2=i===n?W-90:cx(i)-bw/2;
+    s+='<line x1="'+x1+'" y1="'+y+'" x2="'+x2+'" y2="'+y+'" stroke="var(--ink)" stroke-width="1.4" marker-end="url(#pka)"/>';
+    s+='<text x="'+((x1+x2)/2)+'" y="'+(y-10)+'" text-anchor="middle" fill="var(--mark)" font-weight="700">'+c.mid[i]+'</text>'}
+  c.st.forEach(([op,k,who,t],i)=>{const x=cx(i),pub=t==='pub';
+    s+='<rect x="'+(x-bw/2)+'" y="'+(y-22)+'" width="'+bw+'" height="44" rx="7" fill="'+(op==='E'?'var(--accent-soft)':'var(--paper)')+'" stroke="var(--accent)" stroke-width="1.4"/>';
+    s+='<text x="'+x+'" y="'+(y+5)+'" text-anchor="middle" fill="var(--ink)" font-weight="700">'+(op==='E'?'Encrypt':'Decrypt')+'</text>';
+    s+='<line x1="'+x+'" y1="'+(y+52)+'" x2="'+x+'" y2="'+(y+24)+'" stroke="'+(pub?'var(--accent)':'var(--bad)')+'" stroke-width="1.4" marker-end="url(#pka)"/>';
+    s+='<rect x="'+(x-38)+'" y="'+(y+54)+'" width="76" height="26" rx="13" fill="'+(pub?'var(--accent-soft)':'var(--bad-soft)')+'" stroke="'+(pub?'var(--accent)':'var(--bad)')+'"/>';
+    s+='<text x="'+x+'" y="'+(y+71)+'" text-anchor="middle" fill="'+(pub?'var(--accent)':'var(--bad)')+'" font-weight="700">'+k+'<tspan baseline-shift="sub" font-size="9">'+who+'</tspan></text>';
+    s+='<text x="'+x+'" y="'+(y+96)+'" text-anchor="middle" fill="var(--muted)" font-size="10.5">'+(who==='a'?'A’s ':'B’s ')+(pub?'public':'private')+'</text>'});
+  s+='<text x="10" y="18" fill="var(--muted)" font-size="11">blue = public key (anyone may hold it) · red = private key (only its owner)</text>';
+  s+='</g></svg>';$('pk-fig').innerHTML=s;$('pk-cap').textContent=c.cap}
+document.querySelectorAll('[data-pk]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-pk]').forEach(x=>x.setAttribute('aria-pressed',x===b));drawPK(b.dataset.pk)}));
+drawPK('conf');
+
+/* ---------- 9.2 RSA lab ---------- */
+const RSA={};
+const PRE={b1:['17','11','7','88'],b2:['73','151','11','3314']};
+function loadRSA(){const v=$('rsa-pre').value;
+  if(PRE[v]){[$('rsa-p').value,$('rsa-q').value,$('rsa-e').value,$('rsa-m').value]=PRE[v]}
+  else{const bits=v==='r64'?64:512,e=65537n;const okE=x=>gcd(x-1n,e)===1n;const p=rndPrime(bits,okE);let q;do q=rndPrime(bits,okE);while(q===p);
+    $('rsa-p').value=p;$('rsa-q').value=q;$('rsa-e').value='65537';$('rsa-m').value=rndBelow(p*q)}
+  runRSA()}
+function runRSA(){const o=$('rsa-out');RSA.ok=false;
+  try{const p=B($('rsa-p').value),q=B($('rsa-q').value),e=B($('rsa-e').value),M=B($('rsa-m').value);
+    if(p<2n||q<2n)return o.innerHTML=err('p and q must be primes ≥ 2');
+    if(!isPrime(p)||!isPrime(q))return o.innerHTML=err((isPrime(p)?'q':'p')+' is not prime');
+    if(p===q)return o.innerHTML=err('p and q must be different');
+    const n=p*q,ph=(p-1n)*(q-1n);
+    if(e<=1n||e>=ph)return o.innerHTML=err('need 1 < e < φ(n) = '+ph);
+    if(gcd(e,ph)!==1n)return o.innerHTML=err('gcd(e, φ(n)) = '+gcd(e,ph)+' ≠ 1: e has no inverse mod φ(n); pick another e');
+    if(M<0n||M>=n)return o.innerHTML=err('M must satisfy 0 ≤ M < n = '+n);
+    const d=inv(e,ph),C=mpow(M,e,n),M2=mpow(C,d,n);
+    const dp=d%(p-1n),dq=d%(q-1n),Vp=mpow(C,dp,p),Vq=mpow(C,dq,q),Xp=q*inv(q,p),Xq=p*inv(p,q),M3=(Vp*Xp+Vq*Xq)%n;
+    Object.assign(RSA,{ok:true,p,q,n,e,d,M,C});
+    o.innerHTML=kv([['n = pq',short(n)+' <span class="pill">'+bitlen(n)+' bits</span>'],['φ(n) = (p−1)(q−1)',short(ph)],['gcd(e, φ(n))','1 '+ok(true,'e is valid','')],
+      ['d = e⁻¹ mod φ(n)',short(d)+' <span class="pill">check: e·d mod φ(n) = '+(e*d%ph)+'</span>'],['PU = {e, n}','{'+short(e,20)+', n}'],['PR = {d, n}','{d, n}'],
+      ['C = Mᵉ mod n',short(C)],['Cᵈ mod n',short(M2)+' '+ok(M2===M,'= M ✓','≠ M')],
+      ['CRT: d mod (p−1), d mod (q−1)',short(dp,30)+', '+short(dq,30)],['V_p, V_q',short(Vp,30)+', '+short(Vq,30)],['X_p, X_q',short(Xp,30)+', '+short(Xq,30)],
+      ['(V_pX_p + V_qX_q) mod n',short(M3)+' '+ok(M3===M,'= M ✓','≠ M')]])}
+  catch(x){o.innerHTML=err(x.message)}}
+$('rsa-new').addEventListener('click',loadRSA);$('rsa-go').addEventListener('click',runRSA);runRSA();
+
+/* ---------- square-and-multiply ---------- */
+let SM=null,smT=null;
+function smInit(){clearInterval(smT);smT=null;$('sm-play').textContent='Play';
+  try{const a=B($('sm-a').value),b=B($('sm-b').value),n=B($('sm-n').value);
+    if(n<2n||b<0n)throw new Error('need n ≥ 2 and b ≥ 0');if(b>=(1n<<64n))throw new Error('keep b below 2⁶⁴ so the table stays readable');
+    const bits=b.toString(2).split('').map(Number),k=bits.length-1;let c=0n,f=1n;const rows=[];
+    bits.forEach((bi,j)=>{c*=2n;f=f*f%n;let op='S';if(bi){c+=1n;f=f*mod(a,n)%n;op='S M'}rows.push({i:k-j,bi,c,f,op})});
+    SM={a,b,n,rows,step:0};smDraw()}catch(x){SM=null;$('sm-tbl').innerHTML='';$('sm-trace').innerHTML='';$('sm-out').innerHTML=err(x.message)}}
+function smDraw(){const {rows,step}=SM;
+  let h='<table class="modes"><tr><th>i</th><th>bᵢ</th><th>operations</th><th>c</th><th>f</th></tr>';
+  rows.forEach((r,j)=>{const on=j<step,cur=j===step-1;h+='<tr'+(cur?' class="hlrow"':'')+'><td class="c">'+r.i+'</td><td class="c">'+r.bi+'</td><td class="c">'+(on?r.op:'')+'</td><td class="c">'+(on?r.c:'')+'</td><td class="c">'+(on?short(r.f,24):'')+'</td></tr>'});
+  $('sm-tbl').innerHTML=h+'</table>';
+  $('sm-trace').innerHTML='Trace: '+rows.map((r,j)=>j<step?(r.bi?'<b>SM</b>':'S'):'<i>·</i>').join(' ');
+  const sq=Math.min(step,rows.length),mu=rows.slice(0,step).filter(r=>r.bi).length;
+  $('sm-out').innerHTML=step<rows.length?'Step '+step+' of '+rows.length+' · '+sq+' squarings, '+mu+' multiplications so far':
+    'Result: '+SM.a+'^'+SM.b+' mod '+SM.n+' = <b>'+short(rows[rows.length-1].f)+'</b> · '+rows.length+' squarings + '+mu+' multiplications ('+(rows.length+mu)+' modular products) instead of '+(SM.b>1n?(SM.b-1n):0n)+' by repeated multiplication · '+ok(rows[rows.length-1].f===mpow(SM.a,SM.b,SM.n),'checked','mismatch')}
+$('sm-step').addEventListener('click',()=>{if(!SM)smInit();if(SM&&SM.step<SM.rows.length){SM.step++;smDraw()}});
+$('sm-reset').addEventListener('click',smInit);
+$('sm-play').addEventListener('click',()=>{if(smT){clearInterval(smT);smT=null;$('sm-play').textContent='Play';return}if(!SM||SM.step>=SM.rows.length)smInit();if(!SM)return;
+  if(reduce){SM.step=SM.rows.length;smDraw();return}$('sm-play').textContent='Pause';
+  smT=setInterval(()=>{SM.step++;smDraw();if(SM.step>=SM.rows.length){clearInterval(smT);smT=null;$('sm-play').textContent='Play'}},650)});
+['sm-a','sm-b','sm-n'].forEach(id=>$(id).addEventListener('change',smInit));smInit();
+
+/* ---------- e = 3 broadcast ---------- */
+function e3(){const o=$('e3-out');try{const M=B($('e3-m').value);if(M<1n)throw new Error('M must be positive');
+    const bits=Math.max(64,Math.ceil(bitlen(M)/2)+8),ok3=x=>x%3n===2n,ns=[];
+    while(ns.length<3){const p=rndPrime(bits,ok3),q=rndPrime(bits,ok3);if(p===q)continue;const n=p*q;if(ns.every(m=>gcd(m,n)===1n))ns.push(n)}
+    const C=ns.map(n=>mpow(M,3n,n)),X=crt(C,ns),r=icbrt(X);
+    o.innerHTML=kv([['n₁, n₂, n₃',ns.map(n=>short(n,30)).join('<br>')],['Cᵢ = M³ mod nᵢ',C.map(c=>short(c,30)).join('<br>')],
+      ['CRT → M³ mod n₁n₂n₃',short(X)],['integer cube root',short(r)+' '+ok(r===M,'= M: recovered without any private key','≠ M')]])}
+  catch(x){o.innerHTML=err(x.message)}}
+$('e3-go').addEventListener('click',e3);e3();
+
+/* ---------- CCA & blinding ---------- */
+let ccaMode='cca';
+document.querySelectorAll('[data-cca]').forEach(b=>b.addEventListener('click',()=>{ccaMode=b.dataset.cca;document.querySelectorAll('[data-cca]').forEach(x=>x.setAttribute('aria-pressed',x===b));cca()}));
+function cca(){const o=$('cca-out');if(!RSA.ok)return o.innerHTML=err('load a valid key in the RSA lab (§9.2) first');
+  const {n,e,d,M,C}=RSA;
+  if(ccaMode==='cca'){const X=C*mpow(2n,e,n)%n,Y=mpow(X,d,n),i2=inv(2n,n),R=Y*i2%n;
+    o.innerHTML=kv([['intercepted C',short(C)],['1. X = C·2ᵉ mod n',short(X)],['2. victim decrypts: Y = Xᵈ mod n',short(Y)+' (= 2M mod n)'],['3. M = Y·2⁻¹ mod n',short(R)+' '+ok(R===M,'= M ✓','≠ M')]])}
+  else{let r;do r=1n+rndBelow(n-1n);while(gcd(r,n)!==1n);const C1=C*mpow(r,e,n)%n,M1=mpow(C1,d,n),R=M1*inv(r,n)%n;
+    o.innerHTML=kv([['C',short(C)],['1. random r',short(r)],['2. C′ = C·rᵉ mod n',short(C1)+' (what the exponentiation actually processes)'],['3. M′ = (C′)ᵈ mod n',short(M1)],['4. M = M′·r⁻¹ mod n',short(R)+' '+ok(R===M,'= M ✓','≠ M')]])}}
+$('cca-go').addEventListener('click',cca);cca();
+
+/* ---------- prime-field helpers (Number, small q) ---------- */
+function factorsOf(nb){const fs=[];let n=nb;for(let f=2n;f*f<=n;f+=(f===2n?1n:2n)){if(n%f===0n){fs.push(f);while(n%f===0n)n/=f}if(f>2000000n)return null}if(n>1n)fs.push(n);return fs}
+function primRoot(a,q){const fs=factorsOf(q-1n);if(!fs)return null;return fs.every(f=>mpow(a,(q-1n)/f,q)!==1n)}
+
+/* ---------- Diffie–Hellman ---------- */
+function dh(){const o=$('dh-out');try{const q=B($('dh-q').value),a=B($('dh-a').value),xa=B($('dh-xa').value),xb=B($('dh-xb').value);
+    if(!isPrime(q))return o.innerHTML=err('q must be prime');if(a<2n||a>=q)return o.innerHTML=err('need 1 < α < q');
+    if(xa<1n||xa>=q||xb<1n||xb>=q)return o.innerHTML=err('private keys must be in 1 … q − 1');
+    const pr=primRoot(a,q),ya=mpow(a,xa,q),yb=mpow(a,xb,q),ka=mpow(yb,xa,q),kb=mpow(ya,xb,q);
+    let atk='';if(q<=2000000n){const Q=Number(q),A=Number(a),T=Number(ya);let v=1,t=0;do{v=v*A%Q;t++}while(v!==T&&t<Q);atk='found exponent '+t+' after '+t+' tries; then K = '+mpow(yb,BigInt(t),q)+' '+ok(mpow(yb,BigInt(t),q)===ka,'key broken','')}
+    else atk='q too large to search here (the search takes up to q − 1 steps)';
+    o.innerHTML=kv([['α primitive root of q?',pr===null?'not checked (q − 1 too large to factor here)':ok(pr,'yes','no — powers of α do not cover 1 … q − 1')],
+      ['Y_A = α^X_A mod q',ya],['Y_B = α^X_B mod q',yb],['A: K = Y_B^X_A mod q',ka],['B: K = Y_A^X_B mod q',kb+' '+ok(ka===kb,'same key','different')],
+      ['attacker sees','q, α, Y_A = '+ya+', Y_B = '+yb],['brute-force dlog(Y_A)',atk]])}catch(x){o.innerHTML=err(x.message)}}
+$('dh-go').addEventListener('click',dh);
+$('dh-rnd').addEventListener('click',()=>{try{const q=B($('dh-q').value);$('dh-xa').value=2n+rndBelow(q-3n);$('dh-xb').value=2n+rndBelow(q-3n);dh()}catch(x){$('dh-out').innerHTML=err(x.message)}});dh();
+
+/* ---------- MITM animation ---------- */
+const MI=[
+  'Setup: Alice and Bob each have a private key (X_A, X_B) and public key. Darth is between them on the channel.',
+  '1. Darth generates two private keys X_D1, X_D2 and computes public keys Y_D1, Y_D2.',
+  '2. Alice transmits Y_A to Bob.',
+  '3. Darth intercepts Y_A and sends Y_D1 to Bob instead. Darth computes K2 = (Y_A)^X_D2 mod q.',
+  '4. Bob receives Y_D1 and computes K1 = (Y_D1)^X_B mod q.',
+  '5. Bob transmits Y_B to Alice.',
+  '6. Darth intercepts Y_B and sends Y_D2 to Alice. Darth computes K1 = (Y_B)^X_D1 mod q.',
+  '7. Alice receives Y_D2 and computes K2 = (Y_D2)^X_A mod q.',
+  'Result: Alice and Darth share K2; Bob and Darth share K1. Alice sends E(K2, M); Darth decrypts it and forwards E(K1, M) or a modified E(K1, M′) to Bob.'];
+let miS=0,miT=null;
+function miDraw(){const X={A:100,D:360,B:620},rowY=s=>40+s*56;
+  const L=[];const ar=(s,from,to,lab,col)=>{const y=rowY(s),x1=X[from]+(X[to]>X[from]?40:-40),x2=X[to]+(X[to]>X[from]?-40:40);L.push([s,'<line x1="'+x1+'" y1="'+y+'" x2="'+x2+'" y2="'+y+'" stroke="'+col+'" stroke-width="2" marker-end="url(#mia'+(col.includes('bad')?'r':'')+')"/><text x="'+((x1+x2)/2)+'" y="'+(y-7)+'" text-anchor="middle" fill="'+col+'" font-weight="700">'+sfmt(lab)+'</text>'])};
+  const tx=(s,who,t,col)=>L.push([s,'<text x="'+X[who]+'" y="'+(rowY(s)+(who==='D'?24:5))+'" text-anchor="middle" fill="'+(col||'var(--ink)')+'" font-size="11.5">'+sfmt(t)+'</text>']);
+  tx(1,'D','X_D1, X_D2 → Y_D1, Y_D2','var(--bad)');L[0][1]=L[0][1].replace(/y="[0-9.]+"/,'y="'+(rowY(1)+5)+'"');ar(2,'A','D','Y_A','var(--ink)');ar(3,'D','B','Y_D1','var(--bad)');tx(3,'D','K2 = Y_A^X_D2','var(--bad)');
+  tx(4,'B','K1 = Y_D1^X_B');ar(5,'B','D','Y_B','var(--ink)');ar(6,'D','A','Y_D2','var(--bad)');tx(6,'D','K1 = Y_B^X_D1','var(--bad)');tx(7,'A','K2 = Y_D2^X_A');
+  L.push([8,'<rect x="40" y="'+(rowY(8)-16)+'" width="380" height="30" rx="8" fill="var(--bad-soft)" stroke="var(--bad)"/><text x="230" y="'+(rowY(8)+4)+'" text-anchor="middle" fill="var(--bad)" font-weight="700">Alice ↔ Darth share K2</text><rect x="300" y="'+(rowY(8)+20)+'" width="380" height="30" rx="8" fill="var(--bad-soft)" stroke="var(--bad)"/><text x="490" y="'+(rowY(8)+40)+'" text-anchor="middle" fill="var(--bad)" font-weight="700">Darth ↔ Bob share K1</text>']);
+  let s='<svg viewBox="0 0 720 560" role="img" aria-label="Man-in-the-middle attack steps"><defs><marker id="mia" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink)"/></marker><marker id="miar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--bad)"/></marker></defs><g font-size="12">';
+  if(miS>0)s+='<rect x="4" y="'+(rowY(miS)-24)+'" width="712" height="'+(miS===8?72:54)+'" rx="6" fill="var(--mark-soft)" opacity=".6"/>';
+  [['A','Alice'],['D','Darth'],['B','Bob']].forEach(([k,nm])=>{s+='<rect x="'+(X[k]-50)+'" y="4" width="100" height="26" rx="13" fill="'+(k==='D'?'var(--bad-soft)':'var(--accent-soft)')+'" stroke="'+(k==='D'?'var(--bad)':'var(--accent)')+'"/><text x="'+X[k]+'" y="22" text-anchor="middle" fill="var(--ink)" font-weight="700">'+nm+'</text><line x1="'+X[k]+'" y1="30" x2="'+X[k]+'" y2="462" stroke="var(--line)" stroke-dasharray="4 4"/>'});
+  L.forEach(([st,h])=>{s+='<g style="transition:opacity .3s" opacity="'+(st<=miS?1:0)+'">'+h+'</g>'});
+  $('mi-fig').innerHTML=s+'</g></svg>';$('mi-txt').innerHTML=fmt(esc(MI[miS]).replace(/\)\^X_/g,')^X_'))}
+$('mi-step').addEventListener('click',()=>{miS=Math.min(8,miS+1);miDraw()});
+$('mi-reset').addEventListener('click',()=>{clearInterval(miT);miT=null;$('mi-play').textContent='Play';miS=0;miDraw()});
+$('mi-play').addEventListener('click',()=>{if(miT){clearInterval(miT);miT=null;$('mi-play').textContent='Play';return}if(miS>=8)miS=0;if(reduce){miS=8;miDraw();return}
+  $('mi-play').textContent='Pause';miT=setInterval(()=>{miS++;miDraw();if(miS>=8){clearInterval(miT);miT=null;$('mi-play').textContent='Play'}},1600)});
+miDraw();
+
+/* ---------- Elgamal ---------- */
+function elg(){const o=$('el-out');try{const q=B($('el-q').value),a=B($('el-a').value),x=B($('el-x').value),M=B($('el-m').value),k=B($('el-k').value),M2=B($('el-m2').value);
+    if(!isPrime(q))return o.innerHTML=err('q must be prime');if(a<2n||a>=q)return o.innerHTML=err('need 1 < α < q');
+    if(x<=1n||x>=q-1n)return o.innerHTML=err('need 1 < X_A < q − 1');if(M<0n||M>=q||M2<0n||M2>=q)return o.innerHTML=err('messages must be 0 … q − 1');if(k<1n||k>=q)return o.innerHTML=err('need 1 ≤ k ≤ q − 1');
+    const pr=primRoot(a,q),Y=mpow(a,x,q),K=mpow(Y,k,q),C1=mpow(a,k,q),C2=K*M%q,Kr=mpow(C1,x,q),Ki=inv(Kr,q),D=C2*Ki%q,C22=K*M2%q,rec=inv(C2,q)===null?null:inv(C2,q)*C22%q*M%q;
+    o.innerHTML=kv([['α primitive root of q?',pr===null?'not checked':ok(pr,'yes','no')],['public key {q, α, Y_A}','{'+q+', '+a+', '+Y+'}'],['K = Y_A^k mod q',K],['C₁ = α^k mod q',C1],['C₂ = K·M₁ mod q',C2],
+      ['Alice: K = C₁^X_A mod q',Kr+', K⁻¹ = '+Ki],['M = C₂·K⁻¹ mod q',D+' '+ok(D===M,'= M₁ ✓','≠ M₁')],
+      ['M₂ sent with the same k','(C₁, '+C22+')  — C₁ is identical, which an observer can see'],
+      ['attacker knowing M₁',rec===null?'M₁ = 0, so C₂ = 0 gives nothing':'M₂ = C₂,₁⁻¹·C₂,₂·M₁ mod q = '+rec+' '+ok(rec===M2,'= M₂: leaked','≠ M₂')]])}catch(e){o.innerHTML=err(e.message)}}
+$('el-go').addEventListener('click',elg);elg();
+
+/* ---------- EC over reals ---------- */
+const ER={x0:-3,x1:5,y0:-7,y1:7,W:640,H:420};
+const sx=x=>(x-ER.x0)/(ER.x1-ER.x0)*ER.W, sy=y=>ER.H/2-y*(ER.H/(ER.y1-ER.y0));
+function erDraw(){const a=+$('er-a').value,b=+$('er-b').value;$('er-av').textContent=a;$('er-bv').textContent=b;
+  const f=x=>x*x*x+a*x+b,disc=4*a*a*a+27*b*b,N=1600,xs=[];for(let i=0;i<=N;i++)xs.push(ER.x0+(ER.x1-ER.x0)*i/N);
+  let up='',lo='',pen=false;const valid=[];
+  xs.forEach((x,i)=>{const v=f(x);if(v>=0){const y=Math.sqrt(v);valid.push(i);up+=(pen?'L':'M')+sx(x).toFixed(1)+','+sy(y).toFixed(1);lo+=(pen?'L':'M')+sx(x).toFixed(1)+','+sy(-y).toFixed(1);pen=true}else pen=false});
+  let s='<defs><marker id="era" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--muted)"/></marker></defs>';
+  for(let gx=Math.ceil(ER.x0);gx<=ER.x1;gx++)s+='<line x1="'+sx(gx)+'" y1="0" x2="'+sx(gx)+'" y2="'+ER.H+'" stroke="var(--line)" stroke-width=".6"/>';
+  for(let gy=ER.y0;gy<=ER.y1;gy++)s+='<line x1="0" y1="'+sy(gy)+'" x2="'+ER.W+'" y2="'+sy(gy)+'" stroke="var(--line)" stroke-width=".6"/>';
+  s+='<line x1="0" y1="'+sy(0)+'" x2="'+ER.W+'" y2="'+sy(0)+'" stroke="var(--muted)"/><line x1="'+sx(0)+'" y1="0" x2="'+sx(0)+'" y2="'+ER.H+'" stroke="var(--muted)"/>';
+  s+='<path d="'+up+lo+'" fill="none" stroke="var(--accent)" stroke-width="2.4"/>';
+  const out=$('er-out');
+  if(Math.abs(disc)<1e-9){$('er-svg').innerHTML=s;out.innerHTML=err('4a³ + 27b² = 0: the curve is singular and does not form a group (Eq. 10.2)');return}
+  const V=valid.length;const pos=t=>{const u=Math.round(t/1000*(2*V-1));return u<V?{x:xs[valid[u]],y:Math.sqrt(Math.max(0,f(xs[valid[u]])))}:{x:xs[valid[2*V-1-u]],y:-Math.sqrt(Math.max(0,f(xs[valid[2*V-1-u]])))}};
+  const P=pos(+$('er-p').value),dbl=$('er-dbl').checked;let Q=dbl?P:pos(+$('er-q').value);
+  $('er-q').disabled=dbl;const cs=p=>'('+p.x.toFixed(2)+', '+p.y.toFixed(2)+')';$('er-pv').textContent=cs(P);$('er-qv').textContent=dbl?'= P':cs(Q);const same=Math.abs(P.x-Q.x)<1e-9&&Math.abs(P.y-Q.y)<1e-9;
+  const dot=(p,c,l,side)=>{const L=side==='L';return '<circle cx="'+sx(p.x)+'" cy="'+sy(p.y)+'" r="6" fill="'+c+'" stroke="var(--paper)" stroke-width="1.5"/><text x="'+(sx(p.x)+(L?-11:10))+'" y="'+(sy(p.y)+(p.y>=0?-8:18))+'" text-anchor="'+(L?'end':'start')+'" fill="'+c+'" font-size="13" font-weight="700" paint-order="stroke" stroke="var(--bg)" stroke-width="4">'+l+'</text>'};
+  const fx=v=>v.toFixed(3);
+  let msg;
+  if(same&&Math.abs(P.y)<1e-6||!same&&Math.abs(P.x-Q.x)<1e-6){s+='<line x1="'+sx(P.x)+'" y1="0" x2="'+sx(P.x)+'" y2="'+ER.H+'" stroke="var(--mark)" stroke-width="1.6"/>';
+    s+=dot(P,'var(--ink)',same?'P = Q':'P')+(same?'':dot(Q,'var(--ink)','Q = −P'));
+    msg=same?'y_P = 0: the tangent is vertical, so 2P = O.':'P and Q = −P lie on a vertical line, which meets the curve at O: P + Q = O.'}
+  else{const D=same?(3*P.x*P.x+a)/(2*P.y):(Q.y-P.y)/(Q.x-P.x),xr=same?D*D-2*P.x:D*D-P.x-Q.x,yr=same?D*(P.x-xr)-P.y:-P.y+D*(P.x-xr),R={x:xr,y:-yr},S={x:xr,y:yr};
+    const ly=x=>P.y+D*(x-P.x);s+='<line x1="'+sx(ER.x0)+'" y1="'+sy(ly(ER.x0))+'" x2="'+sx(ER.x1)+'" y2="'+sy(ly(ER.x1))+'" stroke="var(--mark)" stroke-width="1.6"/>';
+    const inView=p=>p.x>=ER.x0&&p.x<=ER.x1&&p.y>=ER.y0&&p.y<=ER.y1;
+    if(inView(R)||inView(S))s+='<line x1="'+sx(xr)+'" y1="'+sy(R.y)+'" x2="'+sx(xr)+'" y2="'+sy(S.y)+'" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#era)"/>';
+    s+=dot(R,'var(--mark)',same?'−2P':'−(P+Q)','L')+dot(S,'var(--bad)',same?'2P':'P+Q','L')+dot(P,'var(--ink)',same?'P':'P')+(same?'':dot(Q,'var(--ink)','Q'));
+    msg=kv([['P','('+fx(P.x)+', '+fx(P.y)+')'],[same?'2P = P + P':'Q',same?'tangent slope Δ = (3x_P² + a)/(2y_P) = '+fx(D):'('+fx(Q.x)+', '+fx(Q.y)+')'],
+      [same?'third intersection':'Δ = (y_Q − y_P)/(x_Q − x_P)',same?'('+fx(xr)+', '+fx(-yr)+')':fx(D)],[same?'2P':'P + Q','('+fx(xr)+', '+fx(yr)+')'+(inView(S)?'':' <span class="pill mk">outside the view</span>')]])}
+  $('er-svg').innerHTML=s;out.innerHTML=msg}
+['er-a','er-b','er-p','er-q','er-dbl'].forEach(id=>$(id).addEventListener('input',erDraw));erDraw();
+
+/* ---------- EC over Zp (Number arithmetic) ---------- */
+const nmod=(a,m)=>((a%m)+m)%m;
+function ninv(a,m){a=nmod(a,m);let [r0,r1,s0,s1]=[a,m,1,0];while(r1){const q=Math.floor(r0/r1);[r0,r1]=[r1,r0-q*r1];[s0,s1]=[s1,s0-q*s1]}return r0===1?nmod(s0,m):null}
+function eAdd(P,Q,a,p){if(!P)return Q;if(!Q)return P;if(P[0]===Q[0]&&nmod(P[1]+Q[1],p)===0)return null;
+  const l=(P[0]===Q[0]&&P[1]===Q[1])?nmod((3*P[0]*P[0]+a)%p*ninv(2*P[1],p),p):nmod(nmod(Q[1]-P[1],p)*ninv(Q[0]-P[0],p),p);
+  const x=nmod(l*l-P[0]-Q[0],p);return [x,nmod(l*(P[0]-x)-P[1],p)]}
+function eMul(k,P,a,p){let R=null,A=P;while(k>0){if(k&1)R=eAdd(R,A,a,p);A=eAdd(A,A,a,p);k=Math.floor(k/2)}return R}
+const onC=(P,a,b,p)=>nmod(P[1]*P[1]-(P[0]*P[0]%p*P[0]+a*P[0]+b),p)===0;
+const pt=P=>P?'('+P[0]+', '+P[1]+')':'O';
+const smallPrime=n=>{if(n<2)return false;for(let i=2;i*i<=n;i++)if(n%i===0)return false;return true};
+let EZ={sel:[],pts:[]},ezT=null;
+function ezPlot(){clearInterval(ezT);const p=+$('ez-p').value,a=+$('ez-a').value,b=+$('ez-b').value,o=$('ez-out');EZ={p,a,b,sel:[],pts:[],mul:null};
+  if(!Number.isInteger(p)||!smallPrime(p)||p<3||p>101){$('ez-svg').innerHTML='';return o.innerHTML=err('p must be a prime from 3 to 101')}
+  if(nmod(4*a*a*a+27*b*b,p)===0){$('ez-svg').innerHTML='';return o.innerHTML=err('(4a³ + 27b²) mod p = 0: no group (Eq. 10.6)')}
+  for(let x=0;x<p;x++)for(let y=0;y<p;y++)if(onC([x,y],a,b,p))EZ.pts.push([x,y]);ezDraw()}
+function ezDraw(){const {p,pts,sel,mul}=EZ,M=34,S=520-M-14,c=S/(p-1||1),X=x=>M+x*c,Y=y=>520-M-y*c,r=Math.max(2.5,Math.min(7,c*.38));
+  let s='<g font-size="10" fill="var(--muted)">';const tick=p<=30?1:p<=60?5:10;
+  for(let t=0;t<p;t+=tick){s+='<line x1="'+X(t)+'" y1="'+Y(0)+'" x2="'+X(t)+'" y2="'+Y(p-1)+'" stroke="var(--line)" stroke-width=".6"/><line x1="'+X(0)+'" y1="'+Y(t)+'" x2="'+X(p-1)+'" y2="'+Y(t)+'" stroke="var(--line)" stroke-width=".6"/>';
+    if(t%(p<=30?5:tick)===0){s+='<text x="'+X(t)+'" y="'+(520-M+16)+'" text-anchor="middle">'+t+'</text><text x="'+(M-8)+'" y="'+(Y(t)+3)+'" text-anchor="end">'+t+'</text>'}}
+  s+='<line x1="'+X(0)+'" y1="'+Y((p-1)/2)+'" x2="'+X(p-1)+'" y2="'+Y((p-1)/2)+'" stroke="var(--mark)" stroke-dasharray="3 4" stroke-width=".8"/></g>';
+  const key=P=>P[0]+','+P[1],selK=sel.map(key),res=EZ.res?key(EZ.res):'';const mk=mul?new Map(mul.list.map((P,i)=>[key(P),i+1])):null;
+  pts.forEach(P=>{const k=key(P),isS=selK.includes(k),isR=k===res,m=mk&&mk.get(k);
+    s+='<circle class="ezp" data-x="'+P[0]+'" data-y="'+P[1]+'" cx="'+X(P[0])+'" cy="'+Y(P[1])+'" r="'+(isS||isR||m?r+2:r)+'" fill="'+(isR?'var(--bad)':isS?'var(--mark)':m?'var(--mark-soft)':'var(--accent)')+'" stroke="'+(m?'var(--mark)':'var(--paper)')+'" stroke-width="1.5" style="cursor:pointer"><title>'+pt(P)+'</title></circle>';
+    if(m&&p<=40)s+='<text x="'+(X(P[0])+r+3)+'" y="'+(Y(P[1])-r)+'" font-size="10" fill="var(--mark)" font-weight="700">'+m+'P</text>'});
+  $('ez-svg').innerHTML=s;
+  $('ez-svg').querySelectorAll('.ezp').forEach(el=>el.addEventListener('click',()=>ezPick([+el.dataset.x,+el.dataset.y])));
+  if(!EZ.msg)EZ.msg=kv([['curve','y² mod '+p+' = (x³ + '+EZ.a+'x + '+EZ.b+') mod '+p],['points','N = '+(pts.length+1)+' (including O)'],['bound p + 1 ± 2√p',(p+1-2*Math.sqrt(p)).toFixed(1)+' ≤ N ≤ '+(p+1+2*Math.sqrt(p)).toFixed(1)+' '+ok(Math.abs(pts.length+1-(p+1))<=2*Math.sqrt(p),'holds','')]])+'<p class="src">Click a point to choose P.</p>';
+  $('ez-out').innerHTML=EZ.msg}
+function ezPick(P){clearInterval(ezT);EZ.mul=null;const {a,p}=EZ;
+  if(EZ.sel.length!==1){EZ.sel=[P];EZ.res=null;EZ.msg=kv([['P',pt(P)],['−P',pt([P[0],nmod(-P[1],p)])]])+'<p class="src">Now click Q (or P again to double).</p>';return ezDraw()}
+  const A=EZ.sel[0];EZ.sel=[A,P];const dbl=A[0]===P[0]&&A[1]===P[1],R=eAdd(A,P,a,p);EZ.res=R;let rows=[['P',pt(A)],['Q',pt(P)]];
+  if(!R)rows.push(['P + Q',dbl?'y_P = 0, so 2P = O':'Q = −P, so P + Q = O']);
+  else{const num=dbl?nmod(3*A[0]*A[0]+a,p):nmod(P[1]-A[1],p),den=dbl?nmod(2*A[1],p):nmod(P[0]-A[0],p),di=ninv(den,p),l=nmod(num*di,p);
+    rows.push(['λ',(dbl?'(3x_P² + a)/(2y_P)':'(y_Q − y_P)/(x_Q − x_P)')+' = '+num+' × '+den+'⁻¹ = '+num+' × '+di+' mod '+p+' = '+l],
+      ['x_R','(λ² − x_P − x_Q) mod p = ('+l*l+' − '+A[0]+' − '+P[0]+') mod '+p+' = '+R[0]],['y_R','(λ(x_P − x_R) − y_P) mod p = ('+l+'·('+A[0]+' − '+R[0]+') − '+A[1]+') mod '+p+' = '+R[1]],
+      [dbl?'2P':'P + Q','<b>'+pt(R)+'</b> '+ok(onC(R,a,EZ.b,p),'on the curve','')])}
+  EZ.msg=kv(rows);ezDraw()}
+function ezMul(){clearInterval(ezT);if(!EZ.pts||!EZ.pts.length)return;const P=EZ.sel[0]||EZ.pts[0],{a,p}=EZ,list=[P];let Q=P;
+  while(true){Q=eAdd(Q,P,a,p);if(!Q)break;list.push(Q);if(list.length>EZ.pts.length+2)break}
+  EZ.sel=[P];EZ.res=null;const n=list.length+1;let i=reduce?list.length:0;
+  const show=()=>{EZ.mul={list:list.slice(0,i)};EZ.msg=kv([['P',pt(P)],['multiples',list.slice(0,i).map((X,j)=>(j+1)+'P = '+pt(X)).slice(-6).join(' · ')||'…'],['order of P',i>=list.length?'<b>'+n+'</b> ('+n+'P = O); '+(n===EZ.pts.length+1?'P generates every point':'P generates '+n+' of the '+(EZ.pts.length+1)+' points'):'…']]);ezDraw()};
+  show();if(!reduce)ezT=setInterval(()=>{i++;show();if(i>=list.length)clearInterval(ezT)},Math.max(120,4000/list.length))}
+$('ez-go').addEventListener('click',ezPlot);$('ez-mul').addEventListener('click',ezMul);$('ez-clr').addEventListener('click',ezPlot);ezPlot();
+
+/* ---------- ECC lab ---------- */
+const ECP={dh:{p:211,a:0,b:-4,g:'2, 2',na:121,nb:203,k:41,pm:null},enc:{p:257,a:0,b:-4,g:'2, 2',na:121,nb:101,k:41,pm:'112, 26'}};
+const pp=s=>{const m=String(s).match(/^\s*\(?\s*(-?\d+)\s*,\s*(-?\d+)\s*\)?\s*$/);if(!m)throw new Error('write points as x, y');return [+m[1],+m[2]]};
+function ecLoad(){const c=ECP[$('ec-pre').value];$('ec-p').value=c.p;$('ec-a').value=c.a;$('ec-b').value=c.b;$('ec-g').value=c.g;$('ec-na').value=c.na;$('ec-nb').value=c.nb;$('ec-k').value=c.k;
+  let pm=c.pm;if(!pm){outer:for(let x=100;x<c.p;x++)for(let y=0;y<c.p;y++)if(onC([x,y],c.a,c.b,c.p)){pm=x+', '+y;break outer}}$('ec-pm').value=pm;ec()}
+function ec(){const o=$('ec-out');try{const p=+$('ec-p').value,a=+$('ec-a').value,b=+$('ec-b').value,G=pp($('ec-g').value),na=+$('ec-na').value,nb=+$('ec-nb').value,k=+$('ec-k').value,Pm=pp($('ec-pm').value);
+    if(!smallPrime(p)||p>100000)return o.innerHTML=err('p must be a prime ≤ 100000 here');if(nmod(4*a*a*a+27*b*b,p)===0)return o.innerHTML=err('(4a³ + 27b²) mod p = 0');
+    G[0]=nmod(G[0],p);G[1]=nmod(G[1],p);Pm[0]=nmod(Pm[0],p);Pm[1]=nmod(Pm[1],p);if(!onC(G,a,b,p))return o.innerHTML=err('G '+pt(G)+' is not on the curve');
+    let n=1,Q=G;while(Q){Q=eAdd(Q,G,a,p);n++;if(n>p+2+2*Math.sqrt(p))break}
+    if(![na,nb,k].every(v=>Number.isInteger(v)&&v>0))return o.innerHTML=err('n_A, n_B and k must be positive integers');
+    const PA=eMul(na,G,a,p),PB=eMul(nb,G,a,p),KA=eMul(na,PB,a,p),KB=eMul(nb,PA,a,p);
+    const rows=[['order n of G','<b>'+n+'</b> ('+n+'G = O)'+(na>=n||nb>=n?' <span class="pill no">private keys should be &lt; n</span>':'')],['P_A = n_A × G',pt(PA)],['P_B = n_B × G',pt(PB)],
+      ['A: K = n_A × P_B',pt(KA)],['B: K = n_B × P_A',pt(KB)+' '+ok(pt(KA)===pt(KB),'same point','')]];
+    if(!onC(Pm,a,b,p))rows.push(['encryption',err('P_m '+pt(Pm)+' is not on the curve')]);
+    else{const kG=eMul(k,G,a,p),kPB=eMul(k,PB,a,p),C2=eAdd(Pm,kPB,a,p),nC1=eMul(nb,kG,a,p),neg=nC1?[nC1[0],nmod(-nC1[1],p)]:null,D=eAdd(C2,neg,a,p);
+      rows.push(['kG',pt(kG)],['kP_B',pt(kPB)],['C_m = {kG, P_m + kP_B}','{'+pt(kG)+', '+pt(C2)+'}'],['B: n_B(kG)',pt(nC1)],['C₂ − n_B(kG)',pt(D)+' '+ok(pt(D)===pt(Pm),'= P_m ✓','≠ P_m')])}
+    o.innerHTML=kv(rows)}catch(x){o.innerHTML=err(x.message)}}
+$('ec-load').addEventListener('click',ecLoad);$('ec-go').addEventListener('click',ec);ec();
+
+/* ---------- Micali–Schnorr ---------- */
+(function(){let s='';const sub=t=>'<tspan baseline-shift="sub" font-size="8.5">'+t+'</tspan>';
+  for(let i=0;i<3;i++){const x=100+i*190;
+    s+='<rect x="'+x+'" y="40" width="150" height="52" rx="7" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="'+(x+75)+'" y="60" text-anchor="middle" fill="var(--ink)" font-weight="700">Encrypt</text><text x="'+(x+75)+'" y="80" text-anchor="middle" fill="var(--ink)">y'+sub(i+1)+' = x'+sub(i)+'ᵉ mod n</text>';
+    s+='<text x="'+(x+75)+'" y="28" text-anchor="middle" fill="var(--muted)" font-size="10.5">n, e, r, k</text>';
+    s+='<rect x="'+x+'" y="120" width="70" height="44" rx="5" fill="var(--paper)" stroke="var(--accent)"/><text x="'+(x+35)+'" y="140" text-anchor="middle" fill="var(--ink)" font-size="10.5">x'+sub(i+1)+'</text><text x="'+(x+35)+'" y="155" text-anchor="middle" fill="var(--muted)" font-size="9.5">r MSBs</text>';
+    s+='<rect x="'+(x+80)+'" y="120" width="70" height="44" rx="5" fill="var(--mark-soft)" stroke="var(--mark)"/><text x="'+(x+115)+'" y="140" text-anchor="middle" fill="var(--ink)" font-size="10.5">z'+sub(i+1)+'</text><text x="'+(x+115)+'" y="155" text-anchor="middle" fill="var(--muted)" font-size="9.5">k LSBs</text>';
+    s+='<line x1="'+(x+35)+'" y1="92" x2="'+(x+35)+'" y2="118" stroke="var(--ink)" marker-end="url(#ar-m)"/><line x1="'+(x+115)+'" y1="92" x2="'+(x+115)+'" y2="118" stroke="var(--ink)" marker-end="url(#ar-m)"/>';
+    s+='<line x1="'+(x+115)+'" y1="164" x2="'+(x+115)+'" y2="188" stroke="var(--mark)" marker-end="url(#ar-m2)"/><text x="'+(x+115)+'" y="202" text-anchor="middle" fill="var(--mark)" font-size="10">output z'+sub(i+1)+'</text>';
+    if(i<2)s+='<path d="M'+(x+35)+',164 V214 H'+(x+170)+' V66 H'+(x+188)+'" fill="none" stroke="var(--ink)" marker-end="url(#ar-m)"/><text x="'+(x+100)+'" y="228" text-anchor="middle" fill="var(--muted)" font-size="10">x'+sub(i+1)+' fed back</text>'}
+  $('ms-units').innerHTML=s})();
+function ms(){const o=$('ms-out');o.textContent='generating 256-bit primes…';setTimeout(()=>{const ok3=x=>x%3n===2n;let p,q,n;
+    do{p=rndPrime(256,ok3);q=rndPrime(256,ok3);n=p*q}while(p===q||bitlen(n)!==512);
+    const N=512,e=3n;let r=Math.ceil(2*N/3);r=Math.ceil(r/8)*8;const k=N-r;let x=rnd(r);const rows=[['N, e','512, 3'],['r, k (re ≥ 2N, multiples of 8)',r+', '+k],['seed x₀',short(hex(x),48)]];
+    const mask=(1n<<BigInt(k))-1n;for(let i=1;i<=4;i++){const y=mpow(x,e,n),xi=y>>BigInt(k),z=y&mask;rows.push(['z'+'₁₂₃₄'[i-1]+' (output, hex)','<b>'+z.toString(16).padStart(k/4,'0')+'</b>']);x=xi}
+    rows.push(['total output',4*k+' bits from 4 RSA operations']);o.innerHTML=kv(rows)},20)}
+$('ms-go').addEventListener('click',ms);
+
+/* ===== scroll-following contents ===== */
+const links=[...document.querySelectorAll('nav.toc a')];
+const secs=links.map(l=>document.querySelector(l.getAttribute('href'))).filter(Boolean);
+const list=document.querySelector('nav.toc ol');let current=null,ticking=false;
+function spy(){ticking=false;const line=window.innerHeight*0.3;let idx=0;
+  secs.forEach((s,i)=>{if(s.getBoundingClientRect().top<=line)idx=i});
+  if((window.innerHeight+window.scrollY)>=document.documentElement.scrollHeight-4)idx=secs.length-1;
+  const l=links[idx];
+  if(l!==current){if(current){current.classList.remove('active');current.removeAttribute('aria-current')}
+    l.classList.add('active');l.setAttribute('aria-current','true');current=l;
+    if(list.scrollWidth>list.clientWidth){list.scrollTo({left:l.parentElement.offsetLeft-list.clientWidth/2+l.parentElement.offsetWidth/2,behavior:reduce?'auto':'smooth'})}}
+  const max=document.documentElement.scrollHeight-window.innerHeight;
+  $('toc-progress').style.width=(max>0?Math.min(100,window.scrollY/max*100):0)+'%'}
+window.addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(spy)}},{passive:true});
+window.addEventListener('resize',spy);spy();
+})();
+</script>
+<button class="to-top" id="to-top" type="button" aria-label="Back to top">↑ Top</button>
+
+<script>
+(function(){
+  var btn=document.getElementById('to-top');if(!btn)return;
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches,tick=false;
+  function upd(){tick=false;btn.classList.toggle('show',window.scrollY>600)}
+  window.addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(upd)}},{passive:true});
+  btn.addEventListener('click',function(){window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});var h=document.querySelector('.topbar a.home');if(h)h.focus({preventScroll:true})});
+  upd();
+})();
+</script>
+</body>
+</html>
