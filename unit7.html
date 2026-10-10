@@ -1,0 +1,1771 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unit 7 · Hashes &amp; MACs</title>
+<meta name="description" content="Study guide for Stallings, Cryptography and Network Security, Chapters 11–12: hash function applications, preimage and collision resistance, the birthday attack, iterated hash structure, SHA-512, SHA-3 sponge and Keccak-f, message authentication requirements, MACs, HMAC, DAA and CMAC, CCM and GCM authenticated encryption, key wrapping, and PRNGs from hashes and MACs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,700;1,400&family=Cousine:wght@400;700&family=Noto+Sans+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: graph-paper study notebook (shared with Units 1–6) — sticky contents rail on desktop, single column on phones; each section = one book section */
+:root{
+  --bg:#f3f4f8; --paper:#ffffff; --ink:#191b2b; --muted:#585d78; --line:#d9dce8;
+  --grid:rgba(25,27,43,.045);
+  --accent:#3f46c4; --accent-soft:#e5e7fb; --mark:#b8580f; --mark-soft:#fcebdc;
+  --bad:#b4372f; --bad-soft:#f9e1de;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono:"Cousine", "Noto Sans Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10121c; --paper:#171a28; --ink:#e6e8f2; --muted:#9ca1bb; --line:#2c3048;
+  --grid:rgba(230,232,242,.04);
+  --accent:#9ea6ff; --accent-soft:#232955; --mark:#f6a25a; --mark-soft:#3b2615;
+  --bad:#f08c84; --bad-soft:#3c1d1a; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#10121c; --paper:#171a28; --ink:#e6e8f2; --muted:#9ca1bb; --line:#2c3048;
+  --grid:rgba(230,232,242,.04);
+  --accent:#9ea6ff; --accent-soft:#232955; --mark:#f6a25a; --mark-soft:#3b2615;
+  --bad:#f08c84; --bad-soft:#3c1d1a; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16.5px;line-height:1.6;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;padding-inline:16px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;padding-block:32px 80px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr);gap:16px}}
+
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;font-size:.88rem}
+nav.toc .lbl{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+nav.toc a{display:flex;gap:10px;padding:5px 8px;border-radius:6px;color:var(--ink);text-decoration:none}
+nav.toc a span{font-family:var(--mono);color:var(--accent);min-width:2.6em;font-size:.8rem;padding-top:2px}
+nav.toc a{position:relative;transition:background .15s,color .15s}
+nav.toc a:hover,nav.toc a:focus-visible{background:var(--accent-soft);outline:none}
+nav.toc a.active{background:var(--accent);color:var(--paper);font-weight:700}
+nav.toc a.active span{color:var(--paper)}
+nav.toc .bar{height:3px;background:var(--line);border-radius:2px;margin:12px 0 0;overflow:hidden}
+nav.toc .bar i{display:block;height:100%;width:0;background:var(--accent)}
+@media (max-width:900px){
+  nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border:1px solid var(--line);border-radius:0 0 10px 10px;padding:8px 10px;margin-inline:-4px}
+  nav.toc .lbl{display:none}
+  nav.toc ol{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth}
+  nav.toc ol::-webkit-scrollbar{display:none}
+  nav.toc li{flex:0 0 auto}
+  nav.toc a{white-space:nowrap;padding:5px 10px}
+  nav.toc .bar{margin-top:8px}
+  section.unit{scroll-margin-top:72px}}
+
+main{min-width:0}
+header.hero{padding-block:8px 28px;border-bottom:2px solid var(--ink);margin-bottom:28px}
+.eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,6vw,4rem);line-height:1;margin:.25em 0 .3em;letter-spacing:-.02em;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{max-width:65ch;color:var(--muted);margin:0}
+.formula-strip{font-family:var(--mono);font-size:.85rem;color:var(--muted);margin-top:18px;display:flex;flex-wrap:wrap;gap:8px 18px}
+.formula-strip b{color:var(--ink);font-weight:600}
+
+section.unit{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:28px clamp(18px,4vw,40px);margin-bottom:28px;scroll-margin-top:20px}
+h2{font-family:var(--display);font-weight:700;font-size:1.75rem;line-height:1.15;margin:0 0 4px;text-wrap:balance;display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
+h2 .sec{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:600}
+h3{font-family:var(--display);font-weight:700;font-size:1.2rem;margin:28px 0 8px}
+.why{color:var(--muted);font-size:.95rem;margin:0 0 18px;max-width:70ch}
+p,li{max-width:70ch}
+code,.m{font-family:var(--mono);font-size:.9em}
+.m{white-space:nowrap}
+.m.wr{white-space:normal;overflow-wrap:anywhere}
+.def,.ex,.warn{min-width:0;overflow-wrap:break-word}
+.gk{font-family:var(--mono);font-style:normal}
+
+.def{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+.def b:first-child{font-family:var(--display);font-weight:700}
+.eq{font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;overflow-x:auto;white-space:pre;line-height:1.7;font-size:.92rem}
+.eq .n{color:var(--muted)}
+.eqrows{display:grid;gap:8px;margin:12px 0}
+.eqrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px 14px;align-items:center;font-family:var(--mono);font-size:.92rem;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.eqrow .ex1{min-width:0;line-height:1.6}
+.eqrow .n{color:var(--muted)}
+.eqrow .tag{font-size:.75rem;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--accent-soft);color:var(--accent)}
+.tag.no{background:var(--bad-soft);color:var(--bad)}
+@media (max-width:560px){.eqrow{grid-template-columns:minmax(0,1fr) auto}.eqrow .ex1{grid-column:1 / -1}}
+.ex{border:1px dashed var(--mark);background:var(--mark-soft);border-radius:8px;padding:10px 16px;margin:12px 0}
+.ex .t{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mark);font-weight:600}
+.ex .eq{background:transparent;border:0;padding:4px 0;margin:2px 0}
+.warn{border-left:3px solid var(--bad);background:var(--bad-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+ul.props{padding-left:1.2em}
+ul.props li{margin:4px 0}
+
+/* tables */
+.tbl{overflow-x:auto;margin:12px 0}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.9rem}
+th,td{border:1px solid var(--line);padding:5px 9px;text-align:center}
+th{background:var(--bg);font-family:var(--mono);font-weight:600;font-size:.8rem}
+td.l,th.l{text-align:left}
+td.hi{background:var(--accent-soft);font-weight:700}
+td.one{background:var(--mark-soft);font-weight:700}
+td.dim{color:var(--muted)}
+
+/* interactive lab */
+.lab{border:1px solid var(--line);border-radius:12px;margin:18px 0;overflow:hidden}
+.lab-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--line)}
+.lab-h .t{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.lab-b{padding:14px}
+.controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:end;margin-bottom:12px}
+.controls label{display:grid;gap:3px;font-size:.78rem;font-family:var(--mono);color:var(--muted)}
+input[type=number]{width:9.5em;font:inherit;font-family:var(--mono);font-size:.95rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+button{font-family:var(--mono);font-size:.82rem;padding:7px 12px;border:1px solid var(--accent);background:var(--accent);color:var(--paper);border-radius:6px;cursor:pointer}
+button.ghost{background:transparent;color:var(--accent)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.out{font-family:var(--mono);font-size:.9rem}
+.out .res{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:600}
+.res.ok{background:var(--accent-soft);color:var(--accent)}
+.res.no{background:var(--bad-soft);color:var(--bad)}
+.err{color:var(--bad);font-family:var(--mono);font-size:.85rem}
+svg text{font-family:var(--mono)}
+.figure{margin:16px 0;overflow-x:auto}
+.figure svg{display:block;max-width:100%;height:auto}
+.cap{font-size:.82rem;color:var(--muted);margin-top:6px}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.grid2>*{min-width:0}
+
+/* totient grid */
+.cells{display:flex;flex-wrap:wrap;gap:4px}
+.cells span{font-family:var(--mono);font-size:.78rem;width:2.6em;text-align:center;padding:4px 0;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.cells span.on{background:var(--accent);border-color:var(--accent);color:var(--paper);font-weight:600}
+
+/* mapping row */
+.maprow{display:grid;grid-template-columns:7.5em repeat(8,minmax(2.2em,1fr));gap:4px;font-family:var(--mono);font-size:.85rem;min-width:420px}
+.maprow div{padding:5px 0;text-align:center;border-radius:4px}
+.maprow .h{text-align:left;color:var(--muted);font-size:.75rem;padding-top:7px}
+.maprow .c{background:var(--bg)}
+.maprow .dup{background:var(--bad-soft);color:var(--bad);font-weight:600}
+.maprow .uni{background:var(--accent-soft);color:var(--accent);font-weight:600}
+
+/* glossary & review */
+dl.gloss{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr);gap:0;margin:0}
+dl.gloss dt,dl.gloss dd{padding:9px 0;border-bottom:1px solid var(--line);margin:0}
+dl.gloss dt{font-family:var(--display);font-weight:700;padding-right:16px}
+@media (max-width:560px){dl.gloss{grid-template-columns:minmax(0,1fr)} dl.gloss dt{border-bottom:0;padding-bottom:0}}
+details{border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:8px 0;background:var(--paper)}
+summary{cursor:pointer;font-weight:700}
+details p{margin:.6em 0 0}
+.src{font-size:.85rem;color:var(--muted)}
+.src a,a{color:var(--accent)}
+footer{font-size:.82rem;color:var(--muted);margin-top:24px}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---- Sticky "All units" bar + back-to-top (shared across unit pages) ---- */
+:root{--topbar-h:52px}
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.topbar-in{max-width:1180px;margin:0 auto;height:var(--topbar-h);padding-inline:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.topbar a.home{flex:0 0 auto;font-family:var(--f-mono,var(--mono));font-size:.84rem;font-weight:600;color:var(--ink);text-decoration:none;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface,var(--paper))}
+.topbar a.home:hover{border-color:var(--accent);color:var(--accent)}
+.topbar a.home:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.topbar .where{min-width:0;font-family:var(--f-mono,var(--mono));font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.to-top{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono,var(--mono));font-size:.82rem;font-weight:600;padding:10px 14px;border:1px solid var(--accent);border-radius:999px;background:var(--accent);color:var(--surface,var(--paper));cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.18);opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .2s,transform .2s,visibility 0s linear .2s}
+.to-top.show{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .2s}
+.to-top:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.to-top{transition:none}}
+
+.topbar{margin-inline:-16px}
+.topbar-in{padding-inline:16px}
+nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h) + 20px)}
+section.unit{scroll-margin-top:calc(20px + var(--topbar-h))}
+@media (max-width:900px){nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h))}section.unit{scroll-margin-top:calc(72px + var(--topbar-h))}}
+
+input[type=text],textarea,select{font:inherit;font-family:var(--mono);font-size:.92rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);max-width:100%}
+input[type=text]{width:18em}
+input.wide{width:min(34em,100%)}
+textarea{width:100%;min-height:4.6em;resize:vertical}
+input[type=range]{accent-color:var(--accent)}
+.controls label.grow{flex:1 1 280px}
+.controls label.grow input,.controls label.grow textarea{width:100%}
+.mono{font-family:var(--mono)}
+.big{font-family:var(--mono);font-size:1.05rem;letter-spacing:.06em;overflow-wrap:anywhere}
+.hlrow td{background:var(--accent-soft);font-weight:700;color:var(--accent)}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:12px 0}
+.cmp>div{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--paper);min-width:0}
+.cmp h4{margin:0 0 6px;font-family:var(--display);font-size:1.02rem}
+.cmp p{margin:0;font-size:.95rem}
+.diffbit{color:var(--bad);font-weight:700}
+@media (max-width:560px){input[type=text]{width:100%}}
+.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;font-family:var(--mono);font-size:.84rem;align-items:baseline}
+.kv .k{color:var(--muted)}
+.kv .v{overflow-wrap:anywhere}
+.pill{display:inline-block;font-family:var(--mono);font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.pill.no{background:var(--bad-soft);color:var(--bad)}
+.pill.mk{background:var(--mark-soft);color:var(--mark)}
+.note{border-left:3px solid var(--mark);background:var(--mark-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0;font-size:.95rem}
+.note .t{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mark);font-weight:600;display:block;margin-bottom:2px}
+.modes td,.modes th{text-align:left;vertical-align:top}
+.modes td.c{text-align:center}
+.bitstr{font-family:var(--mono);font-size:.8rem;overflow-wrap:anywhere;line-height:1.5}
+.bitstr b{color:var(--accent)}
+.bitstr i{font-style:normal;color:var(--muted);text-decoration:line-through}
+select{font:inherit;font-family:var(--mono);font-size:.88rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+@media (max-width:560px){.blkrow{grid-template-columns:minmax(0,1fr)}.blkrow .h{padding-top:0}canvas.px{width:150px;height:150px}.kv{grid-template-columns:minmax(0,1fr)}.kv .k{margin-top:4px}}
+.op{font-family:var(--mono);font-size:.92em}
+.seg{display:inline-flex;border:1px solid var(--accent);border-radius:6px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent;color:var(--accent)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--paper)}
+.eq sub,.kv sub{font-size:.75em}
+.pseudo{font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;overflow-x:auto;white-space:pre;line-height:1.55;font-size:.86rem}
+.pseudo .kw{color:var(--accent);font-weight:600}
+.pseudo .cm{color:var(--muted)}
+sub{line-height:0;font-size:.75em}
+/* justified prose (wider screens only: narrow columns get large word gaps) */
+@media (min-width:600px){
+section.unit p,section.unit li,.def,.note,.warn,.why,.lede,details p{text-align:justify;hyphens:auto;-webkit-hyphens:auto}
+section.unit .out,section.unit .cap,section.unit td,section.unit th,.lab-h,.kv{text-align:left;hyphens:manual;-webkit-hyphens:manual}
+section.unit .grid2 *,section.unit .cmp *,section.unit .src{text-align:left;hyphens:manual;-webkit-hyphens:manual}}
+
+/* ---- shared sub-entry nav (from Unit 6) ---- */
+nav.toc li.sub a{padding-left:calc(18px + 2.08rem);font-size:.84rem;color:var(--muted)}
+nav.toc li.sub a.active{color:var(--paper)}
+@media (max-width:900px){nav.toc li.sub a{padding-left:10px}}
+.lab-h .seg button{font-size:.76rem;padding:6px 10px}
+.controls output{color:var(--ink);font-weight:600}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);margin:6px 0}
+input[type=range]{width:150px}
+.kv .v .res{font-size:.78rem;padding:1px 8px}
+@media (max-width:560px){.m{white-space:normal;overflow-wrap:anywhere}input[type=range]{width:100%}}
+
+/* ---- Unit 7 additions ---- */
+.hidden-defs{position:absolute;width:0;height:0;overflow:hidden}
+svg .bx{fill:var(--paper);stroke:var(--ink);stroke-width:1.2}
+svg .bxa{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+svg .bxm{fill:var(--mark-soft);stroke:var(--mark);stroke-width:1.2}
+svg .bxb{fill:var(--bad-soft);stroke:var(--bad);stroke-width:1.2}
+svg .op{fill-opacity:.55}
+svg .ln{stroke:var(--ink);stroke-width:1.3;fill:none}
+svg .ln.dash{stroke-dasharray:5 4;stroke:var(--muted)}
+svg .ah{fill:var(--ink)}
+svg .tx{fill:var(--ink);font-size:12px}
+svg .tm{fill:var(--muted);font-size:11px}
+svg .hot{fill:var(--mark-soft);stroke:var(--mark);stroke-width:2.6}
+svg .lane{cursor:pointer}
+svg .lane:focus-visible rect,svg .lane:hover rect{stroke-width:2.4}
+svg .lane:focus{outline:none}
+svg .heat{fill:color-mix(in srgb,var(--accent) calc(var(--h,0) * 100%),var(--paper));stroke:var(--line);stroke-width:1}
+svg .heat.selc{stroke:var(--mark);stroke-width:2.6}
+td.newv{background:var(--mark-soft);color:var(--mark);font-weight:700}
+.yv{font-size:.82rem;line-height:1.7;margin:.3em 0 .8em}
+.yv b{color:var(--accent);font-weight:600}
+.kv .v b{overflow-wrap:anywhere}
+.mitm-pkt.p1{transform:translate(150px,28px)}
+.mitm-pkt.p2{transform:translate(420px,28px)}
+.mitm-ok{fill:var(--bad)}
+@keyframes mitm1{0%{transform:translate(105px,28px);opacity:1}40%{transform:translate(225px,28px);opacity:1}50%,100%{transform:translate(225px,28px);opacity:0}}
+@keyframes mitm2{0%,45%{transform:translate(370px,28px);opacity:0}50%{transform:translate(370px,28px);opacity:1}90%,100%{transform:translate(470px,28px);opacity:1}}
+@media (prefers-reduced-motion:no-preference){.mitm-pkt.p1{animation:mitm1 6s linear infinite}.mitm-pkt.p2{animation:mitm2 6s linear infinite}}
+#rd-svg .rd-mv{opacity:0}
+#rd-svg.play .rd-mv{animation:rdmv 1.6s ease-in-out forwards}
+#rd-svg.play .rdv{animation:rdfade 2.2s ease forwards}
+@keyframes rdmv{0%{opacity:1;transform:none}75%{opacity:1;transform:translate(var(--dx),118px)}100%{opacity:0;transform:translate(var(--dx),118px)}}
+@keyframes rdfade{0%,70%{opacity:0}100%{opacity:1}}
+#sp-svg .sp-f,#sp-svg .sp-p,#sp-svg .sp-z,#sp-svg .sp-x,#it-svg rect{transition:fill .2s,stroke-width .2s}
+#kg-svg,#k3-svg{max-width:320px}
+.seg{flex-wrap:wrap}
+.out .cap{font-family:var(--body)}
+@media (max-width:600px){.figure svg[width]{max-width:none}}
+</style>
+</head>
+<body>
+<svg class="hidden-defs" aria-hidden="true" focusable="false"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker></defs></svg>
+<header class="topbar"><div class="topbar-in"><a class="home" href="./">← All units</a><span class="where">Unit 7 · Hashes &amp; MACs</span></div></header>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <div class="lbl">Contents</div>
+  <ol>
+    <li><a href="#s111"><span>11.1</span>Hash function applications</a></li>
+    <li><a href="#s112"><span>11.2</span>Two simple hash functions</a></li>
+    <li><a href="#s113"><span>11.3</span>Requirements and security</a></li>
+    <li class="sub"><a href="#s113b">Brute force &amp; birthday attack</a></li>
+    <li class="sub"><a href="#s113c">Cryptanalysis &amp; iterated hashes</a></li>
+    <li><a href="#s114"><span>11.4</span>Hashes from CBC</a></li>
+    <li><a href="#s115"><span>11.5</span>SHA (SHA-512)</a></li>
+    <li class="sub"><a href="#s115r">SHA-512 round function</a></li>
+    <li><a href="#s116"><span>11.6</span>SHA-3 and the sponge</a></li>
+    <li class="sub"><a href="#s116f">Iteration function f</a></li>
+    <li><a href="#s121"><span>12.1</span>Authentication requirements</a></li>
+    <li><a href="#s122"><span>12.2</span>Authentication functions</a></li>
+    <li><a href="#s123"><span>12.3</span>MAC requirements</a></li>
+    <li><a href="#s124"><span>12.4</span>Security of MACs</a></li>
+    <li><a href="#s125"><span>12.5</span>HMAC</a></li>
+    <li><a href="#s126"><span>12.6</span>DAA and CMAC</a></li>
+    <li><a href="#s127"><span>12.7</span>CCM and GCM</a></li>
+    <li><a href="#s128"><span>12.8</span>Key wrapping</a></li>
+    <li><a href="#s129"><span>12.9</span>PRNGs from hashes &amp; MACs</a></li>
+    <li><a href="#terms">Key terms</a></li>
+    <li><a href="#review">Review</a></li>
+    <li><a href="#res"><span>Ref</span>Sources</a></li>
+  </ol>
+  <div class="bar" aria-hidden="true"><i id="toc-progress"></i></div>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Unit 7 · Stallings, Chapters 11–12</div>
+  <h1>Hashes &amp; <em>MACs</em></h1>
+  <p class="lede">Encryption hides data; data integrity algorithms detect when data has been changed. Chapter 11 covers cryptographic hash functions: what they are used for, the resistance properties they need, the birthday attack, and the SHA-2 (SHA-512) and SHA-3 (Keccak) designs. Chapter 12 adds a secret key to get message authentication codes: HMAC, CMAC, the authenticated-encryption modes CCM and GCM, key wrapping, and PRNGs built from hashes and MACs.</p>
+  <div class="formula-strip">
+    <span><b>h = H(M)</b></span>
+    <span><b>collision effort ≈ 2<sup>m/2</sup></b></span>
+    <span><b>T = MAC(K, M)</b></span>
+    <span><b>HMAC = H[(K<sup>+</sup><span class="op">⊕</span>opad) ‖ H[(K<sup>+</sup><span class="op">⊕</span>ipad) ‖ M]]</b></span>
+  </div>
+</header>
+
+<!-- ============ 11.1 ============ -->
+<section class="unit" id="s111">
+  <h2><span class="sec">11.1</span>Applications of Cryptographic Hash Functions</h2>
+  <p class="why">A hash function is the most versatile algorithm in this book. Its uses (message authentication, digital signatures, password files, intrusion detection, PRNGs) decide which security properties it needs in 11.3.</p>
+
+  <div class="def"><b>Hash function</b> — a function H that accepts a variable-length block of data M and produces a fixed-size <b>hash value</b> h = H(M). A “good” hash function spreads outputs evenly and apparently randomly over a large set of inputs, so a change to any bit of M changes h with high probability.</div>
+  <div class="def"><b>Computationally infeasible</b> — no attack is significantly more efficient than brute force (trying inputs one by one), and brute force takes far too long.</div>
+  <div class="def"><b>Cryptographic hash function</b> — a hash function for which it is computationally infeasible to find either (a) a data object that maps to a pre-specified hash value (the <b>one-way property</b>) or (b) two data objects that map to the same hash value (the <b>collision-free property</b>).</div>
+  <p>The input is normally padded to a whole number of fixed-size blocks (e.g. 1024 bits), and the padding includes the original message length in bits. The length field makes it harder to find a second message with the same hash.</p>
+
+  <div class="figure" role="img" aria-label="A variable-length message M with padding and a length field enters the hash function H, which outputs a fixed-length hash value h.">
+  <svg viewBox="0 0 640 150" width="640">
+    <rect class="bx" x="10" y="20" width="420" height="34" rx="4"/>
+    <text class="tx" x="220" y="42" text-anchor="middle">Message or data block M (variable length)</text>
+    <rect class="bxm" x="430" y="20" width="110" height="34" rx="4"/>
+    <text class="tx" x="485" y="42" text-anchor="middle">P, L</text>
+    <text class="tm" x="485" y="72" text-anchor="middle">padding + length (L bits)</text>
+    <path class="ln" d="M275 54 V92" marker-end="url(#ah)"/>
+    <rect class="bxa" x="245" y="94" width="60" height="34" rx="4"/>
+    <text class="tx" x="275" y="116" text-anchor="middle">H</text>
+    <path class="ln" d="M305 111 H368" marker-end="url(#ah)"/>
+    <rect class="bx" x="370" y="94" width="120" height="34" rx="4"/>
+    <text class="tx" x="430" y="116" text-anchor="middle">h (fixed length)</text>
+  </svg>
+  <div class="cap">Redrawn from Figure 11.1, Cryptographic hash function h = H(M).</div></div>
+
+  <h3>Message authentication</h3>
+  <div class="def"><b>Message authentication</b> — a mechanism or service that verifies the integrity of a message: data received are exactly as sent (no modification, insertion, deletion or replay), and often that the claimed sender is genuine. The same ideas apply to data at rest, such as a stored file. When a hash is used this way its value is called a <b>message digest</b>.</div>
+  <p>The sender transmits M together with H(M); the receiver recomputes H(M) and compares. The hash value itself must be protected: otherwise an attacker in the middle (Darth) can replace the data and attach a fresh hash of the replacement, and Bob sees no mismatch (Figure 11.2b).</p>
+
+  <div class="figure" role="img" aria-label="Animation: Alice sends data with its hash; Darth intercepts, replaces the data and recomputes the hash; Bob's comparison passes.">
+  <svg viewBox="0 0 640 170" width="640" id="mitm-svg">
+    <rect class="bx" x="10" y="60" width="90" height="44" rx="6"/><text class="tx" x="55" y="87" text-anchor="middle">Alice</text>
+    <rect class="bxb" x="275" y="60" width="90" height="44" rx="6"/><text class="tx" x="320" y="87" text-anchor="middle">Darth</text>
+    <rect class="bx" x="540" y="60" width="90" height="44" rx="6"/><text class="tx" x="585" y="87" text-anchor="middle">Bob</text>
+    <path class="ln dash" d="M100 82 H273"/><path class="ln dash" d="M365 82 H538"/>
+    <g class="mitm-pkt p1"><rect class="bx" x="0" y="0" width="70" height="22" rx="3"/><text class="tx" x="20" y="15" text-anchor="middle" font-size="10">data</text><rect class="bxa" x="42" y="0" width="28" height="22" rx="3"/><text class="tx" x="56" y="15" text-anchor="middle" font-size="10">H</text></g>
+    <g class="mitm-pkt p2"><rect class="bxb" x="0" y="0" width="70" height="22" rx="3"/><text class="tx" x="20" y="15" text-anchor="middle" font-size="10">data′</text><rect class="bxb" x="42" y="0" width="28" height="22" rx="3"/><text class="tx" x="56" y="15" text-anchor="middle" font-size="10">H′</text></g>
+    <text class="tm" x="320" y="128" text-anchor="middle">replaces data, recomputes H(data′)</text>
+    <text class="tm mitm-ok" x="632" y="128" text-anchor="end">check passes ✓</text>
+    <text class="tm" x="190" y="18" text-anchor="middle">data ‖ H(data)</text>
+    <text class="tm" x="455" y="18" text-anchor="middle">data′ ‖ H(data′)</text>
+  </svg>
+  <div class="cap">After Figure 11.2b. An unprotected hash detects accidents, not attackers. The remedies are the methods below.</div></div>
+
+  <p>Figure 11.3 lists four ways to protect the hash (A and B share secret key K or secret value S):</p>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Method</th><th class="l">A sends</th><th>Confidentiality</th><th class="l">Notes</th></tr>
+    <tr><td class="l">(a) encrypt message + hash</td><td class="l mono">E(K, [M ‖ H(M)])</td><td class="c">yes</td><td class="l">The hash supplies the structure (redundancy) needed for authentication.</td></tr>
+    <tr><td class="l">(b) encrypt only the hash</td><td class="l mono">M ‖ E(K, H(M))</td><td class="c">no</td><td class="l">Less processing when confidentiality is not needed. E(K, H(M)) is in effect a MAC.</td></tr>
+    <tr><td class="l">(c) hash with a shared secret, no encryption</td><td class="l mono">M ‖ H(M ‖ S)</td><td class="c">no</td><td class="l">S is never sent, so an opponent cannot make a valid hash for a changed or fake message.</td></tr>
+    <tr><td class="l">(d) method (c) + encryption</td><td class="l mono">E(K, [M ‖ H(M ‖ S)])</td><td class="c">yes</td><td class="l">Adds confidentiality to (c).</td></tr>
+  </table></div>
+  <p>Reasons to avoid encryption, as in (c): encryption software is relatively slow; encryption hardware has a cost at every node; hardware is optimized for large data, so small blocks are dominated by setup overhead; and algorithms may be patented.</p>
+  <div class="def"><b>Message authentication code (MAC)</b> — also called a <b>keyed hash function</b>. A function of a secret key and a data block that produces a value (the MAC) attached to the message. Without the key, an attacker who alters the message cannot produce the matching MAC; the verifier also knows who sent it, because no one else holds the key. Covered in Chapter 12.</div>
+
+  <h3>Digital signatures</h3>
+  <p>The hash value is encrypted with the sender’s <b>private key</b>; anyone with the <b>public key</b> can verify it, and forging it requires the private key (Figure 11.4):</p>
+  <div class="eqrows">
+    <div class="eqrow"><span class="ex1">M ‖ E(PR<sub>a</sub>, H(M))</span><span class="n">(a)</span><span class="tag ok">authentication + signature</span></div>
+    <div class="eqrow"><span class="ex1">E(K, [M ‖ E(PR<sub>a</sub>, H(M))])</span><span class="n">(b)</span><span class="tag ok">+ confidentiality</span></div>
+  </div>
+
+  <h3>Other applications</h3>
+  <ul class="props">
+    <li><b>One-way password file</b>: the operating system stores H(password), not the password. A login is checked by hashing the entered password and comparing.</li>
+    <li><b>Intrusion and virus detection</b>: store H(F) for each file securely (e.g. on write-once media); recompute later to see if F changed. An intruder must change F without changing H(F).</li>
+    <li><b>Pseudorandom function (PRF) or PRNG</b>: hash output looks random, so it can generate symmetric keys and random bits (12.9).</li>
+  </ul>
+</section>
+
+<!-- ============ 11.2 ============ -->
+<section class="unit" id="s112">
+  <h2><span class="sec">11.2</span>Two Simple Hash Functions</h2>
+  <p class="why">Two insecure functions that show the general shape (process n-bit blocks one at a time) and why simple checksums fail as cryptographic hashes.</p>
+  <p>All hash functions view the input as a sequence of n-bit blocks and process them iteratively to produce an n-bit hash.</p>
+  <div class="def"><b>XOR hash (longitudinal redundancy check)</b> — the bitwise XOR of every block: <span class="m">C<sub>i</sub> = b<sub>i1</sub> <span class="op">⊕</span> b<sub>i2</sub> <span class="op">⊕</span> … <span class="op">⊕</span> b<sub>im</sub></span>, where <span class="m">b<sub>ij</sub></span> is bit i of block j. This is a parity bit per bit position. For random data a data error goes undetected with probability 2<sup>−n</sup>; for formatted data it does worse (in text, the high bit of each byte is always 0, so a 128-bit XOR hash gives only 2<sup>−112</sup>).</div>
+  <div class="def"><b>Rotated XOR (RXOR)</b> — start with hash 0; for each block, rotate the current hash left by one bit, then XOR in the block. The rotation “randomizes” regularities in the input.</div>
+
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · XOR vs RXOR (16-bit)</span><span class="pill">Figure 11.5</span></div>
+    <div class="lab-b">
+      <div class="controls"><label class="grow">Message (UTF-8 text, split into 16-bit blocks)<input type="text" id="sx-in" class="wide" value="pay Bob 100"></label><button id="sx-swap" class="ghost" type="button">Swap first two blocks</button></div>
+      <div id="sx-out" class="out"></div>
+      <p class="cap">Swapping blocks never changes the XOR hash (XOR is order-independent). Easy forgery: append one block equal to the XOR of the current hash and the target hash.</p>
+    </div>
+  </div>
+
+  <ul class="props">
+    <li>RXOR is a good integrity check but useless for security when only the hash is encrypted (Figures 11.3b, 11.4a): for any desired message, append one n-bit block that forces the hash to the required value.</li>
+    <li>Encrypting the whole message plus XOR hash is not enough either. A scheme proposed by the National Bureau of Standards appends <span class="m">h = X<sub>N+1</sub> = X<sub>1</sub> <span class="op">⊕</span> … <span class="op">⊕</span> X<sub>N</sub></span> (64-bit blocks) and encrypts everything in CBC mode. Since <span class="m">X<sub>i</sub> = Y<sub>i−1</sub> <span class="op">⊕</span> D(K, Y<sub>i</sub>)</span>, the hash equals an XOR of terms that can be taken in any order, so <b>permuting the ciphertext blocks</b> goes undetected.</li>
+  </ul>
+</section>
+
+<!-- ============ 11.3 ============ -->
+<section class="unit" id="s113">
+  <h2><span class="sec">11.3</span>Requirements and Security</h2>
+  <p class="why">The six requirements of Table 11.1 define “secure” for a hash function, and each application in 11.1 relies on a different subset of them.</p>
+  <div class="def"><b>Preimage</b> — for h = H(x), x is a preimage of h. H is many-to-one, so a hash value generally has many preimages: with b-bit inputs and n-bit hashes (b &gt; n), about <span class="m">2<sup>b−n</sup></span> each on average; with arbitrary-length inputs, arbitrarily many.</div>
+  <div class="def"><b>Collision</b> — x ≠ y with H(x) = H(y). Collisions must exist; what matters is that they are infeasible to find.</div>
+
+  <h3>Table 11.1 · Requirements for a cryptographic hash function H</h3>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Requirement</th><th class="l">Description</th></tr>
+    <tr><td class="l">Variable input size</td><td class="l">H can be applied to a block of data of any size.</td></tr>
+    <tr><td class="l">Fixed output size</td><td class="l">H produces a fixed-length output.</td></tr>
+    <tr><td class="l">Efficiency</td><td class="l">H(x) is relatively easy to compute for any x, in hardware and software.</td></tr>
+    <tr><td class="l"><b>Preimage resistant</b> (one-way)</td><td class="l">Given h, infeasible to find y with H(y) = h.</td></tr>
+    <tr><td class="l"><b>Second preimage resistant</b> (weak collision resistant)</td><td class="l">Given x, infeasible to find y ≠ x with H(y) = H(x).</td></tr>
+    <tr><td class="l"><b>Collision resistant</b> (strong collision resistant)</td><td class="l">Infeasible to find any pair x ≠ y with H(x) = H(y).</td></tr>
+    <tr><td class="l">Pseudorandomness</td><td class="l">Output of H passes standard tests for pseudorandomness.</td></tr>
+  </table></div>
+  <ul class="props">
+    <li><b>Preimage resistance</b> protects the secret value in method (c): an attacker who sees M and H(S ‖ M) could otherwise invert H and read off S.</li>
+    <li><b>Second preimage resistance</b> stops forgery with an encrypted hash (Figures 11.3b, 11.4a): otherwise the attacker computes H(M) from an intercepted M and finds another message with the same hash.</li>
+    <li><b>Weak hash function</b> = first five properties. <b>Strong hash function</b> = also collision resistant. Collision resistance protects against one party preparing a message for another to sign. Example: Bob finds two IOUs with the same hash, one small and one large; Alice signs the small one, and Bob presents the large one with her signature.</li>
+    <li><b>Pseudorandomness</b> is implied rather than traditionally listed: hashes are used for key derivation and PRNGs, and the three resistance properties depend on the output looking random.</li>
+  </ul>
+
+  <div class="grid2" style="align-items:center">
+  <div class="figure" role="img" aria-label="Collision resistant is a subset of second preimage resistant; preimage resistant overlaps both but contains neither.">
+  <svg viewBox="0 0 350 210" width="350">
+    <ellipse class="bxa op" cx="140" cy="115" rx="125" ry="88"/>
+    <ellipse class="bxb op" cx="110" cy="130" rx="62" ry="42"/>
+    <ellipse class="bxm op" cx="262" cy="95" rx="82" ry="58"/>
+    <text class="tx" x="64" y="60" font-size="11">Second preimage</text><text class="tx" x="64" y="73" font-size="11">resistant</text>
+    <text class="tx" x="72" y="127" font-size="11">Collision</text><text class="tx" x="72" y="140" font-size="11">resistant</text>
+    <text class="tx" x="266" y="90" font-size="11">Preimage</text><text class="tx" x="266" y="103" font-size="11">resistant</text>
+  </svg>
+  <div class="cap">Figure 11.6. Collision resistant ⇒ second preimage resistant (not the reverse). Preimage resistance is independent of both.</div></div>
+  <div>
+  <h3>Table 11.2 · Properties each application needs</h3>
+  <div class="tbl"><table>
+    <tr><th class="l">Application</th><th>Preimage</th><th>2nd preimage</th><th>Collision</th></tr>
+    <tr><td class="l">Hash + digital signature</td><td>yes</td><td>yes</td><td>yes*</td></tr>
+    <tr><td class="l">Intrusion / virus detection</td><td></td><td>yes</td><td></td></tr>
+    <tr><td class="l">Hash + symmetric encryption</td><td></td><td></td><td></td></tr>
+    <tr><td class="l">One-way password file</td><td>yes</td><td></td><td></td></tr>
+    <tr><td class="l">MAC</td><td>yes</td><td>yes</td><td>yes*</td></tr>
+  </table></div>
+  <p class="cap">* Required if the attacker can mount a chosen message attack.</p>
+  </div></div>
+</section>
+
+<section class="unit" id="s113b">
+  <h2>Brute-Force Attacks and the Birthday Attack</h2>
+  <p class="why">A brute-force attack depends only on the hash length m. Collisions are found far faster than preimages: about 2<sup>m/2</sup> tries rather than 2<sup>m</sup>.</p>
+  <p>Two categories of attack exist, as for ciphers: <b>brute force</b> (depends only on bit length) and <b>cryptanalysis</b> (exploits weaknesses of a particular algorithm).</p>
+  <ul class="props">
+    <li><b>Preimage and second preimage attacks</b>: pick random y until H(y) = h. Effort ∝ 2<sup>m</sup>; on average 2<sup>m−1</sup> tries.</li>
+    <li><b>Collision attack</b>: find any x, y with H(x) = H(y). By the <b>birthday paradox</b>, if values are drawn uniformly from 0 … N−1, the chance of a repeat exceeds 0.5 after about <span class="m">√N</span> draws. For an m-bit hash, <span class="m">√(2<sup>m</sup>) = 2<sup>m/2</sup></span> tries.</li>
+  </ul>
+  <div class="tbl"><table>
+    <tr><th class="l">Property</th><th>Brute-force effort</th><th>m = 128</th><th>m = 160</th><th>m = 256</th></tr>
+    <tr><td class="l">Preimage resistant</td><td>2<sup>m</sup></td><td>2<sup>128</sup></td><td>2<sup>160</sup></td><td>2<sup>256</sup></td></tr>
+    <tr><td class="l">Second preimage resistant</td><td>2<sup>m</sup></td><td>2<sup>128</sup></td><td>2<sup>160</sup></td><td>2<sup>256</sup></td></tr>
+    <tr class="hlrow"><td class="l">Collision resistant</td><td>2<sup>m/2</sup></td><td>2<sup>64</sup></td><td>2<sup>80</sup></td><td>2<sup>128</sup></td></tr>
+  </table></div>
+  <p>If collision resistance is required (desirable for a general-purpose hash), 2<sup>m/2</sup> sets the strength. A proposed $10 million machine could find an MD5 (128-bit) collision in 24 days, so 128 bits is inadequate; with current technology, 160 bits is also suspect.</p>
+
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Birthday attack on a truncated hash</span><span class="pill">SHA-256, first m bits</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>hash length m (bits)<input type="range" id="bd-m" min="8" max="32" step="2" value="20"> <output id="bd-mv">20</output></label>
+        <button id="bd-go" type="button">Find a collision</button><button id="bd-many" class="ghost" type="button">Average of 40 runs</button>
+      </div>
+      <div id="bd-out" class="out"></div>
+      <p class="cap">Each try hashes a fresh random message and stores the truncated value; the run stops at the first repeat. Compare the count with 2<sup>m/2</sup> and with the 2<sup>m−1</sup> needed for a preimage.</p>
+    </div>
+  </div>
+
+  <h3>Yuval’s birthday attack on a signed message</h3>
+  <ol>
+    <li>A is prepared to sign a legitimate message x by appending its m-bit hash encrypted with A’s private key (Figure 11.4a).</li>
+    <li>The opponent generates 2<sup>m/2</sup> variations x′ of x with the same meaning, and stores them with their hashes.</li>
+    <li>The opponent prepares a fraudulent message y that A should not sign.</li>
+    <li>The opponent generates variations y′ of y, hashing each, until some H(y′) matches a stored H(x′).</li>
+    <li>A signs the valid variation x′. The signature also fits y′ (same hash), so the opponent succeeds without knowing the key.</li>
+  </ol>
+  <p>For a 64-bit hash this costs only about 2<sup>32</sup>. Variations are easy to make: insert “space-space-backspace” pairs between words and switch some to “space-backspace-space”, or reword without changing meaning (Figure 11.7 is a letter written in 2<sup>38</sup> variations).</p>
+
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Yuval’s attack with a 16-bit hash</span><span class="pill">2<sup>12</sup> variants each</span></div>
+    <div class="lab-b">
+      <p class="cap" style="margin-top:0">Two letters, each with 12 points where either wording works (bracketed). 2<sup>12</sup> = 4096 variants of each. With a 16-bit hash (first 16 bits of SHA-256), a match between a fair and a fraudulent variant is expected after about 2<sup>8</sup> of each.</p>
+      <div class="grid2">
+        <div><b>Fair letter x</b><p class="mono yv" id="yv-x"></p></div>
+        <div><b>Fraudulent letter y</b><p class="mono yv" id="yv-y"></p></div>
+      </div>
+      <div class="controls"><button id="yv-go" type="button">Search for matching variants</button></div>
+      <div id="yv-out" class="out"></div>
+    </div>
+  </div>
+</section>
+
+<section class="unit" id="s113c">
+  <h2>Cryptanalysis and the Iterated Hash Structure</h2>
+  <p class="why">Most hash functions in use, SHA included, share one structure, so attacks focus on its compression function.</p>
+  <p>Cryptanalysis tries to beat brute force. An <b>ideal</b> hash algorithm requires cryptanalytic effort ≥ brute-force effort.</p>
+  <div class="def"><b>Iterated hash function</b> (Merkle) — split the input into L blocks of b bits, padding the final block and including the total input length in it. A <b>compression function</b> f takes an n-bit <b>chaining variable</b> and a b-bit block and outputs n bits (usually b &gt; n, hence “compression”):</div>
+  <div class="eq">CV<sub>0</sub> = IV = initial n-bit value
+CV<sub>i</sub> = f(CV<sub>i−1</sub>, Y<sub>i−1</sub>)      1 ≤ i ≤ L
+H(M) = CV<sub>L</sub></div>
+
+  <div class="figure" role="img" aria-label="Iterated hash: IV enters the first f with block Y0; each f outputs the next chaining variable; the last is the hash.">
+  <svg viewBox="0 0 700 170" width="700" id="it-svg">
+    <text class="tx" x="8" y="104">IV = CV₀</text>
+    <g id="it-f">
+    </g>
+  </svg>
+  <div class="controls"><button id="it-step" type="button">Next block</button><button id="it-reset" class="ghost" type="button">Reset</button><span class="out" id="it-msg"></span></div>
+  <div class="cap">Redrawn from Figure 11.8, General structure of secure hash code. Step through to follow the chaining variable.</div></div>
+
+  <ul class="props">
+    <li><b>Merkle–Damgård result</b>: if the length field is included and f is collision resistant, the iterated hash is collision resistant. Designing a secure hash reduces to designing a collision-resistant compression function on fixed-size inputs.</li>
+    <li>Cryptanalysis therefore targets f: find efficient ways to produce collisions for one execution of f, then deal with the fixed IV. Like block ciphers, f is a series of rounds, so attacks study bit-change patterns from round to round.</li>
+  </ul>
+</section>
+
+<!-- ============ 11.4 ============ -->
+<section class="unit" id="s114">
+  <h2><span class="sec">11.4</span>Hash Functions Based on Cipher Block Chaining</h2>
+  <p class="why">Building a hash from a block cipher in CBC fashion without a secret key; it inherits the birthday attack and a meet-in-the-middle variant.</p>
+  <p>Rabin’s proposal: split M into blocks M<sub>1</sub>, …, M<sub>N</sub>, and use each block as the <b>key</b> of a symmetric cipher such as DES:</p>
+  <div class="eq">H<sub>0</sub> = initial value
+H<sub>i</sub> = E(M<sub>i</sub>, H<sub>i−1</sub>)
+G = H<sub>N</sub></div>
+  <p>With DES the hash is only 64 bits, so the birthday attack works. A <b>meet-in-the-middle</b> version of the birthday attack needs only one message and its signature (an encrypted m-bit hash G):</p>
+  <ol>
+    <li>Compute the unencrypted hash G of the intercepted message.</li>
+    <li>Write any desired message Q<sub>1</sub>, …, Q<sub>N−2</sub>.</li>
+    <li>Compute H<sub>i</sub> = E(Q<sub>i</sub>, H<sub>i−1</sub>) for 1 ≤ i ≤ N−2.</li>
+    <li>For 2<sup>m/2</sup> random blocks X compute E(X, H<sub>N−2</sub>); for 2<sup>m/2</sup> random blocks Y compute D(Y, G).</li>
+    <li>By the birthday paradox some X, Y give E(X, H<sub>N−2</sub>) = D(Y, G).</li>
+    <li>The message Q<sub>1</sub>, …, Q<sub>N−2</sub>, X, Y hashes to G, so the old signature fits it.</li>
+  </ol>
+</section>
+
+<!-- ============ 11.5 ============ -->
+<section class="unit" id="s115">
+  <h2><span class="sec">11.5</span>Secure Hash Algorithm (SHA)</h2>
+  <p class="why">The SHA family is the most widely used set of hash functions. The book describes SHA-512; the other SHA-2 versions are similar.</p>
+  <p>SHA is a NIST standard (FIPS 180) modeled on MD4. SHA-1 gives a 160-bit hash. SHA-256, SHA-384 and SHA-512 (together <b>SHA-2</b>) use the same structure and the same kinds of modular arithmetic and logical operations; SHA-224, SHA-512/224 and SHA-512/256 were added later (FIPS 180-4).</p>
+  <h3>Table 11.3 · SHA parameters (bits)</h3>
+  <div class="tbl"><table>
+    <tr><th class="l">Algorithm</th><th>Message size</th><th>Block size</th><th>Word size</th><th>Digest size</th></tr>
+    <tr><td class="l">SHA-1</td><td>&lt; 2<sup>64</sup></td><td>512</td><td>32</td><td>160</td></tr>
+    <tr><td class="l">SHA-224</td><td>&lt; 2<sup>64</sup></td><td>512</td><td>32</td><td>224</td></tr>
+    <tr><td class="l">SHA-256</td><td>&lt; 2<sup>64</sup></td><td>512</td><td>32</td><td>256</td></tr>
+    <tr><td class="l">SHA-384</td><td>&lt; 2<sup>128</sup></td><td>1024</td><td>64</td><td>384</td></tr>
+    <tr class="hlrow"><td class="l">SHA-512</td><td>&lt; 2<sup>128</sup></td><td>1024</td><td>64</td><td>512</td></tr>
+    <tr><td class="l">SHA-512/224</td><td>&lt; 2<sup>128</sup></td><td>1024</td><td>64</td><td>224</td></tr>
+    <tr><td class="l">SHA-512/256</td><td>&lt; 2<sup>128</sup></td><td>1024</td><td>64</td><td>256</td></tr>
+  </table></div>
+  <div class="warn"><b>Status of SHA-1.</b> The book notes a collision attack needing about 2<sup>69</sup> operations instead of 2<sup>80</sup> and says SHA-1 is considered insecure and being phased out. Since then NIST has set December 31, 2030 as the date to stop using SHA-1 and recommends SHA-2 or SHA-3 (see Sources).</div>
+
+  <h3>SHA-512 logic</h3>
+  <p>Input: a message under 2<sup>128</sup> bits. Output: a 512-bit digest. Processing is in 1024-bit blocks and follows the iterated structure of Figure 11.8.</p>
+  <ol>
+    <li><b>Append padding bits</b> so the length ≡ 896 (mod 1024). Padding is always added (1 to 1024 bits): a single 1 bit, then 0 bits.</li>
+    <li><b>Append length</b>: a 128-bit unsigned integer, most significant byte first, holding the original length in bits. The result is N × 1024 bits: blocks M<sub>1</sub> … M<sub>N</sub>.</li>
+    <li><b>Initialize the hash buffer</b>: eight 64-bit registers a … h, set to the first 64 bits of the fractional parts of the square roots of the first eight primes, stored <b>big-endian</b>.</li>
+    <li><b>Process each 1024-bit block</b> in module F: 80 rounds, each using a 64-bit word W<sub>t</sub> from the message schedule and a constant K<sub>t</sub> (first 64 bits of the fractional parts of the cube roots of the first 80 primes). The output of round 79 is added word-by-word mod 2<sup>64</sup> to the input H<sub>i−1</sub> to give H<sub>i</sub>.</li>
+    <li><b>Output</b>: after N blocks, H<sub>N</sub> is the 512-bit digest.</li>
+  </ol>
+  <div class="def"><b>Big-endian</b> — the most significant byte of a word is stored at the lowest address (leftmost). <b>Little-endian</b> stores the least significant byte first. SHA-512 is big-endian; SHA-3 lanes (11.6) are little-endian.</div>
+  <div class="eq">H<sub>0</sub> = IV
+H<sub>i</sub> = SUM<sub>64</sub>(H<sub>i−1</sub>, abcdefgh<sub>i</sub>)      <span class="n">abcdefgh<sub>i</sub> = output of round 79 on block i</span>
+MD  = H<sub>N</sub>                          <span class="n">SUM<sub>64</sub> = word-by-word addition mod 2<sup>64</sup></span></div>
+
+  <div class="figure" role="img" aria-label="SHA-512 overview: padded message split into 1024-bit blocks; each block passes through F with the previous 512-bit hash value; outputs are added mod 2^64.">
+  <svg viewBox="0 0 660 190" width="660">
+    <rect class="bx" x="20" y="14" width="150" height="30"/><text class="tx" x="95" y="34" text-anchor="middle">M₁ (1024)</text>
+    <rect class="bx" x="200" y="14" width="150" height="30"/><text class="tx" x="275" y="34" text-anchor="middle">M₂</text>
+    <text class="tx" x="395" y="34" text-anchor="middle">…</text>
+    <rect class="bx" x="440" y="14" width="110" height="30"/><text class="tx" x="495" y="34" text-anchor="middle">M<tspan font-size="9" dy="3">N</tspan></text>
+    <rect class="bxm" x="550" y="14" width="40" height="30"/><text class="tm" x="570" y="34" text-anchor="middle">10…0</text>
+    <rect class="bxm" x="590" y="14" width="56" height="30"/><text class="tm" x="618" y="34" text-anchor="middle">L(128)</text>
+    <g>
+      <path class="ln" d="M95 44 V78" marker-end="url(#ah)"/><path class="ln" d="M275 44 V78" marker-end="url(#ah)"/><path class="ln" d="M495 44 V78" marker-end="url(#ah)"/>
+      <rect class="bxa" x="70" y="80" width="50" height="40" rx="4"/><text class="tx" x="95" y="105" text-anchor="middle">F</text>
+      <rect class="bxa" x="250" y="80" width="50" height="40" rx="4"/><text class="tx" x="275" y="105" text-anchor="middle">F</text>
+      <rect class="bxa" x="470" y="80" width="50" height="40" rx="4"/><text class="tx" x="495" y="105" text-anchor="middle">F</text>
+      <text class="tx" x="4" y="104">H₀=IV</text><path class="ln" d="M44 100 H68" marker-end="url(#ah)"/>
+      <circle class="bx" cx="155" cy="100" r="10"/><text class="tx" x="155" y="104" text-anchor="middle">+</text>
+      <circle class="bx" cx="335" cy="100" r="10"/><text class="tx" x="335" y="104" text-anchor="middle">+</text>
+      <circle class="bx" cx="555" cy="100" r="10"/><text class="tx" x="555" y="104" text-anchor="middle">+</text>
+      <path class="ln" d="M120 100 H143" marker-end="url(#ah)"/><path class="ln" d="M300 100 H323" marker-end="url(#ah)"/><path class="ln" d="M520 100 H543" marker-end="url(#ah)"/>
+      <path class="ln" d="M56 100 V140 H155 V112" marker-end="url(#ah)"/>
+      <path class="ln" d="M165 100 H248" marker-end="url(#ah)"/><text class="tm" x="200" y="94">H₁</text>
+      <path class="ln" d="M205 100 V140 H335 V112" marker-end="url(#ah)"/>
+      <path class="ln" d="M345 100 H400"/><text class="tx" x="420" y="104">…</text><path class="ln" d="M440 100 H468" marker-end="url(#ah)"/>
+      <path class="ln" d="M452 100 V140 H555 V112" marker-end="url(#ah)"/>
+      <path class="ln" d="M565 100 H600" marker-end="url(#ah)"/><text class="tx" x="604" y="104">H<tspan font-size="9" dy="3">N</tspan></text>
+      <text class="tm" x="330" y="175" text-anchor="middle">+ = word-by-word addition mod 2⁶⁴ · each arrow between blocks is 512 bits</text>
+    </g>
+  </svg>
+  <div class="cap">Redrawn from Figure 11.9, Message digest generation using SHA-512.</div></div>
+</section>
+
+<section class="unit" id="s115r">
+  <h2>SHA-512 Round Function and Message Schedule</h2>
+  <p class="why">Each of the 80 rounds updates the 512-bit buffer abcdefgh. Six words are only shifted down; two (a and e) are new.</p>
+  <div class="eq">T<sub>1</sub> = h + Ch(e, f, g) + Σ<sub>1</sub>(e) + W<sub>t</sub> + K<sub>t</sub>
+T<sub>2</sub> = Σ<sub>0</sub>(a) + Maj(a, b, c)
+h = g   g = f   f = e   <b>e = d + T<sub>1</sub></b>
+d = c   c = b   b = a   <b>a = T<sub>1</sub> + T<sub>2</sub></b>          <span class="n">+ is addition mod 2<sup>64</sup>, 0 ≤ t ≤ 79</span></div>
+  <ul class="props">
+    <li><b>Ch(e, f, g)</b> = (e AND f) <span class="op">⊕</span> (NOT e AND g): the conditional function “if e then f else g”, bit by bit.</li>
+    <li><b>Maj(a, b, c)</b> = (a AND b) <span class="op">⊕</span> (a AND c) <span class="op">⊕</span> (b AND c): true where a majority (two or three) of the bits are true.</li>
+    <li><b>Σ<sub>0</sub>(a)</b> = ROTR<sup>28</sup>(a) <span class="op">⊕</span> ROTR<sup>34</sup>(a) <span class="op">⊕</span> ROTR<sup>39</sup>(a); <b>Σ<sub>1</sub>(e)</b> = ROTR<sup>14</sup>(e) <span class="op">⊕</span> ROTR<sup>18</sup>(e) <span class="op">⊕</span> ROTR<sup>41</sup>(e). ROTR<sup>n</sup> = circular right shift of the 64-bit word by n bits.</li>
+    <li>Word <b>e</b> depends on d, e, f, g, h, W<sub>t</sub>, K<sub>t</sub>. Word <b>a</b> depends on every input word except d, plus W<sub>t</sub>, K<sub>t</sub>.</li>
+  </ul>
+
+  <div class="figure" role="img" aria-label="Animation of one SHA-512 round: words a,b,c,d,e,f,g slide one place right into b,c,d,e,f,g,h; new values for a and e are computed from T1 and T2.">
+  <svg viewBox="0 0 660 200" width="660" id="rd-svg"></svg>
+  <div class="cap">After Figure 11.11, Elementary SHA-512 operation (single round). Shaded words are copied (permutation); a and e are substituted. Press play to animate.</div>
+  <div class="controls"><button id="rd-play" type="button">Play one round</button></div></div>
+
+  <h3>Message schedule</h3>
+  <p>The 80 words W<sub>t</sub> come from the current 1024-bit block (Figure 11.12). W<sub>0</sub> … W<sub>15</sub> are the block’s 16 words. For t = 16 … 79:</p>
+  <div class="eq">W<sub>t</sub> = σ<sub>1</sub>(W<sub>t−2</sub>) + W<sub>t−7</sub> + σ<sub>0</sub>(W<sub>t−15</sub>) + W<sub>t−16</sub>
+σ<sub>0</sub>(x) = ROTR<sup>1</sup>(x) <span class="op">⊕</span> ROTR<sup>8</sup>(x) <span class="op">⊕</span> SHR<sup>7</sup>(x)
+σ<sub>1</sub>(x) = ROTR<sup>19</sup>(x) <span class="op">⊕</span> ROTR<sup>61</sup>(x) <span class="op">⊕</span> SHR<sup>6</sup>(x)        <span class="n">SHR<sup>n</sup> = right shift, zeros in on the left</span></div>
+  <p>This adds redundancy and interdependence among the compressed words, which makes it harder to find a different block with the same compression output. Every bit of the hash depends on every input bit. Unless SHA-512 has an unpublished weakness, finding two messages with the same digest takes about 2<sup>256</sup> operations, and finding a message with a given digest about 2<sup>512</sup>.</p>
+
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · SHA-512 step by step</span><span class="pill">book example: “abc”</span></div>
+    <div class="lab-b">
+      <div class="controls"><label class="grow">Message (UTF-8)<input type="text" id="s5-in" class="wide" value="abc"></label></div>
+      <div id="s5-pad" class="out"></div>
+      <div class="controls" style="margin-top:12px"><label>block<select id="s5-blk"></select></label><label>round t<input type="range" id="s5-t" min="0" max="79" value="0" style="width:220px"> <output id="s5-tv">0</output></label></div>
+      <div id="s5-round" class="out"></div>
+      <div id="s5-dig" class="out" style="margin-top:10px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 11.6 ============ -->
+<section class="unit" id="s116">
+  <h2><span class="sec">11.6</span>SHA-3</h2>
+  <p class="why">SHA-2 shares structure and operations with the broken MD5 and SHA-0, so NIST ran a competition for a different design. The winner, Keccak, is SHA-3 (FIPS 202). It complements SHA-2 rather than replacing it.</p>
+
+  <h3>The sponge construction</h3>
+  <p>The sponge has the general structure of an iterated hash: split input into fixed blocks and feed each iteration’s output into the next. It allows variable-length input <b>and</b> output, so the same structure can serve as a hash (fixed output), a PRNG (fixed input), and other functions. It is defined by three parameters:</p>
+  <ul class="props">
+    <li><b>f</b>: the internal function applied once per block, called here the <b>iteration function</b> (Keccak calls it a permutation).</li>
+    <li><b>r</b>: the <b>bitrate</b>, the input block size; the bits of message processed per iteration.</li>
+    <li><b>pad</b>: the padding algorithm. <b>pad10*</b> appends 1 then the minimum number of 0s; <b>pad10*1</b> (multirate) appends 1, 0s, then 1, and is the simplest scheme allowing the same f at different rates. FIPS 202 uses pad10*1. Padding is always added: if the message is already a multiple of r, a full padding block is appended.</li>
+  </ul>
+  <div class="def"><b>State</b> — a b-bit variable s, b = r + c, initialized to all zeros. <b>Capacity</b> c is the part of the state never directly touched by input or output; it measures the achievable security. Raising c and lowering r trades speed for security. Keccak defaults: c = 1024, r = 576, b = 1600.</div>
+  <ul class="props">
+    <li><b>Absorbing phase</b>: pad each r-bit block with zeros to b bits, XOR it into s, then s ← f(s).</li>
+    <li><b>Squeezing phase</b>: if the wanted output length ℓ ≤ b, return the first ℓ bits of s. Otherwise keep the first r bits as Z<sub>0</sub>, apply f again, take the next r bits as Z<sub>1</sub>, and so on until (j−1)·r &lt; ℓ ≤ j·r; return the first ℓ bits.</li>
+  </ul>
+
+  <div class="figure" role="img" aria-label="Animated sponge construction: message blocks are XORed into the r-bit part of the state before each f; output blocks Z are read from the r-bit part.">
+  <svg viewBox="0 0 700 210" width="700" id="sp-svg"></svg>
+  <div class="controls"><button id="sp-play" type="button">Animate</button><span class="out" id="sp-msg">absorb P₀, P₁, P₂, then squeeze Z₀, Z₁</span></div>
+  <div class="cap">After Figure 11.15, Sponge construction. Top strip = r bits (rate), bottom strip = c bits (capacity).</div></div>
+
+  <div class="pseudo"><span class="cm">// SPONGE[f, pad, r] — Z = sponge(M, ℓ)</span>
+P = M ‖ pad[r](|M|)
+s = 0<sup>b</sup>
+<span class="kw">for</span> i = 0 <span class="kw">to</span> |P|<sub>r</sub> − 1:   s = f(s <span class="op">⊕</span> (P<sub>i</sub> ‖ 0<sup>b−r</sup>))
+Z = ⌊s⌋<sub>r</sub>
+<span class="kw">while</span> |Z|<sub>r</sub>·r &lt; ℓ:   s = f(s);   Z = Z ‖ ⌊s⌋<sub>r</sub>
+<span class="kw">return</span> ⌊Z⌋<sub>ℓ</sub>                     <span class="cm">// ⌊X⌋ₗ = first ℓ bits of X</span></div>
+
+  <h3>Table 11.5 · SHA-3 parameters (r + c = 1600, 24 rounds, 64-bit words)</h3>
+  <div class="tbl"><table>
+    <tr><th class="l">Digest size</th><th>224</th><th>256</th><th>384</th><th>512</th></tr>
+    <tr><td class="l">Bitrate r</td><td>1152</td><td>1088</td><td>832</td><td>576</td></tr>
+    <tr><td class="l">Capacity c</td><td>448</td><td>512</td><td>768</td><td>1024</td></tr>
+    <tr><td class="l">Collision resistance</td><td>2<sup>112</sup></td><td>2<sup>128</sup></td><td>2<sup>192</sup></td><td>2<sup>256</sup></td></tr>
+    <tr><td class="l">Second preimage resistance</td><td>2<sup>224</sup></td><td>2<sup>256</sup></td><td>2<sup>384</sup></td><td>2<sup>512</sup></td></tr>
+  </table></div>
+  <p>Message size has no maximum. Security is a function of the capacity (c = 2 × digest size). SHA-3 is written as:</p>
+  <div class="eq">Keccak[r, c] = SPONGE[Keccak-f[r + c], pad10*1, r]</div>
+  <div class="note"><span class="t">From FIPS 202</span>The same sponge also defines two extendable-output functions, SHAKE128 and SHAKE256, where the output length ℓ is chosen by the caller (the squeezing phase in use). FIPS 202 also places two domain bits before pad10*1 (01 for SHA-3), which the lab below includes.</div>
+</section>
+
+<section class="unit" id="s116f">
+  <h2>The SHA-3 Iteration Function f (Keccak-f)</h2>
+  <p class="why">f turns the 1600-bit state into a 5 × 5 matrix of 64-bit lanes and runs 24 rounds of five steps. The steps use only XOR, AND, NOT and rotations, so there are no tables or arithmetic in which a trapdoor could hide.</p>
+  <div class="def"><b>Lane</b> — one 64-bit word of the state. The state is the array a[x, y, z] with column x = 0…4, row y = 0…4 and bit z = 0…63; as lanes, L[x, y]. Bits map as <span class="m">s[64(5y + x) + z] = a[x, y, z]</span>: the first 64 bits of s are L[0, 0] (lower left), the next L[1, 0], filling row y = 0 first. Note x is the <b>column</b>, unlike the usual row-first math convention.</div>
+
+  <div class="grid2">
+  <div>
+    <div class="figure"><svg viewBox="0 0 300 300" width="300" id="kg-svg" role="img" aria-label="5 by 5 lane grid; select a lane to see which lanes the theta and chi steps read."></svg></div>
+    <div class="controls"><div class="seg" role="group" aria-label="Step to inspect"><button type="button" id="kg-th" aria-pressed="true">θ inputs</button><button type="button" id="kg-ch" aria-pressed="false">χ inputs</button><button type="button" id="kg-rh" aria-pressed="false">ρ offsets</button><button type="button" id="kg-pi" aria-pressed="false">π move</button></div></div>
+    <p class="cap" id="kg-cap"></p>
+  </div>
+  <div>
+    <h3 style="margin-top:0">Table 11.6 · Step functions</h3>
+    <div class="tbl"><table class="modes">
+      <tr><th>Step</th><th class="l">Type</th><th class="l">What it does</th></tr>
+      <tr><td>θ theta</td><td class="l">substitution</td><td class="l">Each bit depends on itself, one bit in each lane of the preceding column, and one bit in each lane of the succeeding column.</td></tr>
+      <tr><td>ρ rho</td><td class="l">permutation</td><td class="l">Circular bit shift within each lane. L[0, 0] unchanged.</td></tr>
+      <tr><td>π pi</td><td class="l">permutation</td><td class="l">Lanes move within the 5 × 5 matrix. L[0, 0] unchanged.</td></tr>
+      <tr><td>χ chi</td><td class="l">substitution</td><td class="l">Each bit depends on itself and the same bit in the next two lanes of its row.</td></tr>
+      <tr><td>ι iota</td><td class="l">substitution</td><td class="l">L[0, 0] is XORed with a round constant.</td></tr>
+    </table></div>
+    <p>One round is the composition <span class="m">R = ι ∘ χ ∘ π ∘ ρ ∘ θ</span> (θ first). All 24 rounds are identical apart from ι’s round constant.</p>
+  </div></div>
+
+  <h3>θ theta</h3>
+  <div class="eq">C[x] = L[x,0] <span class="op">⊕</span> L[x,1] <span class="op">⊕</span> L[x,2] <span class="op">⊕</span> L[x,3] <span class="op">⊕</span> L[x,4]          <span class="n">column parity lane</span>
+L[x,y] ← L[x,y] <span class="op">⊕</span> C[x−1] <span class="op">⊕</span> ROT(C[x+1], 1)                 <span class="n">indices mod 5</span></div>
+  <p>Each bit depends on 11 bits, giving good mixing; the designers state that without θ the round function would give no significant <b>diffusion</b> (each input bit affecting many output bits, Chapter 4).</p>
+  <h3>ρ rho</h3>
+  <p>Lane L[x, y] is rotated by <span class="m">(t+1)(t+2)/2 mod 64</span> bits, where t (0 ≤ t &lt; 24) picks the lane through <span class="m">(x, y) = (0 1; 2 3)<sup>t</sup>(1, 0) mod 5</span>; equivalently, starting at (1, 0), each step maps (x, y) → (y, 2x + 3y). All 24 offsets differ. ρ provides diffusion within each lane; without it, diffusion between lanes would be very slow.</p>
+  <div class="tbl" id="rho-tbl"></div>
+  <h3>π pi</h3>
+  <p>Lane at (x, y) moves to (y, 2x + 3y) mod 5. Lanes on the same diagonal before π end up on the same row after it. π permutes lanes; ρ permutes bits inside a lane.</p>
+  <h3>χ chi</h3>
+  <div class="eq">a[x,y,z] ← a[x,y,z] <span class="op">⊕</span> (NOT a[x+1,y,z] AND a[x+2,y,z])</div>
+  <p>The <b>only nonlinear</b> step: without χ the round function would be linear.</p>
+  <h3>ι iota</h3>
+  <div class="eq">L[0,0] ← L[0,0] <span class="op">⊕</span> RC[i<sub>r</sub>]          <span class="n">0 ≤ i<sub>r</sub> ≤ 23</span></div>
+  <p>Breaks the symmetry left by the other four steps. The 24 constants (Table 11.8) have only 1 to 6 one-bits, and their combined OR is 800000008000808B: only 7 bit positions of L[0, 0] are ever affected directly. θ and χ spread that change to every lane within one round.</p>
+
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · SHA3-256, first block, round 0</span><span class="pill">r = 1088, c = 512</span></div>
+    <div class="lab-b">
+      <div class="controls"><label class="grow">Message (UTF-8)<input type="text" id="k3-in" class="wide" value="abc"></label></div>
+      <div class="controls"><div class="seg" role="group" aria-label="State to show" id="k3-seg"></div></div>
+      <div class="grid2"><div class="figure"><svg viewBox="0 0 300 300" width="300" id="k3-svg" role="img" aria-label="State heatmap: each cell is a lane, shaded by its number of 1 bits."></svg></div><div id="k3-info" class="out"></div></div>
+      <div id="k3-dig" class="out"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 12.1 ============ -->
+<section class="unit" id="s121">
+  <h2><span class="sec">12.1</span>Message Authentication Requirements</h2>
+  <p class="why">Eight attacks on communication across a network, and which mechanism handles each.</p>
+  <div class="tbl"><table class="modes">
+    <tr><th>#</th><th class="l">Attack</th><th class="l">Meaning</th><th class="l">Countered by</th></tr>
+    <tr><td>1</td><td class="l">Disclosure</td><td class="l">Message contents released to anyone without the key.</td><td class="l" rowspan="2">Confidentiality (Part One)</td></tr>
+    <tr><td>2</td><td class="l">Traffic analysis</td><td class="l">Pattern of traffic found: frequency and duration of connections, number and length of messages.</td></tr>
+    <tr><td>3</td><td class="l">Masquerade</td><td class="l">Messages inserted from a fraudulent source, including fake acknowledgments of receipt or nonreceipt.</td><td class="l" rowspan="4"><b>Message authentication</b></td></tr>
+    <tr><td>4</td><td class="l">Content modification</td><td class="l">Insertion, deletion, transposition or modification of contents.</td></tr>
+    <tr><td>5</td><td class="l">Sequence modification</td><td class="l">Insertion, deletion or reordering in a sequence of messages.</td></tr>
+    <tr><td>6</td><td class="l">Timing modification</td><td class="l">Delay or replay of a message, or of a whole session.</td></tr>
+    <tr><td>7</td><td class="l">Source repudiation</td><td class="l">Source denies sending the message.</td><td class="l">Digital signatures</td></tr>
+    <tr><td>8</td><td class="l">Destination repudiation</td><td class="l">Destination denies receiving it.</td><td class="l">Signatures + a protocol designed for it</td></tr>
+  </table></div>
+  <div class="def"><b>Message authentication</b> (summary) — a procedure to verify that received messages come from the alleged source and have not been altered; it may also verify sequencing and timeliness. A <b>digital signature</b> is an authentication technique that also counters repudiation by the source.</div>
+</section>
+
+<!-- ============ 12.2 ============ -->
+<section class="unit" id="s122">
+  <h2><span class="sec">12.2</span>Message Authentication Functions</h2>
+  <p class="why">Every authentication mechanism has a lower-level function that produces an authenticator and a higher-level protocol that uses it. This section compares the three kinds of authenticator.</p>
+  <div class="def"><b>Authenticator</b> — a value used to authenticate a message. Three classes of function produce one: a <b>hash function</b> (fixed-length hash value, Chapter 11), <b>message encryption</b> (the ciphertext of the whole message), and a <b>MAC</b> (a fixed-length value computed from the message and a secret key).</div>
+
+  <h3>Message encryption · symmetric</h3>
+  <p>With key K shared only by A and B, encryption gives confidentiality, and B knows the message came from A (only A could produce ciphertext that decrypts under K) and was not altered (without K an opponent cannot change ciphertext bits to get chosen plaintext changes).</p>
+  <div class="warn">B’s decryption accepts any input X and outputs Y = D(K, X). If any bit pattern is a legitimate plaintext, B cannot tell a real message from random ciphertext. Authentication by encryption requires that only a <b>small subset</b> of bit patterns count as legitimate plaintext, i.e. the plaintext needs structure.</div>
+  <p>One way to add structure: append an error-detecting code, a <b>frame check sequence (FCS)</b> F(M), before encrypting. The order matters:</p>
+  <div class="grid2">
+    <div class="figure" role="img" aria-label="Internal error control: F(M) computed and appended before encryption; B decrypts and compares.">
+      <svg viewBox="0 0 310 80" width="310">
+        <text class="tm" x="6" y="16">(a) internal error control</text>
+        <rect class="bx" x="6" y="40" width="40" height="26"/><text class="tx" x="26" y="58" text-anchor="middle">M</text>
+        <rect class="bxm" x="46" y="40" width="46" height="26"/><text class="tx" x="69" y="58" text-anchor="middle">F(M)</text>
+        <path class="ln" d="M92 53 H118" marker-end="url(#ah)"/>
+        <rect class="bxa" x="120" y="38" width="36" height="30" rx="4"/><text class="tx" x="138" y="58" text-anchor="middle">E</text>
+        <path class="ln" d="M156 53 H180" marker-end="url(#ah)"/>
+        <text class="tx" x="184" y="49" font-size="10">E(K, [M ‖ F(M)])</text>
+        <text class="tm" x="184" y="66" font-size="10">sent</text>
+      </svg><p class="cap">An opponent cannot make ciphertext that decrypts to a valid FCS, so this authenticates.</p></div>
+    <div class="figure" role="img" aria-label="External error control: M is encrypted, then F computed on the ciphertext and appended.">
+      <svg viewBox="0 0 310 80" width="310">
+        <text class="tm" x="6" y="16">(b) external error control</text>
+        <rect class="bx" x="6" y="40" width="40" height="26"/><text class="tx" x="26" y="58" text-anchor="middle">M</text>
+        <path class="ln" d="M46 53 H64" marker-end="url(#ah)"/>
+        <rect class="bxa" x="66" y="38" width="36" height="30" rx="4"/><text class="tx" x="84" y="58" text-anchor="middle">E</text>
+        <path class="ln" d="M102 53 H120" marker-end="url(#ah)"/>
+        <rect class="bx" x="122" y="40" width="70" height="26"/><text class="tx" x="157" y="58" text-anchor="middle" font-size="10">E(K, M)</text>
+        <rect class="bxb" x="192" y="40" width="108" height="26"/><text class="tx" x="246" y="58" text-anchor="middle" font-size="10">F(E(K, M))</text>
+      </svg><p class="cap">Anyone can compute a valid FCS over any ciphertext, so there is no authentication.</p></div>
+  </div>
+  <p class="cap">After Figure 12.2. Internal error control is the one that authenticates.</p>
+  <p>Any structure helps, such as layered protocol headers. If each pair of hosts shared a key and encrypted everything except the IP header, a substituted segment would not decrypt to a meaningful TCP header, and the sequence numbers would stop an opponent from delaying, misordering or deleting segments.</p>
+
+  <h3>Message encryption · public key (Figure 12.1)</h3>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Transmitted</th><th class="l">Provides</th><th class="l">Why</th></tr>
+    <tr><td class="l mono">E(K, M)</td><td class="l">confidentiality, authentication</td><td class="l">symmetric case above (needs plaintext structure)</td></tr>
+    <tr><td class="l mono">E(PU<sub>b</sub>, M)</td><td class="l">confidentiality only</td><td class="l">anyone can encrypt with B’s public key and claim to be A</td></tr>
+    <tr><td class="l mono">E(PR<sub>a</sub>, M)</td><td class="l">authentication, signature</td><td class="l">only A holds PR<sub>a</sub>; not even B could create it. No confidentiality: anyone can decrypt with PU<sub>a</sub></td></tr>
+    <tr><td class="l mono">E(PU<sub>b</sub>, E(PR<sub>a</sub>, M))</td><td class="l">confidentiality, authentication, signature</td><td class="l">cost: the complex public-key algorithm runs four times per message instead of two</td></tr>
+  </table></div>
+
+  <h3>Message authentication code</h3>
+  <p>A and B share key K. A computes <span class="m">MAC = C(K, M)</span> (C = MAC function) and sends M with the MAC; B recomputes and compares (Figure 12.4a). If they match, B knows:</p>
+  <ol>
+    <li>The message was not altered: an attacker without K cannot change the MAC to match changes.</li>
+    <li>The message is from the alleged sender: no one else can make a proper MAC.</li>
+    <li>If the message carries a sequence number (HDLC, X.25, TCP), the order is correct: the number cannot be altered.</li>
+  </ol>
+  <p>A MAC is like encryption but need not be reversible. It is a <b>many-to-one</b> function: with an n-bit MAC there are 2<sup>n</sup> MAC values for N ≫ 2<sup>n</sup> messages, and 2<sup>k</sup> keys. Example: 100-bit messages, 10-bit MAC → each MAC value is produced by 2<sup>100</sup>/2<sup>10</sup> = 2<sup>90</sup> messages; a 5-bit key gives 32 mappings. This makes a MAC less vulnerable to being broken than encryption.</p>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Figure 12.4</th><th class="l">Transmitted</th><th class="l">Provides</th></tr>
+    <tr><td class="l">(a)</td><td class="l mono">M ‖ C(K, M)</td><td class="l">authentication; M sent in the clear</td></tr>
+    <tr class="hlrow"><td class="l">(b) authentication tied to plaintext</td><td class="l mono">E(K<sub>2</sub>, [M ‖ C(K<sub>1</sub>, M)])</td><td class="l">authentication + confidentiality (usually preferred)</td></tr>
+    <tr><td class="l">(c) authentication tied to ciphertext</td><td class="l mono">E(K<sub>2</sub>, M) ‖ C(K<sub>1</sub>, E(K<sub>2</sub>, M))</td><td class="l">authentication + confidentiality</td></tr>
+  </table></div>
+  <p>Situations where a separate MAC beats symmetric encryption:</p>
+  <ul class="props">
+    <li>The same message is <b>broadcast</b> to many destinations; only one has to check authenticity and raise an alarm.</li>
+    <li>A heavily loaded receiver can <b>check selected messages</b> at random instead of decrypting all.</li>
+    <li>A <b>program in plaintext</b> can run without decryption each time, yet be checked on demand.</li>
+    <li>Some applications need authentication but not secrecy, e.g. SNMPv3 separates the two.</li>
+    <li>Separating the functions gives architectural flexibility (authenticate at application level, encrypt at transport level).</li>
+    <li>Protection can outlast reception: decryption ends encryption’s protection, but a MAC can still be checked later inside the target system.</li>
+  </ul>
+  <div class="note"><span class="t">Limit</span>A MAC is not a digital signature: sender and receiver share the same key, so either could have produced it.</div>
+</section>
+
+<!-- ============ 12.3 ============ -->
+<section class="unit" id="s123">
+  <h2><span class="sec">12.3</span>Requirements for Message Authentication Codes</h2>
+  <p class="why">Brute-forcing a MAC key works differently from brute-forcing an encryption key, and an attacker may forge tags without the key at all. The three requirements below rule this out.</p>
+  <div class="def"><b>MAC</b> (also <b>cryptographic checksum</b>) — <span class="m">T = MAC(K, M)</span>: M is variable length, K is shared only by sender and receiver, and T is the fixed-length authenticator, called the <b>tag</b>. The tag is attached when M is known to be correct; the receiver recomputes it.</div>
+  <p><b>Key search on a MAC.</b> For encryption, ~2<sup>k−1</sup> tries of D(K<sub>i</sub>, C) find a key whose output looks like plaintext. For a MAC with k &gt; n, trying all 2<sup>k</sup> keys on a known (M<sub>1</sub>, T<sub>1</sub>) leaves about 2<sup>k−n</sup> keys that match; each further pair cuts the set by 2<sup>n</sup>, so about k/n rounds are needed. If k ≤ n, the first round likely leaves one key. Discovering a MAC key is therefore no less effort than an encryption key of the same length.</p>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Rounds of MAC key search</span><span class="pill">book: k = 80, n = 32</span></div>
+    <div class="lab-b">
+      <div class="controls"><label>key length k<input type="number" id="ks-k" value="80" min="1" max="512"></label><label>tag length n<input type="number" id="ks-n" value="32" min="1" max="512"></label></div>
+      <div id="ks-out" class="out"></div>
+    </div>
+  </div>
+  <p><b>Forgery without the key.</b> Let M = X<sub>1</sub> ‖ … ‖ X<sub>m</sub> (64-bit blocks), <span class="m">Δ(M) = X<sub>1</sub> <span class="op">⊕</span> … <span class="op">⊕</span> X<sub>m</sub></span> and <span class="m">MAC(K, M) = E(K, Δ(M))</span> with DES in ECB mode. Key search costs 2<sup>56</sup>, but an opponent can replace X<sub>1</sub> … X<sub>m−1</sub> with any Y<sub>1</sub> … Y<sub>m−1</sub> and set <span class="m">Y<sub>m</sub> = Y<sub>1</sub> <span class="op">⊕</span> … <span class="op">⊕</span> Y<sub>m−1</sub> <span class="op">⊕</span> Δ(M)</span>. The new message has the same Δ, so the original tag is still valid.</p>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Forging the XOR MAC</span><span class="pill">AES used as E</span></div>
+    <div class="lab-b">
+      <div class="controls"><label class="grow">Original message (8-byte blocks)<input type="text" id="xm-m" class="wide" value="PAY $10 TO ALICE"></label><label class="grow">Replacement for all but the last block<input type="text" id="xm-y" class="wide" value="PAY $9999 TO DARTH. "></label></div>
+      <div id="xm-out" class="out"></div>
+    </div>
+  </div>
+  <p>Assuming the opponent knows the MAC function but not K, the MAC function must satisfy:</p>
+  <ol>
+    <li>Given M and MAC(K, M), it is infeasible to construct M′ with MAC(K, M′) = MAC(K, M). <span class="cap">(defeats the forgery above)</span></li>
+    <li>MAC(K, M) is uniformly distributed: for random M, M′, Pr[MAC(K, M) = MAC(K, M′)] = 2<sup>−n</sup>. <span class="cap">(a chosen-plaintext brute force then needs ~2<sup>n−1</sup> tries)</span></li>
+    <li>If M′ = f(M) for a known transformation f (e.g. flipping specific bits), Pr[MAC(K, M) = MAC(K, M′)] = 2<sup>−n</sup>. <span class="cap">(no weak spots in parts of the message)</span></li>
+  </ol>
+</section>
+
+<!-- ============ 12.4 ============ -->
+<section class="unit" id="s124">
+  <h2><span class="sec">12.4</span>Security of MACs</h2>
+  <p class="why">Brute force on a MAC is harder than on a hash because it needs known message–tag pairs; its cost is min(2<sup>k</sup>, 2<sup>n</sup>).</p>
+  <p>A hash collision can be hunted off line. Whether a MAC can be attacked off line depends on the key and tag sizes. The desired property:</p>
+  <div class="def"><b>Computation resistance</b> — given one or more text–MAC pairs [x<sub>i</sub>, MAC(K, x<sub>i</sub>)], it is computationally infeasible to compute any text–MAC pair [x, MAC(K, x)] for a new input x ≠ x<sub>i</sub>.</div>
+  <div class="cmp">
+    <div><h4>Attack the key space</h4><p>Compute the tag of a known text under all 2<sup>k</sup> keys; check survivors against more pairs. Effort ≈ 2<sup>k</sup>. Finding K lets the attacker MAC anything.</p></div>
+    <div><h4>Attack the MAC value</h4><p>Produce a valid tag for a given message, or a message for a given tag. Effort ≈ 2<sup>n</sup> (like one-way or weak collision resistance), and it cannot be done off line: the attacker needs chosen text–tag pairs or the key.</p></div>
+  </div>
+  <div class="eq">brute-force effort ≈ min(2<sup>k</sup>, 2<sup>n</sup>)
+reasonable requirement: min(k, n) ≥ N        <span class="n">N perhaps ≈ 128</span></div>
+  <p><b>Cryptanalysis</b> tries to beat that; an ideal MAC requires cryptanalytic effort ≥ brute force. MACs vary in structure far more than hashes, so the cryptanalysis is hard to generalize.</p>
+</section>
+
+<!-- ============ 12.5 ============ -->
+<section class="unit" id="s125">
+  <h2><span class="sec">12.5</span>MACs Based on Hash Functions: HMAC</h2>
+  <p class="why">A plain hash has no key and cannot be used as a MAC directly. HMAC (RFC 2104, FIPS 198) adds a key around any embedded hash and is mandatory-to-implement for IP security.</p>
+  <p>Motivation: hash functions generally run faster in software than block ciphers, and their library code is widely available.</p>
+  <h3>Design objectives (RFC 2104)</h3>
+  <ul class="props">
+    <li>Use available hash functions without modification, especially fast, freely available ones.</li>
+    <li>Allow easy replacement of the embedded hash if faster or more secure ones are needed (e.g. SHA-2 → SHA-3). The hash is treated as a black box.</li>
+    <li>Preserve the hash’s original performance without significant degradation.</li>
+    <li>Use and handle keys in a simple way.</li>
+    <li>Have a well-understood analysis of strength based on reasonable assumptions about the hash. This is HMAC’s main advantage over other hash-based schemes.</li>
+  </ul>
+  <h3>The algorithm</h3>
+  <div class="kv">
+    <span class="k">H</span><span class="v">embedded hash function, n-bit output, b-bit blocks (SHA-256: n = 256, b = 512)</span>
+    <span class="k">K</span><span class="v">secret key; recommended length ≥ n. If longer than b, K is hashed first to give an n-bit key</span>
+    <span class="k">K<sup>+</sup></span><span class="v">K padded with zeros to b bits</span>
+    <span class="k">ipad</span><span class="v">00110110 (36 hex) repeated b/8 times</span>
+    <span class="k">opad</span><span class="v">01011100 (5C hex) repeated b/8 times</span>
+  </div>
+  <div class="eq">HMAC(K, M) = H[(K<sup>+</sup> <span class="op">⊕</span> opad) ‖ H[(K<sup>+</sup> <span class="op">⊕</span> ipad) ‖ M]]</div>
+  <ol>
+    <li>Pad K with zeros to make the b-bit string K<sup>+</sup>.</li>
+    <li>XOR K<sup>+</sup> with ipad to get the b-bit block S<sub>i</sub>.</li>
+    <li>Append M to S<sub>i</sub>.</li>
+    <li>Apply H to the result (the inner hash).</li>
+    <li>XOR K<sup>+</sup> with opad to get the b-bit block S<sub>o</sub>.</li>
+    <li>Append the inner hash to S<sub>o</sub>.</li>
+    <li>Apply H and output the result.</li>
+  </ol>
+  <div class="note"><span class="t">Padding side</span>The book says zeros go on the <b>left</b> of K. RFC 2104 step (1) appends zeros to the <b>end</b> (right) of K, and real implementations follow the RFC; the lab below does too, so its outputs match the RFC 4231 test vectors (see Sources).</div>
+  <p>The ipad and opad XORs each flip half the bits of K, a different half each time, so passing S<sub>i</sub> and S<sub>o</sub> through the compression function pseudorandomly generates two keys from K. For long messages HMAC costs about the same as H; it adds three compression-function calls (for S<sub>i</sub>, S<sub>o</sub> and the inner hash block).</p>
+
+  <div class="figure" role="img" aria-label="HMAC structure: K+ xor ipad then message blocks hashed; result padded and hashed after K+ xor opad.">
+  <svg viewBox="0 0 660 240" width="660">
+    <rect class="bxm" x="20" y="14" width="110" height="28"/><text class="tx" x="75" y="32" text-anchor="middle">K⁺ ⊕ ipad = Sᵢ</text>
+    <rect class="bx" x="130" y="14" width="70" height="28"/><text class="tx" x="165" y="32" text-anchor="middle">Y₀</text>
+    <rect class="bx" x="200" y="14" width="70" height="28"/><text class="tx" x="235" y="32" text-anchor="middle">Y₁</text>
+    <rect class="bx" x="270" y="14" width="40" height="28"/><text class="tx" x="290" y="32" text-anchor="middle">…</text>
+    <rect class="bx" x="310" y="14" width="80" height="28"/><text class="tx" x="350" y="32" text-anchor="middle">Yₗ₋₁</text>
+    <path class="ln" d="M205 42 V66" marker-end="url(#ah)"/>
+    <text class="tx" x="70" y="88">IV</text><path class="ln" d="M90 84 H148" marker-end="url(#ah)"/>
+    <rect class="bxa" x="150" y="68" width="110" height="32" rx="4"/><text class="tx" x="205" y="89" text-anchor="middle">Hash</text>
+    <path class="ln" d="M260 84 H435 V134" marker-end="url(#ah)"/><text class="tm" x="300" y="78">H(Sᵢ ‖ M), n bits</text>
+    <rect class="bxm" x="140" y="136" width="150" height="28"/><text class="tx" x="215" y="154" text-anchor="middle">K⁺ ⊕ opad = Sₒ</text>
+    <rect class="bx" x="290" y="136" width="190" height="28"/><text class="tx" x="385" y="154" text-anchor="middle">H(Sᵢ ‖ M) padded to b</text>
+    <path class="ln" d="M310 164 V186" marker-end="url(#ah)"/>
+    <text class="tx" x="175" y="208">IV</text><path class="ln" d="M195 204 H253" marker-end="url(#ah)"/>
+    <rect class="bxa" x="255" y="188" width="110" height="32" rx="4"/><text class="tx" x="310" y="209" text-anchor="middle">Hash</text>
+    <path class="ln" d="M365 204 H423" marker-end="url(#ah)"/><text class="tx" x="429" y="208">HMAC(K, M)</text>
+  </svg>
+  <div class="cap">Redrawn from Figure 12.5, HMAC structure.</div></div>
+  <p><b>Efficient implementation</b> (Figure 12.6): precompute <span class="m">f(IV, K<sup>+</sup> <span class="op">⊕</span> ipad)</span> and <span class="m">f(IV, K<sup>+</sup> <span class="op">⊕</span> opad)</span> once per key and use them in place of the IV. Then only one extra compression call is added per message, which pays off when most messages are short.</p>
+
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · HMAC, step by step</span><span class="pill">preset: RFC 4231 test case 2</span></div>
+    <div class="lab-b">
+      <div class="controls"><label>embedded hash<select id="hm-h"><option>SHA-256</option><option>SHA-512</option></select></label><label class="grow">Key K (text)<input type="text" id="hm-k" value="Jefe"></label><label class="grow">Message M (text)<input type="text" id="hm-m" class="wide" value="what do ya want for nothing?"></label></div>
+      <div id="hm-out" class="out"></div>
+    </div>
+  </div>
+
+  <h3>Security of HMAC</h3>
+  <p>Its designers proved an exact relationship: for a given effort (time, message–tag pairs), a successful attack on HMAC is equivalent to one of these attacks on the embedded hash:</p>
+  <ol>
+    <li>Computing an output of the compression function with an IV that is random, secret and unknown to the attacker (brute force on that n-bit key ≈ 2<sup>n</sup>, or a birthday attack).</li>
+    <li>Finding collisions in the hash even when the IV is random and secret (birthday attack ≈ 2<sup>n/2</sup>).</li>
+  </ol>
+  <p>For plain MD5 a 2<sup>64</sup> collision search looks feasible off line. Against HMAC the attacker does not know K and cannot generate pairs off line, so it must observe 2<sup>64</sup> blocks (2<sup>72</sup> bits) produced under one key: on a 1-Gbps link, about 150,000 years. On this argument the book considers MD5 acceptable inside HMAC where speed matters.</p>
+</section>
+
+<!-- ============ 12.6 ============ -->
+<section class="unit" id="s126">
+  <h2><span class="sec">12.6</span>MACs Based on Block Ciphers: DAA and CMAC</h2>
+  <p class="why">A block cipher in CBC mode with IV = 0 gives a MAC. The original form (DAA) is only secure for fixed-length messages; CMAC fixes that with two derived subkeys.</p>
+  <h3>Data Authentication Algorithm (DAA) · obsolete</h3>
+  <p>FIPS PUB 113 / ANSI X9.17, based on DES. Split the data into 64-bit blocks D<sub>1</sub> … D<sub>N</sub>, padding the last on the right with zeros:</p>
+  <div class="eq">O<sub>1</sub> = E(K, D<sub>1</sub>)
+O<sub>j</sub> = E(K, [D<sub>j</sub> <span class="op">⊕</span> O<sub>j−1</sub>])      2 ≤ j ≤ N
+DAC = O<sub>N</sub>, or its leftmost M bits, 16 ≤ M ≤ 64</div>
+  <p>This CBC-MAC is secure only if every message has one fixed length of mn bits. Given the tag T of a one-block message X, the attacker knows the tag of the two-block message <span class="m">X ‖ (X <span class="op">⊕</span> T)</span>: it is again T.</p>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · CBC-MAC length-extension forgery</span><span class="pill">AES-128 in place of DES</span></div>
+    <div class="lab-b">
+      <div class="controls"><label class="grow">Key (hex, 16 bytes)<input type="text" id="cf-k" class="wide" value="2b7e151628aed2a6abf7158809cf4f3c"></label><label class="grow">One-block message X (16 chars)<input type="text" id="cf-x" value="TRANSFER 100 USD"></label></div>
+      <div id="cf-out" class="out"></div>
+    </div>
+  </div>
+  <h3>Cipher-based MAC (CMAC) · NIST SP 800-38B</h3>
+  <p>Fixing the limitation took three keys (one cipher key and two b-bit keys); a refinement derives the two b-bit keys from the cipher key. CMAC is for AES (b = 128, k = 128/192/256) and triple DES (b = 64, k = 112/168). For a message of n whole blocks M<sub>1</sub> … M<sub>n</sub>:</p>
+  <div class="eq">C<sub>1</sub> = E(K, M<sub>1</sub>)
+C<sub>j</sub> = E(K, [M<sub>j</sub> <span class="op">⊕</span> C<sub>j−1</sub>])          2 ≤ j &lt; n
+C<sub>n</sub> = E(K, [M<sub>n</sub> <span class="op">⊕</span> C<sub>n−1</sub> <span class="op">⊕</span> <b>K<sub>1</sub></b>])
+T   = MSB<sub>Tlen</sub>(C<sub>n</sub>)                 <span class="n">MSB<sub>s</sub>(X) = leftmost s bits</span></div>
+  <p>If the message is not a whole number of blocks, pad the last block on the right with a 1 then 0s, and use <b>K<sub>2</sub></b> instead of K<sub>1</sub>. Subkeys:</p>
+  <div class="eq">L  = E(K, 0<sup>b</sup>)
+K<sub>1</sub> = L · x                  <span class="n">multiplication in GF(2<sup>b</sup>)</span>
+K<sub>2</sub> = L · x<sup>2</sup> = (L · x) · x</div>
+  <p>Multiplying by x is a one-bit left shift, then, if the bit shifted out was 1, an XOR with a constant set by the irreducible polynomial: <span class="m">x<sup>128</sup> + x<sup>7</sup> + x<sup>2</sup> + x + 1</span> (constant 0x87) for b = 128, <span class="m">x<sup>64</sup> + x<sup>4</sup> + x<sup>3</sup> + x + 1</span> (0x1B) for b = 64. This is the same doubling used in AES MixColumns (Unit 4).</p>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · AES-CMAC</span><span class="pill">preset: RFC 4493 examples</span></div>
+    <div class="lab-b">
+      <div class="controls"><label class="grow">Key K (hex)<input type="text" id="cm-k" class="wide" value="2b7e151628aed2a6abf7158809cf4f3c"></label><label class="grow">Message (hex, any length)<input type="text" id="cm-m" class="wide" value="6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411"></label></div>
+      <div class="controls"><button class="ghost" type="button" id="cm-p0">empty message</button><button class="ghost" type="button" id="cm-p16">16 bytes</button><button class="ghost" type="button" id="cm-p40">40 bytes</button></div>
+      <div id="cm-out" class="out"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 12.7 ============ -->
+<section class="unit" id="s127">
+  <h2><span class="sec">12.7</span>Authenticated Encryption: CCM and GCM</h2>
+  <p class="why">Many protocols need confidentiality and integrity together. Combining a cipher and a MAC ad hoc has pitfalls; CCM and GCM are NIST-standardized designs that do both.</p>
+  <div class="def"><b>Authenticated encryption (AE)</b> — an encryption system that simultaneously protects the confidentiality and the authenticity (integrity) of communications.</div>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Approach</th><th class="l">Computation</th><th class="l">Receiver order</th><th class="l">Used by</th></tr>
+    <tr><td class="l">Hash then encrypt (H→E)</td><td class="l mono">h = H(M); E(K, [M ‖ h])</td><td class="l">decrypt, then verify</td><td class="l">WEP (fundamentally weak, replaced)</td></tr>
+    <tr><td class="l">Authenticate then encrypt (A→E)</td><td class="l mono">T = MAC(K<sub>1</sub>, M); E(K<sub>2</sub>, [M ‖ T])</td><td class="l">decrypt, then verify</td><td class="l">SSL/TLS</td></tr>
+    <tr><td class="l">Encrypt then authenticate (E→A)</td><td class="l mono">C = E(K<sub>2</sub>, M); T = MAC(K<sub>1</sub>, C)</td><td class="l"><b>verify, then decrypt</b></td><td class="l">IPsec</td></tr>
+    <tr><td class="l">Encrypt and authenticate (E + A)</td><td class="l mono">C = E(K<sub>2</sub>, M); T = MAC(K<sub>1</sub>, M)</td><td class="l">decrypt, then verify</td><td class="l">SSH</td></tr>
+  </table></div>
+  <p>All four have known security concerns, but with proper design any can be secure; that is the goal of CCM and GCM.</p>
+
+  <h3>Counter with CBC-MAC (CCM) · SP 800-38C</h3>
+  <p>Standardized for IEEE 802.11 Wi-Fi; a variation of encrypt-and-MAC. Ingredients: AES, CTR mode (Unit 5), and the CMAC algorithm, all with <b>one key K</b>. Inputs:</p>
+  <ul class="props">
+    <li><b>Plaintext P</b>: authenticated and encrypted.</li>
+    <li><b>Associated data A</b>: authenticated but not encrypted, e.g. a protocol header that must travel in the clear.</li>
+    <li><b>Nonce N</b>: a value unique for every instance during a protocol association; prevents replay and other attacks.</li>
+  </ul>
+  <div class="pseudo"><span class="cm">// CCM authentication-encryption (SP 800-38C)</span>
+1. Format (N, A, P) into blocks B<sub>0</sub>, B<sub>1</sub>, …, B<sub>r</sub>     <span class="cm">// B₀ = nonce + length flags</span>
+2. Y<sub>0</sub> = E(K, B<sub>0</sub>)
+3. <span class="kw">for</span> i = 1 <span class="kw">to</span> r:  Y<sub>i</sub> = E(K, B<sub>i</sub> <span class="op">⊕</span> Y<sub>i−1</sub>)       <span class="cm">// CBC-MAC</span>
+4. T = MSB<sub>Tlen</sub>(Y<sub>r</sub>)
+5. Generate counters Ctr<sub>0</sub>, Ctr<sub>1</sub>, …, Ctr<sub>m</sub>, m = ⌈Plen/128⌉
+6. <span class="kw">for</span> j = 0 <span class="kw">to</span> m:  S<sub>j</sub> = E(K, Ctr<sub>j</sub>)
+7. S = S<sub>1</sub> ‖ S<sub>2</sub> ‖ … ‖ S<sub>m</sub>
+8. <span class="kw">return</span> C = (P <span class="op">⊕</span> MSB<sub>Plen</sub>(S)) ‖ (T <span class="op">⊕</span> MSB<sub>Tlen</sub>(S<sub>0</sub>))    <span class="cm">// tag encrypted with Ctr₀</span></div>
+  <p>Decryption: reject if Clen ≤ Tlen; regenerate S; recover P and T; recompute the CBC-MAC over (N, A, P); return P only if the tags match, else INVALID. CCM is fairly complex: two full passes over the plaintext, a forced trade-off between nonce and tag lengths, and the key used twice in CTR mode. Analyses still conclude it is highly secure.</p>
+
+  <h3>Galois/Counter Mode (GCM) · SP 800-38D</h3>
+  <p>Designed to be <b>parallelizable</b> for high throughput, low cost and low latency. The message is encrypted with a CTR variant; the ciphertext is multiplied with key material and length information over GF(2<sup>128</sup>) to get the tag. <b>GMAC</b> is the MAC-only version. Two functions:</p>
+  <div class="def"><b>GHASH<sub>H</sub>(X)</b> — a keyed hash. Split X into 128-bit blocks X<sub>1</sub> … X<sub>m</sub>; Y<sub>0</sub> = 0<sup>128</sup>; Y<sub>i</sub> = (Y<sub>i−1</sub> <span class="op">⊕</span> X<sub>i</sub>) · H in GF(2<sup>128</sup>); return Y<sub>m</sub>. Equivalently <span class="m wr">(X<sub>1</sub>·H<sup>m</sup>) <span class="op">⊕</span> (X<sub>2</sub>·H<sup>m−1</sup>) <span class="op">⊕</span> … <span class="op">⊕</span> (X<sub>m</sub>·H)</span>, so with H<sup>2</sup>, H<sup>3</sup>, … precomputed the blocks can be processed in parallel.</div>
+  <div class="def"><b>GCTR<sub>K</sub>(ICB, X)</b> — CTR mode from initial counter block ICB: CB<sub>1</sub> = ICB, CB<sub>i</sub> = inc<sub>32</sub>(CB<sub>i−1</sub>) (add 1 mod 2<sup>32</sup> to the rightmost 32 bits), Y<sub>i</sub> = X<sub>i</sub> <span class="op">⊕</span> E(K, CB<sub>i</sub>); the last partial block uses only the needed leftmost bits. Counters are cheap and encryptions can run in parallel.</div>
+  <div class="pseudo"><span class="cm">// GCM authenticated encryption (SP 800-38D), inputs K, IV, P, A</span>
+1. H  = E(K, 0<sup>128</sup>)                                   <span class="cm">// hash key</span>
+2. J<sub>0</sub> = IV ‖ 0<sup>31</sup> ‖ 1                 <span class="kw">if</span> len(IV) = 96
+   J<sub>0</sub> = GHASH<sub>H</sub>(IV ‖ 0<sup>s+64</sup> ‖ [len(IV)]<sub>64</sub>)   <span class="kw">otherwise</span>  <span class="cm">// pre-counter block</span>
+3. C  = GCTR<sub>K</sub>(inc<sub>32</sub>(J<sub>0</sub>), P)
+4. u, v = zero bits needed to pad C, A to multiples of 128
+5. S  = GHASH<sub>H</sub>(A ‖ 0<sup>v</sup> ‖ C ‖ 0<sup>u</sup> ‖ [len(A)]<sub>64</sub> ‖ [len(C)]<sub>64</sub>)
+6. T  = MSB<sub>t</sub>(GCTR<sub>K</sub>(J<sub>0</sub>, S))
+7. <span class="kw">return</span> (C, T)</div>
+  <p>GCM uses only Galois-field multiplication for its hash because it is easy to do in hardware; a CTR-based AE approach is shown to be the most efficient for high-speed packet networks, and GCM meets a high level of security.</p>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · AES-GCM encrypt, tamper, verify</span><span class="pill">preset: GCM spec test case 2</span></div>
+    <div class="lab-b">
+      <div class="controls"><label class="grow">Key K (hex, 16/24/32 bytes)<input type="text" id="gc-k" class="wide" value="00000000000000000000000000000000"></label><label class="grow">IV (hex; 12 bytes is the fast path)<input type="text" id="gc-iv" class="wide" value="000000000000000000000000"></label></div>
+      <div class="controls"><label class="grow">Plaintext P (hex)<input type="text" id="gc-p" class="wide" value="00000000000000000000000000000000"></label><label class="grow">Associated data A (text)<input type="text" id="gc-a" value=""></label></div>
+      <div class="controls"><button type="button" id="gc-flip" class="ghost">Flip a ciphertext bit</button><button type="button" id="gc-flipa" class="ghost">Change A</button><button type="button" id="gc-reset" class="ghost">Undo tampering</button></div>
+      <div id="gc-out" class="out"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 12.8 ============ -->
+<section class="unit" id="s128">
+  <h2><span class="sec">12.8</span>Key Wrapping</h2>
+  <p class="why">Key Wrap (KW, NIST SP 800-38F; the AES version is RFC 3394) encrypts a symmetric key under a key both parties already share, with integrity built in.</p>
+  <div class="def"><b>Key encryption key (KEK)</b> — the already-shared symmetric key used to encrypt (wrap) a new key.</div>
+  <ul class="props">
+    <li><b>Why encrypt a key with a key?</b> Protocols such as IEEE 802.11 and IPsec use a key hierarchy. Lower keys are used and changed often; a higher-level key, used rarely and so more resistant to cryptanalysis, encrypts new lower-level keys for exchange.</li>
+    <li><b>Why a new mode?</b> Keys can be longer than the block (AES block 128 bits, keys up to 256). Keys are worth more than ordinary data (one key protects much data), so NIST wanted a robust mode where every output bit depends nontrivially on every input bit. In ECB, CBC, CTR and the other modes the last plaintext block affects only the last ciphertext block. KW is slower, but it is used only on small amounts of data.</li>
+  </ul>
+  <div class="kv">
+    <span class="k">n</span><span class="v">number of 64-bit key-data blocks (semiblocks) P<sub>1</sub> … P<sub>n</sub></span>
+    <span class="k">s</span><span class="v">number of stages, s = 6n</span>
+    <span class="k">A(t)</span><span class="v">64-bit integrity check register after stage t; A(0) = ICV = A6A6A6A6A6A6A6A6</span>
+    <span class="k">R(t, i)</span><span class="v">64-bit register i after stage t</span>
+  </div>
+  <div class="pseudo"><span class="cm">// Wrap: inputs P₁…Pₙ and KEK K; output C₀…Cₙ (one block longer)</span>
+A(0) = A6A6A6A6A6A6A6A6;   R(0, i) = P<sub>i</sub>
+<span class="kw">for</span> t = 1 <span class="kw">to</span> s:
+    W      = E(K, [A(t−1) ‖ R(t−1, 1)])
+    A(t)   = t <span class="op">⊕</span> MSB<sub>64</sub>(W)
+    R(t, n) = LSB<sub>64</sub>(W)
+    <span class="kw">for</span> i = 1 <span class="kw">to</span> n−1:  R(t, i) = R(t−1, i+1)       <span class="cm">// sliding buffer</span>
+C<sub>0</sub> = A(s);   C<sub>i</sub> = R(s, i)</div>
+  <div class="pseudo"><span class="cm">// Unwrap: run the stages backwards with the decryption function</span>
+A(s) = C<sub>0</sub>;   R(s, i) = C<sub>i</sub>
+<span class="kw">for</span> t = s <span class="kw">down to</span> 1:
+    W        = D(K, [(A(t) <span class="op">⊕</span> t) ‖ R(t, n)])
+    A(t−1)   = MSB<sub>64</sub>(W);   R(t−1, 1) = LSB<sub>64</sub>(W)
+    <span class="kw">for</span> i = 2 <span class="kw">to</span> n:  R(t−1, i) = R(t, i−1)
+<span class="kw">if</span> A(0) = A6A6A6A6A6A6A6A6  <span class="kw">then</span> P<sub>i</sub> = R(0, i)  <span class="kw">else</span> error</div>
+  <p>The A output feeds the next stage, while each R output skips forward n stages through the sliding buffer, increasing the avalanche effect. A wrong recovered ICV means error or alteration, so KW gives integrity as well as confidentiality.</p>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · AES key wrap, stage by stage</span><span class="pill">preset: RFC 3394 §4.1</span></div>
+    <div class="lab-b">
+      <div class="controls"><label class="grow">KEK (hex)<input type="text" id="kw-k" class="wide" value="000102030405060708090A0B0C0D0E0F"></label><label class="grow">Key data (hex, multiple of 8 bytes)<input type="text" id="kw-p" class="wide" value="00112233445566778899AABBCCDDEEFF"></label></div>
+      <div class="controls"><label>stage t<input type="range" id="kw-t" min="0" max="12" value="0" style="width:220px"> <output id="kw-tv">0</output></label><button type="button" id="kw-play" class="ghost">Play</button><button type="button" id="kw-tamper" class="ghost">Tamper with C₁ and unwrap</button></div>
+      <div id="kw-reg" class="out"></div>
+      <div id="kw-out" class="out" style="margin-top:10px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 12.9 ============ -->
+<section class="unit" id="s129">
+  <h2><span class="sec">12.9</span>Pseudorandom Number Generation Using Hash Functions and MACs</h2>
+  <p class="why">Hash and MAC outputs look random, so like block ciphers (Unit 5) they can drive a PRNG. NIST SP 800-90 and ISO 18031 define a hash-based generator; SP 800-90 also defines one based on HMAC.</p>
+  <div class="def"><b>PRNG essentials</b> — a <b>seed</b> and a deterministic algorithm producing a stream of pseudorandom bits. Used as a <b>pseudorandom function (PRF)</b> to make a value such as a session key, the seed is known only to its user; used for stream encryption, the seed acts as the secret key shared by sender and receiver.</div>
+  <h3>PRNG based on a hash function</h3>
+  <div class="pseudo"><span class="cm">// V = seed, seedlen ≥ k + 64 bits (k = security level), n = output bits, H has outlen-bit output</span>
+m = ⌈n / outlen⌉;   data = V;   W = null string
+<span class="kw">for</span> i = 1 <span class="kw">to</span> m:
+    w<sub>i</sub> = H(data);   W = W ‖ w<sub>i</sub>
+    data = (data + 1) mod 2<sup>seedlen</sup>
+<span class="kw">return</span> leftmost n bits of W</div>
+  <p>SP 800-90 also updates V periodically. There are no known or suspected weaknesses in this approach with a strong hash such as SHA-2.</p>
+  <h3>PRNG based on a MAC (HMAC)</h3>
+  <p>HMAC gives more confidence in the security than a bare hash, at twice the execution time (two hash executions per output block). The key K and seed V together form the overall seed; SP 800-90 also updates both periodically. Figure 12.15 compares three designs:</p>
+  <div class="cmp">
+    <div><h4>NIST SP 800-90</h4><div class="pseudo">w<sub>0</sub> = V
+<span class="kw">for</span> i = 1 <span class="kw">to</span> m:
+  w<sub>i</sub> = MAC(K, w<sub>i−1</sub>)
+  W = W ‖ w<sub>i</sub></div><p>Each input is the previous output, so an observer knows HMAC’s input and output; HMAC’s security still protects K.</p></div>
+    <div><h4>IEEE 802.11i</h4><div class="pseudo"><span class="kw">for</span> i = 1 <span class="kw">to</span> m:
+  w<sub>i</sub> = MAC(K, V ‖ i)
+  W = W ‖ w<sub>i</sub></div><p>Seed plus a counter; the output reveals nothing direct about the input. Seems to offer more security than SP 800-90.</p></div>
+    <div><h4>TLS / WTLS</h4><div class="pseudo">A(0) = V
+<span class="kw">for</span> i = 1 <span class="kw">to</span> m:
+  A(i) = MAC(K, A(i−1))
+  w<sub>i</sub> = MAC(K, A(i) ‖ V)
+  W = W ‖ w<sub>i</sub></div><p>Two HMAC calls per block: doubles the cost and seems to be security overkill.</p></div>
+  </div>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Four generators, same seed</span><span class="pill">H = SHA-256, MAC = HMAC-SHA-256</span></div>
+    <div class="lab-b">
+      <div class="controls"><label class="grow">Seed V (text)<input type="text" id="pr-v" value="seed-2026"></label><label class="grow">Key K for HMAC (text)<input type="text" id="pr-k" value="secret key"></label><label>output bytes<input type="number" id="pr-n" value="48" min="1" max="256"></label></div>
+      <div id="pr-out" class="out"></div>
+    </div>
+  </div>
+  <div class="note"><span class="t">Current standard</span>SP 800-90A Rev. 1 names these mechanisms Hash_DRBG and HMAC_DRBG (with CTR_DRBG from Unit 5). The labs show the simplified forms of Figures 12.14–12.15, not the full DRBGs with their update and reseed steps.</div>
+</section>
+
+<!-- ============ Key terms ============ -->
+<section class="unit" id="terms">
+  <h2><span class="sec">11.7 · 12.10</span>Key Terms</h2>
+  <p class="why">The key-term lists of both chapters, plus the intermediate terms they depend on, one line each.</p>
+  <dl class="gloss">
+    <dt>Hash function</dt><dd>Maps a variable-length input to a fixed-length hash value (hash code).</dd>
+    <dt>Hash value / hash code</dt><dd>The fixed-length output h = H(M).</dd>
+    <dt>Message digest</dt><dd>A hash value used for message authentication.</dd>
+    <dt>Cryptographic hash function</dt><dd>Hash for which finding a preimage or a collision is computationally infeasible.</dd>
+    <dt>One-way hash function</dt><dd>A preimage-resistant hash: easy to compute, infeasible to invert.</dd>
+    <dt>Preimage</dt><dd>Any x with H(x) = h.</dd>
+    <dt>Collision</dt><dd>x ≠ y with H(x) = H(y).</dd>
+    <dt>Preimage resistant</dt><dd>Given h, infeasible to find y with H(y) = h.</dd>
+    <dt>Second preimage resistant</dt><dd>= weak collision resistance. Given x, infeasible to find y ≠ x with H(y) = H(x).</dd>
+    <dt>Collision resistant</dt><dd>= strong collision resistance. Infeasible to find any x ≠ y with H(x) = H(y).</dd>
+    <dt>Weak / strong hash function</dt><dd>Weak: the first five Table 11.1 properties. Strong: also collision resistant.</dd>
+    <dt>Birthday paradox</dt><dd>Drawing uniformly from N values, a repeat is more likely than not after about √N draws.</dd>
+    <dt>Birthday attack</dt><dd>Collision search using the birthday paradox: about 2<sup>m/2</sup> work for an m-bit hash.</dd>
+    <dt>Iterated hash function</dt><dd>Chains a compression function over fixed-size blocks, starting from an IV.</dd>
+    <dt>Compression function</dt><dd>f(CV, Y): n-bit chaining variable + b-bit block → n-bit output.</dd>
+    <dt>Chaining variable</dt><dd>The n-bit value passed between compression-function calls; the last one is the hash.</dd>
+    <dt>MD4, MD5</dt><dd>Earlier 128-bit hashes; SHA is modeled on MD4. MD5 is broken for collisions.</dd>
+    <dt>SHA-1</dt><dd>160-bit SHA; considered insecure, being phased out.</dd>
+    <dt>SHA-224/256/384/512</dt><dd>The SHA-2 family, named by digest size.</dd>
+    <dt>Big endian / little endian</dt><dd>Most / least significant byte stored at the lowest address.</dd>
+    <dt>SHA-3, Keccak</dt><dd>The NIST hash standard (FIPS 202) based on the Keccak sponge.</dd>
+    <dt>Sponge construction</dt><dd>Iterated construction with variable-length input and output, built on a fixed b-bit function f.</dd>
+    <dt>Bitrate r</dt><dd>Bits of input absorbed (or output squeezed) per iteration.</dd>
+    <dt>Capacity c</dt><dd>c = b − r; the untouched part of the state, which sets the security level.</dd>
+    <dt>Absorbing phase</dt><dd>XOR each padded block into the state, then apply f.</dd>
+    <dt>Squeezing phase</dt><dd>Read r bits, apply f, repeat until enough output.</dd>
+    <dt>Lane</dt><dd>A 64-bit word L[x, y] of the 5 × 5 SHA-3 state.</dd>
+    <dt>Theta step function</dt><dd>θ: XOR each lane with the parities of the two neighbouring columns (one rotated); diffusion.</dd>
+    <dt>Rho step function</dt><dd>ρ: rotate each lane by its own fixed offset.</dd>
+    <dt>Pi step function</dt><dd>π: move lanes (x, y) → (y, 2x + 3y).</dd>
+    <dt>Chi step function</dt><dd>χ: the only nonlinear step, a <span class="op">⊕</span> (NOT b AND c) along rows.</dd>
+    <dt>Iota step function</dt><dd>ι: XOR a round constant into L[0, 0].</dd>
+    <dt>Authenticator</dt><dd>A value used to authenticate a message.</dd>
+    <dt>Message authentication</dt><dd>Verifying a message came from its alleged source unaltered (maybe also in sequence and on time).</dd>
+    <dt>Message authentication code (MAC)</dt><dd>T = MAC(K, M): fixed-length authenticator from a shared secret key; also cryptographic checksum or keyed hash function.</dd>
+    <dt>Tag</dt><dd>The MAC value attached to a message.</dd>
+    <dt>Cryptographic checksum</dt><dd>Another name for a MAC.</dd>
+    <dt>Keyed hash function</dt><dd>A hash-like function that takes a secret key; a MAC.</dd>
+    <dt>Frame check sequence (FCS)</dt><dd>Error-detecting code appended to a message; authenticates only if added before encryption (internal error control).</dd>
+    <dt>Computation resistance</dt><dd>Given text–MAC pairs, infeasible to produce a valid pair for a new text.</dd>
+    <dt>HMAC</dt><dd>H[(K<sup>+</sup><span class="op">⊕</span>opad) ‖ H[(K<sup>+</sup><span class="op">⊕</span>ipad) ‖ M]] with any embedded hash.</dd>
+    <dt>Data Authentication Algorithm (DAA)</dt><dd>Obsolete DES CBC-MAC with IV 0; secure only for fixed-length messages.</dd>
+    <dt>Cipher-Based MAC (CMAC)</dt><dd>CBC-MAC with subkey K<sub>1</sub> or K<sub>2</sub> XORed into the last block (SP 800-38B).</dd>
+    <dt>Authenticated encryption (AE)</dt><dd>Encryption that protects confidentiality and integrity at once.</dd>
+    <dt>Associated data</dt><dd>Data that is authenticated but sent unencrypted (e.g. a header).</dd>
+    <dt>Nonce</dt><dd>A value unique per use within an association; prevents replay.</dd>
+    <dt>Counter with CBC-MAC (CCM)</dt><dd>AE mode: CBC-MAC over (N, A, P), then CTR encryption of P and the tag; one key (SP 800-38C).</dd>
+    <dt>Galois/Counter Mode (GCM)</dt><dd>Parallelizable AE mode: GCTR encryption plus GHASH over GF(2<sup>128</sup>) (SP 800-38D).</dd>
+    <dt>Key wrapping</dt><dd>Encrypting a key under another shared key.</dd>
+    <dt>Key encryption key</dt><dd>The shared key that wraps other keys.</dd>
+    <dt>Key Wrap mode</dt><dd>KW (SP 800-38F): 6n stages with an integrity check value.</dd>
+    <dt>Pseudorandom function (PRF)</dt><dd>Deterministic function producing random-looking values, e.g. session keys, from a seed.</dd>
+  </dl>
+</section>
+
+<!-- ============ Review ============ -->
+<section class="unit" id="review">
+  <h2><span class="sec">11.7 · 12.10</span>Review Questions</h2>
+  <p class="why">Review questions 11.1–11.9 and 12.1–12.9 from the book. Answer first, then open to check.</p>
+  <h3>Chapter 11</h3>
+  <details><summary>11.1 What characteristics are needed in a secure hash function?</summary><p>Variable input size, fixed output size, efficiency, preimage resistance (one-way), second preimage resistance (weak collision resistance), collision resistance (strong collision resistance), and pseudorandom output (Table 11.1).</p></details>
+  <details><summary>11.2 What is the difference between weak and strong collision resistance?</summary><p>Weak: for a <i>given</i> x it is infeasible to find y ≠ x with H(y) = H(x). Strong: it is infeasible to find <i>any</i> pair x ≠ y with H(x) = H(y). The attacker chooses both messages in the strong case, so the birthday attack applies (2<sup>m/2</sup> instead of 2<sup>m</sup>).</p></details>
+  <details><summary>11.3 What is the role of a compression function in a hash function?</summary><p>It is the fixed-size building block of an iterated hash: it combines the n-bit chaining variable with one b-bit block to give the next chaining variable. If the length is included and the compression function is collision resistant, so is the whole hash.</p></details>
+  <details><summary>11.4 What is the difference between little-endian and big-endian format?</summary><p>Big-endian stores the most significant byte of a word at the lowest address (leftmost); little-endian stores the least significant byte there. SHA-512 uses big-endian; SHA-3 reads lanes little-endian.</p></details>
+  <details><summary>11.5 What basic arithmetical and logical functions are used in SHA?</summary><p>Addition modulo 2<sup>64</sup> (2<sup>32</sup> for SHA-256), bitwise AND, XOR and NOT (inside Ch and Maj), circular right shifts ROTR and right shifts SHR.</p></details>
+  <details><summary>11.6 Describe the set of criteria used by NIST to evaluate SHA-3 candidates.</summary><p>The criteria are in the book’s online Appendix V. NIST’s call for candidates ranked three groups: <b>security</b> (the most important: security in applications such as signatures, key derivation, HMAC and DRBGs; collision resistance of about n/2 bits, preimage resistance of about n bits, second-preimage and length-extension resistance; resistance to known attacks; quality of the security arguments), <b>cost</b> (computational efficiency across platforms, memory requirements), and <b>algorithm and implementation characteristics</b> (flexibility, such as a tunable security/performance trade-off and parallelism, and simplicity). See Sources.</p></details>
+  <details><summary>11.7 Define the term sponge construction.</summary><p>An iterated construction that builds a function with variable-length input and arbitrary-length output from a fixed-length function f on b = r + c bits: pad the message to multiples of r, absorb each block by XOR into the state followed by f, then squeeze r bits at a time (applying f between) until the output is long enough.</p></details>
+  <details><summary>11.8 Briefly describe the internal structure of the iteration function f.</summary><p>The 1600-bit state is arranged as a 5 × 5 matrix of 64-bit lanes and passes through 24 rounds. Each round is five steps, θ, ρ, π, χ, ι, each a permutation or substitution of the state. The rounds are identical except for ι’s round constant.</p></details>
+  <details><summary>11.9 List and briefly describe the step functions that comprise the iteration function f.</summary><p>θ: XOR each bit with the parity of a column on one side and a rotated column on the other (diffusion). ρ: rotate each lane by a fixed offset. π: permute lane positions. χ: nonlinear row mix a <span class="op">⊕</span> (NOT b AND c). ι: XOR a round constant into L[0, 0] to break symmetry.</p></details>
+  <h3>Chapter 12</h3>
+  <details><summary>12.1 What types of attacks are addressed by message authentication?</summary><p>Masquerade, content modification, sequence modification and timing modification (delay or replay). Source repudiation needs digital signatures.</p></details>
+  <details><summary>12.2 What two levels of functionality comprise a message authentication or digital signature mechanism?</summary><p>A lower-level function that produces an authenticator, and a higher-level authentication protocol that uses it to let the receiver verify the message.</p></details>
+  <details><summary>12.3 What are some approaches to producing message authentication?</summary><p>A hash function, message encryption (symmetric or public key), and a message authentication code.</p></details>
+  <details><summary>12.4 When a combination of symmetric encryption and an error control code is used for message authentication, in what order must the two functions be performed?</summary><p>Error control code first, then encryption: E(K, [M ‖ F(M)]) (internal error control). With the code outside, anyone can compute a valid code for any ciphertext.</p></details>
+  <details><summary>12.5 What is a message authentication code?</summary><p>A fixed-length value T = MAC(K, M) computed from the message and a secret key shared by sender and receiver, appended to the message so the receiver can verify origin and integrity.</p></details>
+  <details><summary>12.6 What is the difference between a message authentication code and a one-way hash function?</summary><p>A hash takes no key, so anyone can compute it and the hash value itself must be protected. A MAC depends on a secret key, so only key holders can create or verify it.</p></details>
+  <details><summary>12.7 In what ways can a hash value be secured so as to provide message authentication?</summary><p>Encrypt message plus hash symmetrically; encrypt only the hash symmetrically; hash the message together with a shared secret value; or that plus encryption (Figure 11.3). Encrypting the hash with the sender’s private key also gives a signature.</p></details>
+  <details><summary>12.8 Is it necessary to recover the secret key in order to attack a MAC algorithm?</summary><p>No. Some attacks produce a valid tag directly, such as the XOR-MAC forgery and the CBC-MAC X ‖ (X <span class="op">⊕</span> T) forgery. Attacking the tag value costs about 2<sup>n</sup>, the key about 2<sup>k</sup>.</p></details>
+  <details><summary>12.9 What changes in HMAC are required in order to replace one underlying hash function with another?</summary><p>None to HMAC itself: remove the existing hash module and drop in the new one (adjusting b and n to the new hash). HMAC treats the hash as a black box.</p></details>
+</section>
+
+<!-- ============ Sources ============ -->
+<section class="unit" id="res">
+  <h2><span class="sec">Ref</span>References / Sources</h2>
+  <ul>
+    <li>W. Stallings, <i>Cryptography and Network Security: Principles and Practice</i>, 7th ed., Global Edition, Pearson, 2017. Chapters 11–12, pp. 339–418. All content not marked otherwise.</li>
+    <li><b>In the book:</b> Chapter 4 (diffusion), Chapter 6 (AES, MixColumns doubling), Chapter 7 (CBC and CTR modes), Appendix B.10 (Sage examples for hash functions); online Appendix N (MD5), Appendix U (birthday attack mathematics) and Appendix V (SHA-3 evaluation criteria).</li>
+    <li><a href="https://csrc.nist.gov/pubs/fips/180-4/upd1/final" target="_blank" rel="noopener">NIST FIPS 180-4, Secure Hash Standard</a> — SHA-1 and SHA-2 specification; the SHA-512 lab follows it.</li>
+    <li><a href="https://csrc.nist.gov/pubs/fips/202/final" target="_blank" rel="noopener">NIST FIPS 202, SHA-3 Standard</a> — Keccak-f, pad10*1, SHA-3 domain bits and SHAKE; the SHA3-256 lab follows it.</li>
+    <li><a href="https://www.nist.gov/news-events/news/2022/12/nist-retires-sha-1-cryptographic-algorithm" target="_blank" rel="noopener">NIST, “NIST Retires SHA-1 Cryptographic Algorithm” (2022)</a> — source of the SHA-1 status note.</li>
+    <li><a href="https://www.federalregister.gov/documents/2007/11/02/E7-21581/announcing-request-for-candidate-algorithm-nominations-for-a-new-cryptographic-hash-algorithm-sha-3" target="_blank" rel="noopener">NIST, request for SHA-3 candidate algorithms (Federal Register, 2007)</a> — evaluation criteria for review question 11.6.</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc2104" target="_blank" rel="noopener">RFC 2104, HMAC</a> and <a href="https://www.rfc-editor.org/rfc/rfc4231" target="_blank" rel="noopener">RFC 4231, HMAC-SHA test vectors</a> — key padding side and the HMAC lab preset.</li>
+    <li><a href="https://csrc.nist.gov/pubs/sp/800/38/b/upd1/final" target="_blank" rel="noopener">NIST SP 800-38B, CMAC</a> and <a href="https://www.rfc-editor.org/rfc/rfc4493" target="_blank" rel="noopener">RFC 4493, AES-CMAC</a> — CMAC lab presets.</li>
+    <li><a href="https://csrc.nist.gov/pubs/sp/800/38/c/upd1/final" target="_blank" rel="noopener">NIST SP 800-38C, CCM</a> and <a href="https://csrc.nist.gov/pubs/sp/800/38/d/final" target="_blank" rel="noopener">NIST SP 800-38D, GCM and GMAC</a>.</li>
+    <li><a href="https://csrc.nist.gov/pubs/sp/800/38/f/final" target="_blank" rel="noopener">NIST SP 800-38F, Key Wrapping</a> and <a href="https://www.rfc-editor.org/rfc/rfc3394" target="_blank" rel="noopener">RFC 3394, AES Key Wrap</a> — key wrap lab preset.</li>
+    <li><a href="https://csrc.nist.gov/pubs/sp/800/90/a/r1/final" target="_blank" rel="noopener">NIST SP 800-90A Rev. 1, DRBGs</a> — current names Hash_DRBG and HMAC_DRBG.</li>
+  </ul>
+  <footer>Content follows W. Stallings, <i>Cryptography and Network Security: Principles and Practice</i>, 7th ed., Global Edition, Chapters 11–12. All hashing, AES, CMAC, GCM and key-wrap labs run in your browser with code checked against the standards’ test vectors; nothing is sent anywhere. Random values come from <code>crypto.getRandomValues</code> and are for study only.</footer>
+</section>
+</main>
+</div>
+
+<script>
+/* ===== Unit 7 engine: byte helpers, SHA-256, SHA-512 (traced), Keccak/SHA-3 (traced), HMAC, AES, CMAC, GCM, KW ===== */
+const U7=(function(){
+/* ---------- bytes ---------- */
+const enc=s=>new TextEncoder().encode(s);
+const hex=b=>Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');
+function unhex(h){h=String(h).replace(/[\s:]/g,'').toLowerCase();if(h.length%2||/[^0-9a-f]/.test(h))throw new Error('not valid hex (need an even number of 0–9, a–f)');const o=new Uint8Array(h.length/2);for(let i=0;i<o.length;i++)o[i]=parseInt(h.substr(2*i,2),16);return o}
+const cat=(...a)=>{const n=a.reduce((s,x)=>s+x.length,0),o=new Uint8Array(n);let p=0;for(const x of a){o.set(x,p);p+=x.length}return o};
+const xorb=(a,b)=>{const o=new Uint8Array(a.length);for(let i=0;i<a.length;i++)o[i]=a[i]^b[i];return o};
+const eqb=(a,b)=>a.length===b.length&&a.every((x,i)=>x===b[i]);
+
+/* ---------- simple hashes (11.2) ---------- */
+function xor16(bytes,rot){ // 16-bit blocks; rot: rotate hash left 1 before each XOR
+  let h=0;const blocks=[];const b=bytes.length%2?cat(bytes,new Uint8Array(1)):bytes;
+  for(let i=0;i<b.length;i+=2){const w=(b[i]<<8)|b[i+1];if(rot)h=((h<<1)|(h>>>15))&0xffff;h^=w;blocks.push([w,h])}
+  return {h,blocks};
+}
+
+/* ---------- SHA-256 ---------- */
+const K256=new Uint32Array([0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+function sha256(msg){
+  const l=msg.length,bl=Math.ceil((l+9)/64)*64,m=new Uint8Array(bl);m.set(msg);m[l]=0x80;
+  const bits=l*8;const dv=new DataView(m.buffer);dv.setUint32(bl-4,bits>>>0);dv.setUint32(bl-8,Math.floor(bits/2**32));
+  let H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  const W=new Uint32Array(64),r=(x,n)=>(x>>>n)|(x<<(32-n));
+  for(let o=0;o<bl;o+=64){
+    for(let t=0;t<16;t++)W[t]=dv.getUint32(o+4*t);
+    for(let t=16;t<64;t++){const s0=r(W[t-15],7)^r(W[t-15],18)^(W[t-15]>>>3),s1=r(W[t-2],17)^r(W[t-2],19)^(W[t-2]>>>10);W[t]=(W[t-16]+s0+W[t-7]+s1)>>>0}
+    let [a,b,c,d,e,f,g,h]=H;
+    for(let t=0;t<64;t++){const S1=r(e,6)^r(e,11)^r(e,25),ch=(e&f)^(~e&g),T1=(h+S1+ch+K256[t]+W[t])>>>0,S0=r(a,2)^r(a,13)^r(a,22),mj=(a&b)^(a&c)^(b&c),T2=(S0+mj)>>>0;
+      h=g;g=f;f=e;e=(d+T1)>>>0;d=c;c=b;b=a;a=(T1+T2)>>>0}
+    H=H.map((x,i)=>(x+[a,b,c,d,e,f,g,h][i])>>>0);
+  }
+  const out=new Uint8Array(32);const ov=new DataView(out.buffer);H.forEach((x,i)=>ov.setUint32(4*i,x));return out;
+}
+
+/* ---------- SHA-512 (BigInt, with trace) ---------- */
+const M64=(1n<<64n)-1n;
+const K512=`428a2f98d728ae22 7137449123ef65cd b5c0fbcfec4d3b2f e9b5dba58189dbbc 3956c25bf348b538 59f111f1b605d019 923f82a4af194f9b ab1c5ed5da6d8118 d807aa98a3030242 12835b0145706fbe 243185be4ee4b28c 550c7dc3d5ffb4e2 72be5d74f27b896f 80deb1fe3b1696b1 9bdc06a725c71235 c19bf174cf692694 e49b69c19ef14ad2 efbe4786384f25e3 0fc19dc68b8cd5b5 240ca1cc77ac9c65 2de92c6f592b0275 4a7484aa6ea6e483 5cb0a9dcbd41fbd4 76f988da831153b5 983e5152ee66dfab a831c66d2db43210 b00327c898fb213f bf597fc7beef0ee4 c6e00bf33da88fc2 d5a79147930aa725 06ca6351e003826f 142929670a0e6e70 27b70a8546d22ffc 2e1b21385c26c926 4d2c6dfc5ac42aed 53380d139d95b3df 650a73548baf63de 766a0abb3c77b2a8 81c2c92e47edaee6 92722c851482353b a2bfe8a14cf10364 a81a664bbc423001 c24b8b70d0f89791 c76c51a30654be30 d192e819d6ef5218 d69906245565a910 f40e35855771202a 106aa07032bbd1b8 19a4c116b8d2d0c8 1e376c085141ab53 2748774cdf8eeb99 34b0bcb5e19b48a8 391c0cb3c5c95a63 4ed8aa4ae3418acb 5b9cca4f7763e373 682e6ff3d6b2b8a3 748f82ee5defb2fc 78a5636f43172f60 84c87814a1f0ab72 8cc702081a6439ec 90befffa23631e28 a4506cebde82bde9 bef9a3f7b2c67915 c67178f2e372532b ca273eceea26619c d186b8c721c0c207 eada7dd6cde0eb1e f57d4f7fee6ed178 06f067aa72176fba 0a637dc5a2c898a6 113f9804bef90dae 1b710b35131c471b 28db77f523047d84 32caab7b40c72493 3c9ebe0a15c9bebc 431d67c49c100d4c 4cc5d4becb3e42b6 597f299cfc657e2a 5fcb6fab3ad6faec 6c44198c4a475817`.split(/\s+/).map(x=>BigInt('0x'+x));
+const IV512=['6a09e667f3bcc908','bb67ae8584caa73b','3c6ef372fe94f82b','a54ff53a5f1d36f1','510e527fade682d1','9b05688c2b3e6c1f','1f83d9abfb41bd6b','5be0cd19137e2179'].map(x=>BigInt('0x'+x));
+const R64=(x,n)=>((x>>BigInt(n))|(x<<BigInt(64-n)))&M64;
+const S64=(x,n)=>x>>BigInt(n);
+const h64=x=>x.toString(16).padStart(16,'0');
+function sha512pad(msg){
+  const l=msg.length,bl=Math.ceil((l+17)/128)*128,m=new Uint8Array(bl);m.set(msg);m[l]=0x80;
+  let bits=BigInt(l)*8n;for(let i=0;i<16;i++){m[bl-1-i]=Number(bits&255n);bits>>=8n}
+  return m;
+}
+function sha512(msg,trace){
+  const m=sha512pad(msg);let H=IV512.slice();const tr={padded:m,blocks:[]};
+  for(let o=0;o<m.length;o+=128){
+    const W=[];for(let t=0;t<16;t++){let w=0n;for(let j=0;j<8;j++)w=(w<<8n)|BigInt(m[o+8*t+j]);W.push(w)}
+    for(let t=16;t<80;t++){const s0=R64(W[t-15],1)^R64(W[t-15],8)^S64(W[t-15],7),s1=R64(W[t-2],19)^R64(W[t-2],61)^S64(W[t-2],6);W.push((s1+W[t-7]+s0+W[t-16])&M64)}
+    let [a,b,c,d,e,f,g,h]=H;const rounds=[];
+    for(let t=0;t<80;t++){
+      const S1=R64(e,14)^R64(e,18)^R64(e,41),ch=(e&f)^((~e&M64)&g),T1=(h+ch+S1+W[t]+K512[t])&M64;
+      const S0=R64(a,28)^R64(a,34)^R64(a,39),mj=(a&b)^(a&c)^(b&c),T2=(S0+mj)&M64;
+      h=g;g=f;f=e;e=(d+T1)&M64;d=c;c=b;b=a;a=(T1+T2)&M64;
+      if(trace)rounds.push({t,T1,T2,regs:[a,b,c,d,e,f,g,h]});
+    }
+    const Hin=H.slice();H=H.map((x,i)=>(x+[a,b,c,d,e,f,g,h][i])&M64);
+    if(trace)tr.blocks.push({W,rounds,Hin,Hout:H.slice()});
+  }
+  const out=new Uint8Array(64);H.forEach((x,i)=>{for(let j=0;j<8;j++)out[8*i+j]=Number((x>>BigInt(56-8*j))&255n)});
+  tr.digest=out;return trace?tr:out;
+}
+
+/* ---------- Keccak-f[1600] / SHA-3 (BigInt lanes, with trace) ---------- */
+const RC=['0000000000000001','0000000000008082','800000000000808A','8000000080008000','000000000000808B','0000000080000001','8000000080008081','8000000000008009','000000000000008A','0000000000000088','0000000080008009','000000008000000A','000000008000808B','800000000000008B','8000000000008089','8000000000008003','8000000000008002','8000000000000080','000000000000800A','800000008000000A','8000000080008081','8000000000008080','0000000080000001','8000000080008008'].map(x=>BigInt('0x'+x));
+// rho offsets r[x][y] from t loop (book eq. 11.2)
+const RHO=(()=>{const r=[...Array(5)].map(()=>Array(5).fill(0));let x=1,y=0;for(let t=0;t<24;t++){r[x][y]=((t+1)*(t+2)/2)%64;[x,y]=[y,(2*x+3*y)%5]}return r})();
+const RHOT=(()=>{const o=[];let x=1,y=0;for(let t=0;t<24;t++){o.push({t,x,y,raw:(t+1)*(t+2)/2,off:((t+1)*(t+2)/2)%64});[x,y]=[y,(2*x+3*y)%5]}return o})();
+const rotl=(v,n)=>n===0?v:((v<<BigInt(n))|(v>>BigInt(64-n)))&M64;
+const cloneL=L=>L.map(c=>c.slice());
+function keccakf(L,trace){ // L[x][y] BigInt
+  const steps=[];
+  for(let ir=0;ir<24;ir++){
+    const C=[0,1,2,3,4].map(x=>L[x][0]^L[x][1]^L[x][2]^L[x][3]^L[x][4]);
+    for(let x=0;x<5;x++){const D=C[(x+4)%5]^rotl(C[(x+1)%5],1);for(let y=0;y<5;y++)L[x][y]^=D}
+    if(trace&&ir===0)steps.push(['θ',cloneL(L)]);
+    for(let x=0;x<5;x++)for(let y=0;y<5;y++)L[x][y]=rotl(L[x][y],RHO[x][y]);
+    if(trace&&ir===0)steps.push(['ρ',cloneL(L)]);
+    const B=[...Array(5)].map(()=>Array(5).fill(0n));
+    for(let x=0;x<5;x++)for(let y=0;y<5;y++)B[y][(2*x+3*y)%5]=L[x][y];
+    for(let x=0;x<5;x++)for(let y=0;y<5;y++)L[x][y]=B[x][y];
+    if(trace&&ir===0)steps.push(['π',cloneL(L)]);
+    for(let y=0;y<5;y++){const row=[0,1,2,3,4].map(x=>L[x][y]);for(let x=0;x<5;x++)L[x][y]=row[x]^((~row[(x+1)%5]&M64)&row[(x+2)%5])}
+    if(trace&&ir===0)steps.push(['χ',cloneL(L)]);
+    L[0][0]^=RC[ir];
+    if(trace&&ir===0)steps.push(['ι',cloneL(L)]);
+  }
+  return steps;
+}
+function laneFromBytes(b,o){let v=0n;for(let j=7;j>=0;j--)v=(v<<8n)|BigInt(b[o+j]);return v} // little-endian lanes
+function sha3(msg,outBits,trace){
+  const rate=(1600-2*outBits)/8;const pl=Math.ceil((msg.length+1)/rate)*rate;const P=new Uint8Array(pl);P.set(msg);
+  P[msg.length]^=0x06;P[pl-1]^=0x80; // SHA-3 domain bits 01 + pad10*1
+  const L=[...Array(5)].map(()=>Array(5).fill(0n));const tr={rate,padded:P,absorb:[]};
+  for(let o=0;o<pl;o+=rate){
+    for(let i=0;i<rate/8;i++){const x=i%5,y=Math.floor(i/5);L[x][y]^=laneFromBytes(P,o+8*i)}
+    const before=cloneL(L);const steps=keccakf(L,trace&&o===0);
+    if(trace)tr.absorb.push({before,steps,after:cloneL(L)});
+  }
+  const out=new Uint8Array(outBits/8);
+  for(let i=0;i<out.length;i++){const lane=Math.floor(i/8),x=lane%5,y=Math.floor(lane/5);out[i]=Number((L[x][y]>>BigInt(8*(i%8)))&255n)}
+  tr.digest=out;return trace?tr:out;
+}
+
+/* ---------- HMAC ---------- */
+const HF={'SHA-256':{f:sha256,b:64},'SHA-512':{f:m=>sha512(m),b:128}};
+function hmac(name,key,msg,trace){
+  const {f,b}=HF[name];let K=key.length>b?f(key):key;const Kp=new Uint8Array(b);Kp.set(K); // RFC 2104: zeros appended to the end
+  const Si=Kp.map(x=>x^0x36),So=Kp.map(x=>x^0x5c);const inner=f(cat(Si,msg));const out=f(cat(So,inner));
+  return trace?{Kp,Si,So,inner,out,hashedKey:key.length>b}:out;
+}
+
+/* ---------- AES (FIPS 197) ---------- */
+const SBOX=new Uint8Array(256),INV=new Uint8Array(256);
+(function(){let p=1,q=1;do{p=p^((p<<1)&0xff)^(p&0x80?0x1b:0);q^=q<<1;q^=q<<2;q^=q<<4;q&=0xff;if(q&0x80)q^=0x09;const x=q^((q<<1|q>>7)&0xff)^((q<<2|q>>6)&0xff)^((q<<3|q>>5)&0xff)^((q<<4|q>>4)&0xff);SBOX[p]=(x^0x63)&0xff}while(p!==1);SBOX[0]=0x63;for(let i=0;i<256;i++)INV[SBOX[i]]=i})();
+const xt=a=>((a<<1)^(a&0x80?0x1b:0))&0xff;
+const gm=(a,b)=>{let r=0;while(b){if(b&1)r^=a;a=xt(a);b>>=1}return r};
+function expandKey(key){
+  const Nk=key.length/4;if(![4,6,8].includes(Nk))throw new Error('AES key must be 16, 24 or 32 bytes');
+  const Nr=Nk+6,w=[];for(let i=0;i<Nk;i++)w.push(Array.from(key.slice(4*i,4*i+4)));
+  let rc=1;for(let i=Nk;i<4*(Nr+1);i++){let t=w[i-1].slice();
+    if(i%Nk===0){t=[t[1],t[2],t[3],t[0]].map(x=>SBOX[x]);t[0]^=rc;rc=xt(rc)}else if(Nk>6&&i%Nk===4)t=t.map(x=>SBOX[x]);
+    w.push(w[i-Nk].map((x,j)=>x^t[j]))}
+  return {w,Nr};
+}
+function aesEnc(ks,inp){
+  const {w,Nr}=ks;let s=Array.from(inp);const ark=r=>{for(let c=0;c<4;c++)for(let j=0;j<4;j++)s[4*c+j]^=w[4*r+c][j]};
+  ark(0);
+  for(let r=1;r<=Nr;r++){
+    s=s.map(x=>SBOX[x]);
+    s=[s[0],s[5],s[10],s[15],s[4],s[9],s[14],s[3],s[8],s[13],s[2],s[7],s[12],s[1],s[6],s[11]];
+    if(r<Nr)for(let c=0;c<4;c++){const [a0,a1,a2,a3]=s.slice(4*c,4*c+4);s[4*c]=xt(a0)^xt(a1)^a1^a2^a3;s[4*c+1]=a0^xt(a1)^xt(a2)^a2^a3;s[4*c+2]=a0^a1^xt(a2)^xt(a3)^a3;s[4*c+3]=xt(a0)^a0^a1^a2^xt(a3)}
+    ark(r);
+  }
+  return Uint8Array.from(s);
+}
+function aesDec(ks,inp){
+  const {w,Nr}=ks;let s=Array.from(inp);const ark=r=>{for(let c=0;c<4;c++)for(let j=0;j<4;j++)s[4*c+j]^=w[4*r+c][j]};
+  ark(Nr);
+  for(let r=Nr-1;r>=0;r--){
+    s=[s[0],s[13],s[10],s[7],s[4],s[1],s[14],s[11],s[8],s[5],s[2],s[15],s[12],s[9],s[6],s[3]];
+    s=s.map(x=>INV[x]);ark(r);
+    if(r>0)for(let c=0;c<4;c++){const [a0,a1,a2,a3]=s.slice(4*c,4*c+4);s[4*c]=gm(a0,14)^gm(a1,11)^gm(a2,13)^gm(a3,9);s[4*c+1]=gm(a0,9)^gm(a1,14)^gm(a2,11)^gm(a3,13);s[4*c+2]=gm(a0,13)^gm(a1,9)^gm(a2,14)^gm(a3,11);s[4*c+3]=gm(a0,11)^gm(a1,13)^gm(a2,9)^gm(a3,14)}
+  }
+  return Uint8Array.from(s);
+}
+
+/* ---------- CBC-MAC / CMAC (SP 800-38B) ---------- */
+function dbl(L){const o=new Uint8Array(16);let c=0;for(let i=15;i>=0;i--){o[i]=((L[i]<<1)|c)&0xff;c=L[i]>>7}if(L[0]&0x80)o[15]^=0x87;return o}
+function cbcmac(key,msg){const ks=expandKey(key);let c=new Uint8Array(16);for(let o=0;o<msg.length;o+=16){const blk=new Uint8Array(16);blk.set(msg.slice(o,o+16));c=aesEnc(ks,xorb(c,blk))}return c}
+function cmac(key,msg,trace){
+  const ks=expandKey(key);const L=aesEnc(ks,new Uint8Array(16)),K1=dbl(L),K2=dbl(K1);
+  const n=Math.max(1,Math.ceil(msg.length/16)),full=msg.length>0&&msg.length%16===0;const blocks=[];
+  for(let i=0;i<n;i++){const b=new Uint8Array(16);const part=msg.slice(16*i,16*i+16);b.set(part);if(i===n-1&&!full)b[part.length]=0x80;blocks.push(b)}
+  blocks[n-1]=xorb(blocks[n-1],full?K1:K2);
+  let c=new Uint8Array(16);const cs=[];for(const b of blocks){c=aesEnc(ks,xorb(c,b));cs.push(c)}
+  return trace?{L,K1,K2,full,blocks,cs,T:c}:c;
+}
+
+/* ---------- GCM (SP 800-38D) ---------- */
+const b2n=b=>b.reduce((v,x)=>(v<<8n)|BigInt(x),0n);
+const n2b=(v,len)=>{const o=new Uint8Array(len);for(let i=len-1;i>=0;i--){o[i]=Number(v&255n);v>>=8n}return o};
+const R128=0xe1n<<120n;
+function gfmul(X,Y){let Z=0n,V=Y;for(let i=127;i>=0;i--){if((X>>BigInt(i))&1n)Z^=V;V=(V&1n)?(V>>1n)^R128:V>>1n}return Z}
+function ghash(Hn,X){let Y=0n;for(let o=0;o<X.length;o+=16)Y=gfmul(Y^b2n(X.slice(o,o+16)),Hn);return Y}
+const inc32=cb=>{const o=cb.slice();let v=((o[12]<<24)|(o[13]<<16)|(o[14]<<8)|o[15])>>>0;v=(v+1)>>>0;o[12]=v>>>24;o[13]=(v>>>16)&255;o[14]=(v>>>8)&255;o[15]=v&255;return o};
+function gctr(ks,icb,X){if(!X.length)return new Uint8Array(0);const Y=new Uint8Array(X.length);let cb=icb;for(let o=0;o<X.length;o+=16){const s=aesEnc(ks,cb);for(let j=0;j<16&&o+j<X.length;j++)Y[o+j]=X[o+j]^s[j];cb=inc32(cb)}return Y}
+const pad16=b=>{const r=b.length%16;return r?cat(b,new Uint8Array(16-r)):b};
+function gcm(key,iv,P,A,trace){
+  const ks=expandKey(key);const H=aesEnc(ks,new Uint8Array(16)),Hn=b2n(H);
+  let J0;if(iv.length===12)J0=cat(iv,Uint8Array.from([0,0,0,1]));else J0=n2b(ghash(Hn,cat(pad16(iv),new Uint8Array(8),n2b(BigInt(iv.length*8),8))),16);
+  const C=gctr(ks,inc32(J0),P);
+  const lens=cat(n2b(BigInt(A.length*8),8),n2b(BigInt(C.length*8),8));
+  const S=n2b(ghash(Hn,cat(pad16(A),pad16(C),lens)),16);const T=gctr(ks,J0,S);
+  return trace?{H,J0,C,S,T}:{C,T};
+}
+function gcmDecrypt(key,iv,C,A,T){const r=gcm(key,iv,new Uint8Array(0),A,true);// recompute with given C
+  const ks=expandKey(key);const Hn=b2n(r.H);const lens=cat(n2b(BigInt(A.length*8),8),n2b(BigInt(C.length*8),8));
+  const S=n2b(ghash(Hn,cat(pad16(A),pad16(C),lens)),16);const T2=gctr(ks,r.J0,S);
+  return {ok:eqb(T2.slice(0,T.length),T),P:gctr(ks,inc32(r.J0),C),T2}}
+
+/* ---------- Key Wrap (SP 800-38F, book Section 12.8) ---------- */
+const ICV=unhex('a6a6a6a6a6a6a6a6');
+function kwWrap(kek,key,trace){
+  if(key.length%8||key.length<16)throw new Error('key data must be a multiple of 8 bytes, at least 16');
+  const ks=expandKey(kek);const n=key.length/8,s=6*n;let A=ICV.slice();let R=[];for(let i=0;i<n;i++)R.push(key.slice(8*i,8*i+8));
+  const steps=[];
+  for(let t=1;t<=s;t++){const W=aesEnc(ks,cat(A,R[0]));const tb=n2b(BigInt(t),8);A=xorb(tb,W.slice(0,8));R=R.slice(1).concat([W.slice(8)]);if(trace)steps.push({t,A:A.slice(),R:R.map(x=>x.slice())})}
+  const C=cat(A,...R);return trace?{C,steps,n}:C;
+}
+function kwUnwrap(kek,C){
+  const ks=expandKey(kek);const n=C.length/8-1,s=6*n;let A=C.slice(0,8);let R=[];for(let i=1;i<=n;i++)R.push(C.slice(8*i,8*i+8));
+  for(let t=s;t>=1;t--){const W=aesDec(ks,cat(xorb(A,n2b(BigInt(t),8)),R[n-1]));A=W.slice(0,8);R=[W.slice(8)].concat(R.slice(0,n-1))}
+  return {ok:eqb(A,ICV),A,P:cat(...R)};
+}
+
+/* ---------- PRNGs (Fig 12.14/12.15) ---------- */
+function prngHash(V,nbytes){const out=[];let data=b2n(V);const sl=BigInt(V.length*8);while(out.length<nbytes){const w=sha256(n2b(data,V.length));out.push(...w);data=(data+1n)%(1n<<sl)}return Uint8Array.from(out.slice(0,nbytes))}
+function prngHmac(kind,K,V,nbytes){const out=[];let w=V,A=V,i=1;
+  while(out.length<nbytes){
+    if(kind==='sp')w=hmac('SHA-256',K,w);
+    else if(kind==='wlan')w=hmac('SHA-256',K,cat(V,Uint8Array.from([i])));
+    else{A=hmac('SHA-256',K,A);w=hmac('SHA-256',K,cat(A,V))}
+    out.push(...w);i++}
+  return Uint8Array.from(out.slice(0,nbytes))}
+
+return {enc,hex,unhex,cat,xorb,eqb,xor16,sha256,sha512,sha512pad,h64,K512,IV512,sha3,keccakf,RHO,RHOT,RC,hmac,expandKey,aesEnc,aesDec,cbcmac,cmac,gcm,gcmDecrypt,kwWrap,kwUnwrap,prngHash,prngHmac,b2n,n2b};
+})();
+
+
+/* ===== Unit 7 labs and figures ===== */
+(function(){
+const $=id=>document.getElementById(id);
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const err=m=>'<span class="err">'+esc(m)+'</span>';
+const ok=(b,t,f)=>'<span class="res '+(b?'ok':'no')+'">'+(b?t:f)+'</span>';
+const kv=rows=>'<div class="kv">'+rows.map(([k,v])=>'<span class="k">'+k+'</span><span class="v">'+v+'</span>').join('')+'</div>';
+const {enc,hex,unhex,cat,xorb,eqb}=U7;
+const grp=(h,n)=>h.replace(new RegExp('(.{'+(n||16)+'})','g'),'$1 ').trim();
+const short=(h,n)=>h.length<=n?h:h.slice(0,n/2)+'…'+h.slice(-n/2);
+const rnd=n=>{const b=new Uint8Array(n);crypto.getRandomValues(b);return b};
+const SVGNS='http://www.w3.org/2000/svg';
+const el=(tag,attrs,text)=>{const e=document.createElementNS(SVGNS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text!=null)e.textContent=text;return e};
+const on=(id,ev,f)=>{const e=$(id);if(e)e.addEventListener(ev,f)};
+const subtle=(window.crypto&&crypto.subtle)||null;
+
+/* ---------- 11.2 XOR / RXOR ---------- */
+function sx(){
+  const b=enc($('sx-in').value);if(!b.length){$('sx-out').innerHTML=err('Type at least one character.');return}
+  const a=U7.xor16(b,false),r=U7.xor16(b,true);const bin=w=>w.toString(2).padStart(16,'0');
+  let t='<div class="tbl"><table><tr><th>block</th><th>bits</th><th>XOR so far</th><th>RXOR so far</th></tr>';
+  a.blocks.forEach(([w,h],i)=>{const ch=b.slice(2*i,2*i+2);t+='<tr><td class="mono">“'+esc(new TextDecoder().decode(ch))+'”</td><td class="mono">'+bin(w)+'</td><td class="mono">'+bin(h)+'</td><td class="mono">'+bin(r.blocks[i][1])+'</td></tr>'});
+  t+='</table></div>';
+  $('sx-out').innerHTML=t+kv([['XOR hash','<b>'+a.h.toString(16).padStart(4,'0')+'</b>'],['RXOR hash','<b>'+r.h.toString(16).padStart(4,'0')+'</b>']]);
+}
+on('sx-in','input',sx);
+on('sx-swap','click',()=>{const v=$('sx-in').value;if(v.length<4)return;$('sx-in').value=v.slice(2,4)+v.slice(0,2)+v.slice(4);sx()});
+
+/* ---------- 11.3 birthday attack ---------- */
+const trunc=(h,m)=>(((h[0]<<24)|(h[1]<<16)|(h[2]<<8)|h[3])>>>0)>>>(32-m);
+function birthday(m){const seen=new Map();let n=0;for(;;){const msg=rnd(16);const v=trunc(U7.sha256(msg),m);n++;if(seen.has(v))return {n,a:seen.get(v),b:msg,v};seen.set(v,msg)}}
+on('bd-m','input',()=>{$('bd-mv').textContent=$('bd-m').value});
+on('bd-go','click',()=>{const m=+$('bd-m').value;$('bd-out').textContent='searching…';setTimeout(()=>{
+  const r=birthday(m);const hx=r.v.toString(16).padStart(Math.ceil(m/4),'0');
+  $('bd-out').innerHTML=kv([['collision after','<b>'+r.n.toLocaleString()+'</b> hashes'],['2<sup>m/2</sup>',Math.round(2**(m/2)).toLocaleString()],['preimage would need ≈ 2<sup>m−1</sup>',(2**(m-1)).toLocaleString()],['message x',hex(r.a)],['message y',hex(r.b)],['first '+m+' bits of both hashes','<b>'+hx+'</b> (hex)']])},20)});
+on('bd-many','click',()=>{const m=+$('bd-m').value,runs=m>26?8:m>22?20:40;let i=0,sum=0,min=1e18,max=0;$('bd-out').textContent='running…';
+  (function step(){const r=birthday(m);sum+=r.n;min=Math.min(min,r.n);max=Math.max(max,r.n);i++;
+    if(i<runs){$('bd-out').textContent='run '+i+' of '+runs+'…';setTimeout(step,0);return}
+    const avg=sum/runs;$('bd-out').innerHTML=kv([['runs',String(runs)],['average tries','<b>'+Math.round(avg).toLocaleString()+'</b>'],['2<sup>m/2</sup>',Math.round(2**(m/2)).toLocaleString()],['average ÷ 2<sup>m/2</sup>',(avg/2**(m/2)).toFixed(2)],['fewest / most',min.toLocaleString()+' / '+max.toLocaleString()]])})()});
+
+/* ---------- 11.3 Yuval ---------- */
+const YX='{I|We} {agree|consent} to {pay|give} {Bob|Mr. Smith} {the sum of|a total of} {$10|ten dollars} {for|in return for} {the|his} {old|used} {bicycle|bike}{,|} {payable|due} {today|this week}.';
+const YY='{I|We} {agree|consent} to {pay|give} {Bob|Mr. Smith} {the sum of|a total of} {$10,000|ten thousand dollars} {for|in return for} {the|his} {old|used} {bicycle|bike}{,|} {payable|due} {today|this week}.';
+function variant(tpl,idx,mark){let k=0;return tpl.replace(/\{([^|}]*)\|([^}]*)\}/g,(m,a,b)=>{const pick=(idx>>(k++))&1?b:a;return mark?(pick?'<b>'+esc(pick)+'</b>':''):pick})}
+function showTpl(tpl,id){$(id).innerHTML=esc(tpl).replace(/\{([^|}]*)\|([^}]*)\}/g,(m,a,b)=>'[<b>'+(a||'(none)')+'</b> | <b>'+(b||'(none)')+'</b>]')}
+showTpl(YX,'yv-x');showTpl(YY,'yv-y');
+const h16=s=>{const h=U7.sha256(enc(s));return (h[0]<<8)|h[1]};
+on('yv-go','click',()=>{$('yv-out').textContent='hashing…';setTimeout(()=>{
+  const order=[...Array(4096).keys()].sort(()=>Math.random()-.5);
+  let nx=256;const tab=new Map();for(let i=0;i<nx;i++){const v=h16(variant(YX,order[i]));if(!tab.has(v))tab.set(v,order[i])}
+  const oy=[...Array(4096).keys()].sort(()=>Math.random()-.5);let found=null,ny=0;
+  for(const j of oy){ny++;const v=h16(variant(YY,j));if(tab.has(v)){found=[tab.get(v),j,v];break}}
+  if(!found){for(let i=nx;i<4096;i++){const v=h16(variant(YX,order[i]));if(!tab.has(v))tab.set(v,order[i])}nx=4096;ny=0;for(const j of oy){ny++;const v=h16(variant(YY,j));if(tab.has(v)){found=[tab.get(v),j,v];break}}}
+  if(!found){$('yv-out').innerHTML=err('No match this time; press again.');return}
+  const [ix,iy,v]=found;
+  $('yv-out').innerHTML=kv([['fair variants hashed',String(nx)],['fraudulent variants tried','<b>'+ny+'</b>'],['A signs','<span>'+variant(YX,ix,true)+'</span>'],['signature also fits','<span>'+variant(YY,iy,true)+'</span>'],['16-bit hash of both','<b>'+v.toString(16).padStart(4,'0')+'</b> '+ok(h16(variant(YX,ix))===h16(variant(YY,iy)),'equal','?')]])},20)});
+
+/* ---------- 11.3 iterated hash figure ---------- */
+(function(){const svg=$('it-svg');if(!svg)return;const g=$('it-f');const L=4;const x0=110,dx=140;
+  for(let i=0;i<L;i++){const x=x0+i*dx;
+    g.appendChild(el('rect',{class:'bx itY',x:x-5,y:14,width:70,height:28,id:'itY'+i}));g.appendChild(el('text',{class:'tx',x:x+30,y:33,'text-anchor':'middle'},'Y'+['₀','₁','₂','₃'][i]));
+    g.appendChild(el('path',{class:'ln',d:'M'+(x+30)+' 42 V76','marker-end':'url(#ah)'}));g.appendChild(el('text',{class:'tm',x:x+36,y:62},'b'));
+    g.appendChild(el('rect',{class:'bxa itf',x:x+5,y:78,width:50,height:44,rx:4,id:'itf'+i}));g.appendChild(el('text',{class:'tx',x:x+30,y:105,'text-anchor':'middle'},'f'));
+    g.appendChild(el('path',{class:'ln',d:'M'+(i?x-dx+55:x-30)+' 100 H'+(x+3),'marker-end':'url(#ah)'}));
+    if(i>0)g.appendChild(el('text',{class:'tm',x:x-50,y:92},'CV'+['₀','₁','₂','₃'][i]));
+  }
+  g.appendChild(el('path',{class:'ln',d:'M'+(x0+(L-1)*dx+55)+' 100 H'+(x0+(L-1)*dx+92),'marker-end':'url(#ah)'}));
+  g.appendChild(el('text',{class:'tx',x:x0+(L-1)*dx+96,y:104},'CV₄ = H(M)'));
+  g.appendChild(el('text',{class:'tm',x:350,y:155,'text-anchor':'middle'},'n-bit chaining variables between blocks · last block Y₃ holds padding + length'));
+  let k=0;const msg=$('it-msg');
+  const show=()=>{for(let i=0;i<L;i++){$('itf'+i).classList.toggle('hot',i===k-1);$('itY'+i).classList.toggle('hot',i===k-1)}
+    msg.innerHTML=k===0?'CV₀ = IV':k<=L?'CV'+['₁','₂','₃','₄'][k-1]+' = f(CV'+['₀','₁','₂','₃'][k-1]+', Y'+['₀','₁','₂','₃'][k-1]+')'+(k===L?' = H(M)':''):''};
+  on('it-step','click',()=>{k=k>=L?1:k+1;show()});on('it-reset','click',()=>{k=0;show()});show();})();
+
+/* ---------- SHA-512 trace (shared) ---------- */
+const H64=U7.h64;
+function roundSvg(){const svg=$('rd-svg');if(!svg)return;const tr=U7.sha512(enc('abc'),true),r0=tr.blocks[0].rounds[0];
+  const names='abcdefgh'.split(''),inp=U7.IV512,out=r0.regs;const w=72,gap=8,x0=20;
+  svg.innerHTML='';
+  svg.appendChild(el('text',{class:'tm',x:x0,y:14},'input to round 0 (“abc”, H₀)'));
+  svg.appendChild(el('text',{class:'tm',x:x0,y:192},'output of round 0'));
+  for(let i=0;i<8;i++){const x=x0+i*(w+gap);
+    svg.appendChild(el('rect',{class:'bx',x,y:22,width:w,height:36,rx:3}));
+    svg.appendChild(el('text',{class:'tx',x:x+w/2,y:37,'text-anchor':'middle',style:'font-size:11px'},names[i]));
+    svg.appendChild(el('text',{class:'tm',x:x+w/2,y:52,'text-anchor':'middle'},H64(inp[i]).slice(0,8)));
+    const cls=(i===0||i===4)?'bxb':'bxa';
+    svg.appendChild(el('rect',{class:cls,x,y:140,width:w,height:36,rx:3}));
+    svg.appendChild(el('text',{class:'tx',x:x+w/2,y:155,'text-anchor':'middle',style:'font-size:11px'},names[i]));
+    svg.appendChild(el('text',{class:'tm rdv',x:x+w/2,y:170,'text-anchor':'middle'},H64(out[i]).slice(0,8)));
+  }
+  // movers: input a..g travel to slots b..h
+  for(let i=0;i<7;i++){const x=x0+i*(w+gap);const g=el('g',{class:'rd-mv'});g.style.setProperty('--dx',(w+gap)+'px');
+    g.appendChild(el('rect',{class:'bxa',x,y:22,width:w,height:36,rx:3}));g.appendChild(el('text',{class:'tm',x:x+w/2,y:44,'text-anchor':'middle'},H64(inp[i]).slice(0,8)));svg.appendChild(g)}
+  [[20,92,'T₁ = h + Ch(e,f,g) + Σ₁(e) + W₀ + K₀'],[340,92,'T₂ = Σ₀(a) + Maj(a,b,c)'],[20,114,'new a = T₁ + T₂'],[180,114,'new e = d + T₁'],[340,114,'(values shown: first 32 of 64 bits, hex)']].forEach(([x,y,t])=>svg.appendChild(el('text',{class:'tx',x,y,style:'font-size:11px'},t)));
+}
+roundSvg();
+on('rd-play','click',()=>{const svg=$('rd-svg');svg.classList.remove('play');void svg.getBoundingClientRect();svg.classList.add('play')});
+
+function s5(){
+  let tr;try{tr=U7.sha512(enc($('s5-in').value),true)}catch(e){$('s5-pad').innerHTML=err(e.message);return}
+  window._s5=tr;const n=tr.blocks.length,l=enc($('s5-in').value).length;
+  const ph=hex(tr.padded);
+  $('s5-pad').innerHTML=kv([['message length',l*8+' bits'],['padding','1 bit + '+(tr.padded.length*8-l*8-128-1)+' zero bits, then 128-bit length = '+(l*8).toString(16)+' hex'],['blocks N',String(n)],['padded block 1 (W₀…W₁₅)','<span class="bitstr">'+grp(ph.slice(0,256),16)+'</span>']]);
+  const sel=$('s5-blk');sel.innerHTML=tr.blocks.map((b,i)=>'<option value="'+i+'">M'+(i+1)+'</option>').join('');
+  s5r();
+  const d=hex(tr.digest);$('s5-dig').innerHTML=kv([['digest H<sub>N</sub>','<b class="bitstr">'+grp(d,16)+'</b>'],['check','<span id="s5-chk">…</span>']]);
+  if(subtle)subtle.digest('SHA-512',enc($('s5-in').value)).then(b=>{const c=$('s5-chk');if(c)c.innerHTML=ok(hex(new Uint8Array(b))===d,'matches the browser’s built-in SHA-512','differs from the browser’s SHA-512')}).catch(()=>{const c=$('s5-chk');if(c)c.textContent='built-in SHA-512 not available here'});else $('s5-chk').textContent='built-in SHA-512 not available here';
+}
+function s5r(){const tr=window._s5;if(!tr)return;const b=tr.blocks[+$('s5-blk').value||0];const t=+$('s5-t').value;$('s5-tv').textContent=t;
+  const r=b.rounds[t],prev=t?b.rounds[t-1].regs:b.Hin;const names='abcdefgh';
+  let rows=[['W<sub>'+t+'</sub>',H64(b.W[t])+(t<16?' (word '+t+' of the block)':' (σ₁(W<sub>'+(t-2)+'</sub>) + W<sub>'+(t-7)+'</sub> + σ₀(W<sub>'+(t-15)+'</sub>) + W<sub>'+(t-16)+'</sub>)')],['K<sub>'+t+'</sub>',H64(U7.K512[t])],['T₁ / T₂',H64(r.T1)+' / '+H64(r.T2)]];
+  let tb='<div class="tbl"><table><tr><th>reg</th><th>before round '+t+'</th><th>after</th></tr>';
+  for(let i=0;i<8;i++){const nw=(i===0||i===4);tb+='<tr><td class="mono">'+names[i]+'</td><td class="mono">'+H64(prev[i])+'</td><td class="mono'+(nw?' newv':'')+'">'+H64(r.regs[i])+(nw?'':' <span class="pill">= old '+names[i-1]+'</span>')+'</td></tr>'}
+  tb+='</table></div>';$('s5-round').innerHTML=kv(rows)+tb}
+on('s5-in','input',s5);on('s5-t','input',s5r);on('s5-blk','change',s5r);
+
+/* ---------- 11.6 sponge animation ---------- */
+(function(){const svg=$('sp-svg');if(!svg)return;svg.setAttribute('viewBox','0 0 700 210');
+  const fx=[150,290,430,570],yR=110,yC=164,add=(t,a,x)=>svg.appendChild(el(t,a,x));
+  add('text',{class:'tm',x:6,y:yR+4},'r');add('text',{class:'tm',x:6,y:yC+4},'c');
+  add('text',{class:'tm',x:24,y:yR-8},'0ʳ');add('text',{class:'tm',x:24,y:yC-8},'0ᶜ');
+  for(let i=0;i<4;i++){const x=fx[i],from=i?fx[i-1]+44:20;
+    if(i<3){const cx=x-34;add('path',{class:'ln',d:'M'+from+' '+yR+' H'+(cx-11),'marker-end':'url(#ah)'});
+      add('circle',{class:'bx sp-x',cx,cy:yR,r:9,id:'spx'+i});add('text',{class:'tx',x:cx,y:yR+4,'text-anchor':'middle'},'⊕');
+      add('rect',{class:'bxm sp-p',x:cx-20,y:30,width:40,height:24,rx:3,id:'spp'+i});add('text',{class:'tx',x:cx,y:46,'text-anchor':'middle'},'P'+['₀','₁','₂'][i]);
+      add('path',{class:'ln',d:'M'+cx+' 54 V'+(yR-11),'marker-end':'url(#ah)'});
+      add('path',{class:'ln',d:'M'+(cx+9)+' '+yR+' H'+(x-2),'marker-end':'url(#ah)'})}
+    else add('path',{class:'ln',d:'M'+from+' '+yR+' H'+(x-2),'marker-end':'url(#ah)'});
+    add('path',{class:'ln',d:'M'+from+' '+yC+' H'+(x-2),'marker-end':'url(#ah)'});
+    add('rect',{class:'bxa sp-f',x,y:yR-18,width:44,height:yC-yR+36,rx:4,id:'spf'+i});add('text',{class:'tx',x:x+22,y:(yR+yC)/2+4,'text-anchor':'middle'},'f');
+  }
+  // squeezing taps go up from the r strip, clear of the c strip
+  [[500,'Z₀'],[650,'Z₁']].forEach(([x,t],k)=>{add('path',{class:'ln',d:'M'+x+' '+yR+' V56','marker-end':'url(#ah)'});add('rect',{class:'bxm sp-z',x:x-20,y:30,width:40,height:24,rx:3,id:'spz'+k});add('text',{class:'tx',x,y:46,'text-anchor':'middle'},t)});
+  add('path',{class:'ln',d:'M'+(fx[3]+44)+' '+yR+' H650'});add('path',{class:'ln dash',d:'M'+(fx[3]+44)+' '+yC+' H660'});
+  add('path',{class:'ln dash',d:'M487 200 V64'});
+  add('text',{class:'tm',x:250,y:204,'text-anchor':'middle'},'absorbing');add('text',{class:'tm',x:580,y:204,'text-anchor':'middle'},'squeezing');
+  const steps=[['spp0','spx0'],['spf0'],['spp1','spx1'],['spf1'],['spp2','spx2'],['spf2'],['spz0'],['spf3'],['spz1']];
+  const txt=['XOR P₀ into the first r bits','s ← f(s)','XOR P₁','s ← f(s)','XOR P₂ (last, padded block)','s ← f(s): absorbing done','output Z₀ = first r bits of s','squeeze: s ← f(s)','output Z₁; return the first ℓ bits of Z₀ ‖ Z₁'];
+  let timer=null;
+  on('sp-play','click',()=>{clearInterval(timer);let i=0;const clr=()=>svg.querySelectorAll('.hot').forEach(e=>e.classList.remove('hot'));
+    const go=()=>{clr();if(i>=steps.length){clearInterval(timer);$('sp-msg').textContent='absorb P₀, P₁, P₂, then squeeze Z₀, Z₁';return}steps[i].forEach(id=>$(id).classList.add('hot'));$('sp-msg').textContent=txt[i];i++};
+    go();timer=setInterval(go,reduce?1600:900)});
+})();
+
+/* ---------- 11.6 lane grid ---------- */
+const CELL=54,GX=20,GY=12;
+function gridCells(svg,cb){svg.innerHTML='';const cells={};
+  for(let x=0;x<5;x++)for(let y=0;y<5;y++){const px=GX+x*CELL,py=GY+(4-y)*CELL;
+    const g=el('g',{class:'lane',tabindex:'0',role:'button','aria-label':'lane L['+x+', '+y+']'});
+    const r=el('rect',{class:'bx',x:px,y:py,width:CELL-4,height:CELL-4,rx:3});const t1=el('text',{class:'tx',x:px+(CELL-4)/2,y:py+20,'text-anchor':'middle',style:'font-size:10px'},'L['+x+','+y+']');
+    const t2=el('text',{class:'tm',x:px+(CELL-4)/2,y:py+38,'text-anchor':'middle',style:'font-size:10px'},'');
+    g.append(r,t1,t2);svg.appendChild(g);cells[x+','+y]={g,r,t2};
+    if(cb){g.addEventListener('click',()=>cb(x,y));g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();cb(x,y)}})}}
+  for(let x=0;x<5;x++)svg.appendChild(el('text',{class:'tm',x:GX+x*CELL+25,y:GY+5*CELL+12,'text-anchor':'middle'},'x='+x));
+  for(let y=0;y<5;y++)svg.appendChild(el('text',{class:'tm',x:GX+5*CELL+4,y:GY+(4-y)*CELL+30},'y='+y));
+  return cells}
+(function(){const svg=$('kg-svg');if(!svg)return;let sel=[2,3],mode='th';
+  const cells=gridCells(svg,(x,y)=>{sel=[x,y];draw()});
+  svg.setAttribute('viewBox','0 0 320 300');
+  function draw(){const [sx_,sy]=sel;
+    for(const k in cells){const c=cells[k];c.r.setAttribute('class','bx');c.t2.textContent=''}
+    const set=(x,y,cls,t)=>{const c=cells[((x%5)+5)%5+','+(((y%5)+5)%5)];c.r.setAttribute('class',cls);if(t!=null)c.t2.textContent=t};
+    let cap='';
+    if(mode==='th'){for(let y=0;y<5;y++){set(sx_-1,y,'bxm','C[x−1]');set(sx_+1,y,'bxa','C[x+1]')}set(sx_,sy,'bxb','target');
+      cap='θ on L['+sx_+','+sy+']: XOR with the parity of column '+((sx_+4)%5)+' (orange) and the parity of column '+((sx_+1)%5)+' rotated by 1 bit (blue). Each bit depends on 11 bits.'}
+    else if(mode==='ch'){set(sx_,sy,'bxb','target');set(sx_+1,sy,'bxm','NOT');set(sx_+2,sy,'bxa','AND');
+      cap='χ on L['+sx_+','+sy+']: XOR with (NOT L['+((sx_+1)%5)+','+sy+']) AND L['+((sx_+2)%5)+','+sy+'], bit by bit in the same row.'}
+    else if(mode==='rh'){for(let x=0;x<5;x++)for(let y=0;y<5;y++)set(x,y,x===sx_&&y===sy?'bxb':'bx','rot '+U7.RHO[x][y]);
+      const t=U7.RHOT.find(o=>o.x===sx_&&o.y===sy);cap=sx_===0&&sy===0?'ρ leaves L[0,0] unchanged.':'ρ rotates L['+sx_+','+sy+'] by '+U7.RHO[sx_][sy]+' bits: t = '+t.t+', (t+1)(t+2)/2 = '+t.raw+' ≡ '+t.off+' (mod 64).'}
+    else{const nx=sy,ny=(2*sx_+3*sy)%5;set(sx_,sy,'bxb','from');set(nx,ny,'bxa','to');
+      cap='π moves the lane at (x, y) = ('+sx_+', '+sy+') to (y, 2x+3y) = ('+nx+', '+ny+').'+(sx_===0&&sy===0?' L[0,0] stays put.':'')}
+    $('kg-cap').textContent=cap+' Select any lane.'}
+  const seg=[['kg-th','th'],['kg-ch','ch'],['kg-rh','rh'],['kg-pi','pi']];
+  seg.forEach(([id,m])=>on(id,'click',()=>{mode=m;seg.forEach(([i2,m2])=>$(i2).setAttribute('aria-pressed',m2===m));draw()}));draw()})();
+
+/* rho table */
+(function(){const t=$('rho-tbl');if(!t)return;let h='<table><tr><th>ρ offset</th>'+[0,1,2,3,4].map(x=>'<th>x = '+x+'</th>').join('')+'</tr>';
+  for(let y=4;y>=0;y--){h+='<tr><th>y = '+y+'</th>'+[0,1,2,3,4].map(x=>'<td'+(x===0&&y===0?' class="dim"':'')+'>'+U7.RHO[x][y]+'</td>').join('')+'</tr>'}
+  t.innerHTML=h+'</table><p class="cap">Table 11.7 results, laid out like the state matrix (row y = 0 at the bottom). Computed by this page from the formula above.</p>'})();
+
+/* ---------- 11.6 SHA-3 lab ---------- */
+(function(){const svg=$('k3-svg');if(!svg)return;const cells=gridCells(svg,(x,y)=>{selL=[x,y];draw()});svg.setAttribute('viewBox','0 0 320 300');
+  let tr=null,view=0,selL=[0,0];const labels=['input ⊕ P₀','θ','ρ','π','χ','ι','after 24 rounds'];
+  $('k3-seg').innerHTML=labels.map((l,i)=>'<button type="button" aria-pressed="'+(i===0)+'" data-i="'+i+'">'+l+'</button>').join('');
+  $('k3-seg').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{view=+b.dataset.i;$('k3-seg').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));draw()}));
+  const pop=v=>{let n=0;while(v){n+=Number(v&1n);v>>=1n}return n};
+  function state(){const a=tr.absorb[0];return view===0?a.before:view===6?(tr.absorb.length===1?a.after:a.after):a.steps[view-1][1]}
+  function draw(){if(!tr)return;const L=state();let tot=0;
+    for(let x=0;x<5;x++)for(let y=0;y<5;y++){const c=cells[x+','+y];const p=pop(L[x][y]);tot+=p;
+      c.r.setAttribute('class','heat'+((x===selL[0]&&y===selL[1])?' selc':''));c.r.style.setProperty('--h',(p/64).toFixed(3));c.t2.textContent=p===1?'1 one':p+' ones'}
+    const [sx_,sy]=selL;
+    $('k3-info').innerHTML=kv([['showing',labels[view]+(view>0&&view<6?' (round 0)':'')],['bits set to 1',tot+' of 1600'],['L['+sx_+','+sy+']',L[sx_][sy].toString(16).padStart(16,'0')],['blocks absorbed',String(tr.absorb.length)]])+'<p class="cap">Shade = fraction of 1 bits in each lane. Message bytes fill lanes little-endian from L[0,0]; the 0x06 and 0x80 padding bytes sit in the same block. Watch θ spread the input over every column.</p>'}
+  function run(){try{tr=U7.sha3(enc($('k3-in').value),256,true)}catch(e){$('k3-dig').innerHTML=err(e.message);return}
+    $('k3-dig').innerHTML=kv([['SHA3-256','<b class="bitstr">'+grp(hex(tr.digest),16)+'</b>'],['rate','1088 bits = 136 bytes per block']]);draw()}
+  on('k3-in','input',run);run()})();
+
+/* ---------- 12.3 key search rounds ---------- */
+function ks(){const k=+$('ks-k').value,n=+$('ks-n').value;if(!(k>0&&n>0)){$('ks-out').innerHTML=err('Enter positive key and tag lengths.');return}
+  const rows=[];let rem=k,i=0;while(rem>0&&i<64){i++;rem=Math.max(0,rem-n);rows.push(['round '+i,rem===0?'≈ 1 key left (the right one)':'≈ 2<sup>'+rem+'</sup> keys left'])}
+  rows.push(['rounds needed','<b>'+i+'</b> ≈ ⌈k/n⌉ known (message, tag) pairs; first round costs 2<sup>'+k+'</sup> MAC computations']);$('ks-out').innerHTML=kv(rows)}
+on('ks-k','input',ks);on('ks-n','input',ks);
+
+/* ---------- 12.3 XOR MAC forgery ---------- */
+const XK=unhex('000102030405060708090a0b0c0d0e0f'),XKS=U7.expandKey(XK);
+const blocks8=b=>{const n=Math.max(1,Math.ceil(b.length/8)),o=[];for(let i=0;i<n;i++){const x=new Uint8Array(8);x.set(b.slice(8*i,8*i+8));o.push(x)}return o};
+const delta=bs=>bs.reduce((a,x)=>xorb(a,x),new Uint8Array(8));
+const xmac=bs=>U7.aesEnc(XKS,cat(delta(bs),new Uint8Array(8))).slice(0,8);
+const show8=b=>{const s=Array.from(b,c=>c>=32&&c<127?String.fromCharCode(c):'·').join('');return '<span class="mono">'+esc(s)+'</span> <span class="cap">'+hex(b)+'</span>'};
+function xm(){const X=blocks8(enc($('xm-m').value)),Y=blocks8(enc($('xm-y').value));const d=delta(X),T=xmac(X);
+  const Ym=xorb(delta(Y),d);const forged=Y.concat([Ym]);const T2=xmac(forged);
+  $('xm-out').innerHTML=kv([['original blocks X',X.map(show8).join('<br>')],['Δ(M)',hex(d)],['tag E(K, Δ(M))','<b>'+hex(T)+'</b>'],['forged blocks',forged.map((b,i)=>show8(b)+(i===forged.length-1?' <span class="pill no">Yₘ computed</span>':'')).join('<br>')],['Δ(M′)',hex(delta(forged))],['tag of forgery','<b>'+hex(T2)+'</b> '+ok(eqb(T,T2),'same tag: receiver accepts','different')]])}
+on('xm-m','input',xm);on('xm-y','input',xm);
+
+/* ---------- 12.5 HMAC ---------- */
+function hm(){const name=$('hm-h').value,K=enc($('hm-k').value),M=enc($('hm-m').value);const t=U7.hmac(name,K,M,true);const b=t.Kp.length;
+  $('hm-out').innerHTML=kv([['b (block) / n (output)',b*8+' / '+t.out.length*8+' bits'],['K'+(t.hashedKey?' → H(K) (longer than b)':''),hex(t.hashedKey?t.Kp.slice(0,t.out.length):K)||'(empty)'],['K⁺ (zeros appended)','<span class="bitstr">'+short(hex(t.Kp),64)+'</span>'],['Sᵢ = K⁺ ⊕ ipad','<span class="bitstr">'+short(hex(t.Si),64)+'</span>'],['inner H(Sᵢ ‖ M)','<span class="bitstr">'+hex(t.inner)+'</span>'],['Sₒ = K⁺ ⊕ opad','<span class="bitstr">'+short(hex(t.So),64)+'</span>'],['HMAC = H(Sₒ ‖ inner)','<b class="bitstr">'+hex(t.out)+'</b>'],['check','<span id="hm-chk">…</span>']]);
+  if(subtle&&K.length){subtle.importKey('raw',K,{name:'HMAC',hash:name},false,['sign']).then(k=>subtle.sign('HMAC',k,M)).then(s=>{const c=$('hm-chk');if(c)c.innerHTML=ok(hex(new Uint8Array(s))===hex(t.out),'matches the browser’s built-in HMAC','differs')}).catch(()=>{const c=$('hm-chk');if(c)c.textContent='built-in HMAC not available here'})}else $('hm-chk').textContent=K.length?'built-in HMAC not available here':'empty key: the browser’s HMAC refuses it';
+  if(name==='SHA-256'&&$('hm-k').value==='Jefe'&&$('hm-m').value==='what do ya want for nothing?')$('hm-chk').insertAdjacentHTML('afterend',' · RFC 4231 expects 5bdcc146…ec3843')}
+on('hm-h','change',hm);on('hm-k','input',hm);on('hm-m','input',hm);
+
+/* ---------- 12.6 CBC-MAC forgery ---------- */
+function cf(){try{const K=unhex($('cf-k').value);if(K.length!==16)throw new Error('key must be 16 bytes (32 hex digits)');
+  const X=new Uint8Array(16);X.fill(32);X.set(enc($('cf-x').value).slice(0,16));const T=U7.cbcmac(K,X);const F=cat(X,xorb(X,T));const T2=U7.cbcmac(K,F);
+  $('cf-out').innerHTML=kv([['X',hex(X)],['T = MAC(K, X)','<b>'+hex(T)+'</b>'],['forged X ‖ (X ⊕ T)','<span class="bitstr">'+hex(X)+' '+hex(xorb(X,T))+'</span>'],['MAC of forgery','<b>'+hex(T2)+'</b> '+ok(eqb(T,T2),'equals T, made without the key','differs')],['why','second step encrypts (X ⊕ T) ⊕ T = X, giving E(K, X) = T again']])}catch(e){$('cf-out').innerHTML=err(e.message)}}
+on('cf-k','input',cf);on('cf-x','input',cf);
+
+/* ---------- 12.6 CMAC ---------- */
+const CMX={'':'bb1d6929e95937287fa37d129b756746','6bc1bee22e409f96e93d7e117393172a':'070a16b46b4d4144f79bdd9dd04a287c','6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411':'dfa66747de9ae63030ca32611497c827'};
+function cm(){try{const K=unhex($('cm-k').value),M=unhex($('cm-m').value);const t=U7.cmac(K,M,true);
+  const rows=[['L = E(K, 0¹²⁸)',hex(t.L)],['K₁ = L·x',hex(t.K1)+(t.L[0]&0x80?' (MSB was 1: XOR 0x87)':' (MSB was 0: shift only)')],['K₂ = K₁·x',hex(t.K2)],['last block',t.full?'complete → XOR K₁':'partial → pad 10…0, XOR K₂']];
+  t.blocks.forEach((b,i)=>rows.push(['C'+(i+1),hex(t.cs[i])]));rows.push(['tag T (Tlen = 128)','<b>'+hex(t.T)+'</b>']);
+  const key=hex(M);if(hex(K)==='2b7e151628aed2a6abf7158809cf4f3c'&&key in CMX)rows.push(['RFC 4493',ok(CMX[key]===hex(t.T),'matches the published tag','mismatch')]);
+  $('cm-out').innerHTML=kv(rows)}catch(e){$('cm-out').innerHTML=err(e.message)}}
+on('cm-k','input',cm);on('cm-m','input',cm);
+on('cm-p0','click',()=>{$('cm-m').value='';cm()});on('cm-p16','click',()=>{$('cm-m').value='6bc1bee22e409f96e93d7e117393172a';cm()});on('cm-p40','click',()=>{$('cm-m').value='6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411';cm()});
+
+/* ---------- 12.7 GCM ---------- */
+let gTamper={c:false,a:false};
+function gc(){try{const K=unhex($('gc-k').value),IV=unhex($('gc-iv').value),P=unhex($('gc-p').value),A=enc($('gc-a').value);if(!IV.length)throw new Error('IV must not be empty');
+  const t=U7.gcm(K,IV,P,A,true);let C=t.C.slice(),A2=A;if(gTamper.c&&C.length)C[0]^=1;if(gTamper.a)A2=cat(A,enc('!'));
+  const v=U7.gcmDecrypt(K,IV,C,A2,t.T);
+  const rows=[['H = E(K, 0¹²⁸)',hex(t.H)],['J₀',hex(t.J0)+(IV.length===12?' = IV ‖ 0³¹ ‖ 1':' = GHASH of padded IV')],['C = GCTR(inc₃₂(J₀), P)','<span class="bitstr">'+(hex(t.C)||'(empty)')+'</span>'],['S = GHASH(A ‖ C ‖ lengths)',hex(t.S)],['tag T','<b>'+hex(t.T)+'</b>']];
+  if(hex(K)==='0'.repeat(32)&&hex(IV)==='0'.repeat(24)&&hex(P)==='0'.repeat(32)&&!A.length)rows.push(['test case 2',ok(hex(t.T)==='ab6e47d42cec13bdf53a67b21257bddf'&&hex(t.C)==='0388dace60b6a392f328c2b971b2fe78','matches the published C and T','mismatch')]);
+  rows.push(['receiver gets',(gTamper.c?'C with first bit flipped':'C')+(gTamper.a?', A changed':'')+', T']);
+  rows.push(['verification',v.ok?ok(true,'tag valid → P released',''):ok(false,'','INVALID → plaintext withheld')]);
+  $('gc-out').innerHTML=kv(rows)}catch(e){$('gc-out').innerHTML=err(e.message)}}
+['gc-k','gc-iv','gc-p','gc-a'].forEach(i=>on(i,'input',gc));
+on('gc-flip','click',()=>{gTamper.c=true;gc()});on('gc-flipa','click',()=>{gTamper.a=true;gc()});on('gc-reset','click',()=>{gTamper={c:false,a:false};gc()});
+
+/* ---------- 12.8 key wrap ---------- */
+let kwTr=null,kwTimer=null;
+function kw(){try{const K=unhex($('kw-k').value),P=unhex($('kw-p').value);kwTr=U7.kwWrap(K,P,true);kwTr.K=K;kwTr.P=P;$('kw-t').max=kwTr.steps.length;if(+$('kw-t').value>kwTr.steps.length)$('kw-t').value=kwTr.steps.length;
+  const C=kwTr.C;const exp=hex(K)==='000102030405060708090a0b0c0d0e0f'&&hex(P)==='00112233445566778899aabbccddeeff';
+  $('kw-out').innerHTML=kv([['n, s = 6n',kwTr.n+', '+6*kwTr.n],['ciphertext C₀…C'+kwTr.n,'<b class="bitstr">'+grp(hex(C),16)+'</b>'+(exp?' '+ok(hex(C)==='1fa68b0a8112b447aef34bd8fb5a7b829d3e862371d2cfe5','matches RFC 3394','mismatch'):'')],['unwrap',(()=>{const u=U7.kwUnwrap(K,C);return ok(u.ok,'A(0) = A6A6A6A6A6A6A6A6, key recovered: '+hex(u.P),'ICV mismatch')})()]]);kwr()}catch(e){$('kw-out').innerHTML=err(e.message);$('kw-reg').innerHTML=''}}
+function kwr(){if(!kwTr)return;const t=+$('kw-t').value;$('kw-tv').textContent=t;const n=kwTr.n;
+  let A,R;if(t===0){A='a6a6a6a6a6a6a6a6';R=[];for(let i=0;i<n;i++)R.push(hex(kwTr.P.slice(8*i,8*i+8)))}else{const s=kwTr.steps[t-1];A=hex(s.A);R=s.R.map(hex)}
+  let h='<div class="tbl"><table><tr><th>register</th><th>A</th>'+R.map((_,i)=>'<th>R'+(i+1)+'</th>').join('')+'</tr><tr><td class="mono">'+(t===0?'initial':'after stage '+t)+'</td><td class="mono'+(t?' newv':'')+'">'+A+'</td>'+R.map((r,i)=>'<td class="mono'+(t&&i===n-1?' newv':'')+'">'+r+'</td>').join('')+'</tr></table></div>';
+  h+=t?'<p class="cap">Stage '+t+': W = E(K, A ‖ R1); A = '+t+' <span class="op">⊕</span> MSB₆₄(W); the buffer slides left and R'+n+' = LSB₆₄(W). The value now in R'+n+' becomes the input R1 at stage '+(t+n)+'.</p>':'<p class="cap">A(0) is the ICV; R holds the plaintext key blocks.</p>';
+  $('kw-reg').innerHTML=h}
+['kw-k','kw-p'].forEach(i=>on(i,'input',kw));on('kw-t','input',kwr);
+on('kw-play','click',()=>{clearInterval(kwTimer);if(!kwTr)return;let t=0;$('kw-t').value=0;kwr();kwTimer=setInterval(()=>{t++;if(t>kwTr.steps.length){clearInterval(kwTimer);return}$('kw-t').value=t;kwr()},reduce?900:450)});
+on('kw-tamper','click',()=>{if(!kwTr)return;const C=kwTr.C.slice();C[8]^=0x01;const u=U7.kwUnwrap(kwTr.K,C);$('kw-out').insertAdjacentHTML('beforeend',kv([['tampered C₁',hex(C.slice(8,16))],['unwrap',ok(u.ok,'accepted','A(0) = '+hex(u.A)+' ≠ ICV → key rejected')]]))});
+
+/* ---------- 12.9 PRNGs ---------- */
+function pr(){const V=enc($('pr-v').value),K=enc($('pr-k').value),n=Math.min(256,Math.max(1,+$('pr-n').value||32));
+  $('pr-out').innerHTML=kv([['hash-based (Fig. 12.14a)','<span class="bitstr">'+grp(hex(U7.prngHash(V.length?V:enc(' '),n)),16)+'</span>'],['SP 800-90 HMAC','<span class="bitstr">'+grp(hex(U7.prngHmac('sp',K,V,n)),16)+'</span>'],['IEEE 802.11i HMAC','<span class="bitstr">'+grp(hex(U7.prngHmac('wlan',K,V,n)),16)+'</span>'],['TLS/WTLS HMAC','<span class="bitstr">'+grp(hex(U7.prngHmac('tls',K,V,n)),16)+'</span>']])+'<p class="cap">Same seed → same stream every time (deterministic). Change one character of the seed or key and every output changes.</p>'}
+['pr-v','pr-k','pr-n'].forEach(i=>on(i,'input',pr));
+
+/* initial render */
+setTimeout(()=>{$('bd-go').click();$('yv-go').click()},300);
+[sx,s5,ks,xm,hm,cf,cm,gc,kw,pr].forEach(f=>{try{f()}catch(e){console.error(e)}});
+
+/* ===== scroll-following contents ===== */
+const links=[...document.querySelectorAll('nav.toc a')];
+const secs=links.map(l=>document.querySelector(l.getAttribute('href'))).filter(Boolean);
+const list=document.querySelector('nav.toc ol');let current=null,ticking=false;
+function spy(){ticking=false;const line=window.innerHeight*0.3;let idx=0;
+  secs.forEach((s,i)=>{if(s.getBoundingClientRect().top<=line)idx=i});
+  if((window.innerHeight+window.scrollY)>=document.documentElement.scrollHeight-4)idx=secs.length-1;
+  const l=links[idx];
+  if(l!==current){if(current){current.classList.remove('active');current.removeAttribute('aria-current')}
+    l.classList.add('active');l.setAttribute('aria-current','true');current=l;
+    if(list.scrollWidth>list.clientWidth){list.scrollTo({left:l.parentElement.offsetLeft-list.clientWidth/2+l.parentElement.offsetWidth/2,behavior:reduce?'auto':'smooth'})}}
+  const max=document.documentElement.scrollHeight-window.innerHeight;
+  $('toc-progress').style.width=(max>0?Math.min(100,window.scrollY/max*100):0)+'%'}
+window.addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(spy)}},{passive:true});
+window.addEventListener('resize',spy);spy();
+})();
+</script>
+<button class="to-top" id="to-top" type="button" aria-label="Back to top">↑ Top</button>
+
+<script>
+(function(){
+  var btn=document.getElementById('to-top');if(!btn)return;
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches,tick=false;
+  function upd(){tick=false;btn.classList.toggle('show',window.scrollY>600)}
+  window.addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(upd)}},{passive:true});
+  btn.addEventListener('click',function(){window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});var h=document.querySelector('.topbar a.home');if(h)h.focus({preventScroll:true})});
+  upd();
+})();
+</script>
+<script>
+/* Phones: keep wide diagrams readable; they scroll inside their own box instead of shrinking */
+(function(){var mq=window.matchMedia&&matchMedia('(max-width:600px)');if(!mq)return;
+  function fit(){document.querySelectorAll('.figure svg[viewBox]').forEach(function(s){var w=s.viewBox.baseVal.width;
+    if(mq.matches&&w>=480){s.style.minWidth=Math.round(w*0.8)+'px';s.style.maxWidth='none'}else{s.style.minWidth='';s.style.maxWidth=''}})}
+  fit();document.addEventListener('click',function(){setTimeout(fit,60)});document.addEventListener('input',function(){setTimeout(fit,60)});
+  if(mq.addEventListener)mq.addEventListener('change',fit)})();
+</script>
+</body>
+</html>
