@@ -7,7 +7,7 @@
 <meta name="description" content="Study guide for Stallings, Cryptography and Network Security, Chapters 11–12: hash function applications, preimage and collision resistance, the birthday attack, iterated hash structure, SHA-512, SHA-3 sponge and Keccak-f, message authentication requirements, MACs, HMAC, DAA and CMAC, CCM and GCM authenticated encryption, key wrapping, and PRNGs from hashes and MACs.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,700;1,400&family=Cousine:wght@400;700&family=Noto+Sans+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,700;1,400&family=Cousine:wght@400;700&family=Noto+Sans+Mono:wght@400;600&family=Noto+Sans+Math&display=swap">
 <style>
 /* Layout: graph-paper study notebook (shared with Units 1–6) — sticky contents rail on desktop, single column on phones; each section = one book section */
 :root{
@@ -16,8 +16,8 @@
   --accent:#3f46c4; --accent-soft:#e5e7fb; --mark:#b8580f; --mark-soft:#fcebdc;
   --bad:#b4372f; --bad-soft:#f9e1de;
   --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
-  --body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
-  --mono:"Cousine", "Noto Sans Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  --body:"Source Sans 3", "Noto Sans Math", "Segoe UI", system-ui, sans-serif;
+  --mono:"Cousine", "Noto Sans Mono", "Noto Sans Math", "DejaVu Sans Mono", Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#10121c; --paper:#171a28; --ink:#e6e8f2; --muted:#9ca1bb; --line:#2c3048;
@@ -1767,5 +1767,6 @@ window.addEventListener('resize',spy);spy();
   fit();document.addEventListener('click',function(){setTimeout(fit,60)});document.addEventListener('input',function(){setTimeout(fit,60)});
   if(mq.addEventListener)mq.addEventListener('change',fit)})();
 </script>
+<script src="notation.js" data-unit="7" defer></script>
 </body>
 </html>

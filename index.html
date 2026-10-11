@@ -7,15 +7,15 @@
 <meta name="description" content="Twelve study guides for Stallings, Cryptography and Network Security: Principles and Practice (7th ed., Global Edition).">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:wght@400;700&family=Noto+Sans+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:wght@400;700&family=Noto+Sans+Mono:wght@400;600&family=Noto+Sans+Math&display=swap">
 <style>
 /* Layout: one column; a header, then the 12 units as a ruled list keyed by chapter numbers. Same tokens as the unit guides. */
 :root{
   --bg:#F1F3F7; --surface:#FFFFFF; --sunk:#E7EBF2; --ink:#131A2A; --muted:#556079; --line:#D3DAE6;
   --accent:#2346C8; --accent-soft:#E2E8FB; --guard:#1C7556; --guard-soft:#DDF1E8;
   --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
-  --f-body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
-  --f-mono:"Noto Sans Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  --f-body:"Source Sans 3", "Noto Sans Math", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"Noto Sans Mono", "Noto Sans Math", "DejaVu Sans Mono", Menlo, Consolas, monospace;
   color-scheme:light;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
@@ -52,6 +52,11 @@ a.unit .num{color:var(--accent)}
 .status.ready{background:var(--guard-soft);color:var(--guard)}
 .status.soon{background:var(--sunk);color:var(--muted)}
 .unit.locked h2{color:var(--muted)}
+a.ref{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:16px;align-items:center;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface);text-decoration:none;color:inherit}
+a.ref:hover{border-color:var(--accent)}
+a.ref:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a.ref .glyphs{font-family:var(--f-mono);font-size:1.15rem;font-weight:600;color:var(--accent);letter-spacing:.08em;white-space:nowrap}
+@media (max-width:520px){a.ref{grid-template-columns:auto minmax(0,1fr)}a.ref .status{grid-column:2;justify-self:start}}
 footer{font-size:.84rem;color:var(--muted);display:grid;gap:4px}
 @media (max-width:520px){.unit{grid-template-columns:2.4rem minmax(0,1fr);row-gap:6px}.status{grid-column:2;justify-self:start}}
 </style>
@@ -65,6 +70,8 @@ footer{font-size:.84rem;color:var(--muted);display:grid;gap:4px}
     <span class="book">Stallings · Cryptography and Network Security: Principles and Practice · 7th ed., Global Edition</span>
     <div class="progress"><div class="bar"><i id="fill" style="width:50%"></i></div><span id="count">6 of 12 ready</span></div>
   </header>
+
+  <a class="ref" href="notation.html"><span class="glyphs" aria-hidden="true">≡ ⊕ φ</span><span class="title"><h2>Notation</h2><span class="ch">Symbols used throughout the book · pp. 10–11</span></span><span class="status ready">Open →</span></a>
 
   <ol class="units" id="units"></ol>
 
@@ -104,6 +111,6 @@ const done=UNITS.filter(u=>u.file).length;
 document.getElementById('count').textContent=done+' of 12 ready';
 document.getElementById('fill').style.width=(done/12*100)+'%';
 </script>
-<noscript><p style="padding:20px"><a href="unit1.html">Unit 1 · Security Foundations</a><br><a href="unit2.html">Unit 2 · Number Theory</a><br><a href="unit3.html">Unit 3 · Classical Ciphers &amp; DES</a><br><a href="unit4.html">Unit 4 · Finite Fields &amp; AES</a><br><a href="unit5.html">Unit 5 · Using Symmetric Ciphers</a><br><a href="unit6.html">Unit 6 · Public-Key Cryptography</a><br><a href="unit7.html">Unit 7 · Hashes &amp; MACs</a></p></noscript>
+<noscript><p style="padding:20px"><a href="notation.html">Notation</a><br><a href="unit1.html">Unit 1 · Security Foundations</a><br><a href="unit2.html">Unit 2 · Number Theory</a><br><a href="unit3.html">Unit 3 · Classical Ciphers &amp; DES</a><br><a href="unit4.html">Unit 4 · Finite Fields &amp; AES</a><br><a href="unit5.html">Unit 5 · Using Symmetric Ciphers</a><br><a href="unit6.html">Unit 6 · Public-Key Cryptography</a><br><a href="unit7.html">Unit 7 · Hashes &amp; MACs</a></p></noscript>
 </body>
 </html>
