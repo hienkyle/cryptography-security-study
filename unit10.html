@@ -1,0 +1,1618 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unit 10 · Access Control &amp; Wireless</title>
+<meta name="description" content="Study guide for Stallings, Cryptography and Network Security, Chapters 16 and 18: network access control, EAP and its methods, IEEE 802.1X and EAPOL, cloud computing models and reference architecture, cloud risks, encrypted cloud databases, security as a service, wireless and mobile device threats, the IEEE 802.11 architecture and services, and IEEE 802.11i: discovery, authentication, key hierarchies, the 4-way handshake, TKIP, CCMP and the PRF.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,700;1,400&family=Cousine:wght@400;700&family=Noto+Sans+Mono:wght@400;600&family=Noto+Sans+Math&display=swap">
+<style>
+/* Layout: graph-paper study notebook (shared with Units 1–9) — sticky contents rail on desktop, single column on phones; each section = one book section */
+:root{
+  --bg:#f3f4f8; --paper:#ffffff; --ink:#191b2b; --muted:#585d78; --line:#d9dce8;
+  --grid:rgba(25,27,43,.045);
+  --accent:#3f46c4; --accent-soft:#e5e7fb; --mark:#b8580f; --mark-soft:#fcebdc;
+  --bad:#b4372f; --bad-soft:#f9e1de;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Noto Sans Math", "Segoe UI", system-ui, sans-serif;
+  --mono:"Cousine", "Noto Sans Mono", "Noto Sans Math", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10121c; --paper:#171a28; --ink:#e6e8f2; --muted:#9ca1bb; --line:#2c3048;
+  --grid:rgba(230,232,242,.04);
+  --accent:#9ea6ff; --accent-soft:#232955; --mark:#f6a25a; --mark-soft:#3b2615;
+  --bad:#f08c84; --bad-soft:#3c1d1a; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#10121c; --paper:#171a28; --ink:#e6e8f2; --muted:#9ca1bb; --line:#2c3048;
+  --grid:rgba(230,232,242,.04);
+  --accent:#9ea6ff; --accent-soft:#232955; --mark:#f6a25a; --mark-soft:#3b2615;
+  --bad:#f08c84; --bad-soft:#3c1d1a; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16.5px;line-height:1.6;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;padding-inline:16px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;padding-block:32px 80px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr);gap:16px}}
+
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;font-size:.88rem}
+nav.toc .lbl{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+nav.toc a{display:flex;gap:10px;padding:5px 8px;border-radius:6px;color:var(--ink);text-decoration:none}
+nav.toc a span{font-family:var(--mono);color:var(--accent);min-width:2.6em;font-size:.8rem;padding-top:2px}
+nav.toc a{position:relative;transition:background .15s,color .15s}
+nav.toc a:hover,nav.toc a:focus-visible{background:var(--accent-soft);outline:none}
+nav.toc a.active{background:var(--accent);color:var(--paper);font-weight:700}
+nav.toc a.active span{color:var(--paper)}
+nav.toc .bar{height:3px;background:var(--line);border-radius:2px;margin:12px 0 0;overflow:hidden}
+nav.toc .bar i{display:block;height:100%;width:0;background:var(--accent)}
+@media (max-width:900px){
+  nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border:1px solid var(--line);border-radius:0 0 10px 10px;padding:8px 10px;margin-inline:-4px}
+  nav.toc .lbl{display:none}
+  nav.toc ol{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth}
+  nav.toc ol::-webkit-scrollbar{display:none}
+  nav.toc li{flex:0 0 auto}
+  nav.toc a{white-space:nowrap;padding:5px 10px}
+  nav.toc .bar{margin-top:8px}
+  section.unit{scroll-margin-top:72px}}
+
+main{min-width:0}
+header.hero{padding-block:8px 28px;border-bottom:2px solid var(--ink);margin-bottom:28px}
+.eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,6vw,4rem);line-height:1;margin:.25em 0 .3em;letter-spacing:-.02em;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{max-width:65ch;color:var(--muted);margin:0}
+.formula-strip{font-family:var(--mono);font-size:.85rem;color:var(--muted);margin-top:18px;display:flex;flex-wrap:wrap;gap:8px 18px}
+.formula-strip b{color:var(--ink);font-weight:600}
+
+section.unit{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:28px clamp(18px,4vw,40px);margin-bottom:28px;scroll-margin-top:20px}
+h2{font-family:var(--display);font-weight:700;font-size:1.75rem;line-height:1.15;margin:0 0 4px;text-wrap:balance;display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
+h2 .sec{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:600}
+h3{font-family:var(--display);font-weight:700;font-size:1.2rem;margin:28px 0 8px}
+.why{color:var(--muted);font-size:.95rem;margin:0 0 18px;max-width:70ch}
+p,li{max-width:70ch}
+code,.m{font-family:var(--mono);font-size:.9em}
+.m{white-space:nowrap}
+.m.wr{white-space:normal;overflow-wrap:anywhere}
+.def,.ex,.warn{min-width:0;overflow-wrap:break-word}
+.gk{font-family:var(--mono);font-style:normal}
+
+.def{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+.def b:first-child{font-family:var(--display);font-weight:700}
+.eq{font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;overflow-x:auto;white-space:pre;line-height:1.7;font-size:.92rem}
+.eq .n{color:var(--muted)}
+.eqrows{display:grid;gap:8px;margin:12px 0}
+.eqrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px 14px;align-items:center;font-family:var(--mono);font-size:.92rem;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.eqrow .ex1{min-width:0;line-height:1.6}
+.eqrow .n{color:var(--muted)}
+.eqrow .tag{font-size:.75rem;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--accent-soft);color:var(--accent)}
+.tag.no{background:var(--bad-soft);color:var(--bad)}
+@media (max-width:560px){.eqrow{grid-template-columns:minmax(0,1fr) auto}.eqrow .ex1{grid-column:1 / -1}}
+.ex{border:1px dashed var(--mark);background:var(--mark-soft);border-radius:8px;padding:10px 16px;margin:12px 0}
+.ex .t{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mark);font-weight:600}
+.ex .eq{background:transparent;border:0;padding:4px 0;margin:2px 0}
+.warn{border-left:3px solid var(--bad);background:var(--bad-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+ul.props{padding-left:1.2em}
+ul.props li{margin:4px 0}
+
+/* tables */
+.tbl{overflow-x:auto;margin:12px 0}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.9rem}
+th,td{border:1px solid var(--line);padding:5px 9px;text-align:center}
+th{background:var(--bg);font-family:var(--mono);font-weight:600;font-size:.8rem}
+td.l,th.l{text-align:left}
+td.hi{background:var(--accent-soft);font-weight:700}
+td.one{background:var(--mark-soft);font-weight:700}
+td.dim{color:var(--muted)}
+
+/* interactive lab */
+.lab{border:1px solid var(--line);border-radius:12px;margin:18px 0;overflow:hidden}
+.lab-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--line)}
+.lab-h .t{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.lab-b{padding:14px}
+.controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:end;margin-bottom:12px}
+.controls label{display:grid;gap:3px;font-size:.78rem;font-family:var(--mono);color:var(--muted)}
+input[type=number]{width:9.5em;font:inherit;font-family:var(--mono);font-size:.95rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+button{font-family:var(--mono);font-size:.82rem;padding:7px 12px;border:1px solid var(--accent);background:var(--accent);color:var(--paper);border-radius:6px;cursor:pointer}
+button.ghost{background:transparent;color:var(--accent)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.out{font-family:var(--mono);font-size:.9rem}
+.out .res{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:600}
+.res.ok{background:var(--accent-soft);color:var(--accent)}
+.res.no{background:var(--bad-soft);color:var(--bad)}
+.err{color:var(--bad);font-family:var(--mono);font-size:.85rem}
+svg text{font-family:var(--mono)}
+.figure{margin:16px 0;overflow-x:auto}
+.figure svg{display:block;max-width:100%;height:auto}
+.cap{font-size:.82rem;color:var(--muted);margin-top:6px}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.grid2>*{min-width:0}
+
+/* totient grid */
+.cells{display:flex;flex-wrap:wrap;gap:4px}
+.cells span{font-family:var(--mono);font-size:.78rem;width:2.6em;text-align:center;padding:4px 0;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.cells span.on{background:var(--accent);border-color:var(--accent);color:var(--paper);font-weight:600}
+
+/* mapping row */
+.maprow{display:grid;grid-template-columns:7.5em repeat(8,minmax(2.2em,1fr));gap:4px;font-family:var(--mono);font-size:.85rem;min-width:420px}
+.maprow div{padding:5px 0;text-align:center;border-radius:4px}
+.maprow .h{text-align:left;color:var(--muted);font-size:.75rem;padding-top:7px}
+.maprow .c{background:var(--bg)}
+.maprow .dup{background:var(--bad-soft);color:var(--bad);font-weight:600}
+.maprow .uni{background:var(--accent-soft);color:var(--accent);font-weight:600}
+
+/* glossary & review */
+dl.gloss{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr);gap:0;margin:0}
+dl.gloss dt,dl.gloss dd{padding:9px 0;border-bottom:1px solid var(--line);margin:0}
+dl.gloss dt{font-family:var(--display);font-weight:700;padding-right:16px}
+@media (max-width:560px){dl.gloss{grid-template-columns:minmax(0,1fr)} dl.gloss dt{border-bottom:0;padding-bottom:0}}
+details{border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:8px 0;background:var(--paper)}
+summary{cursor:pointer;font-weight:700}
+details p{margin:.6em 0 0}
+.src{font-size:.85rem;color:var(--muted)}
+.src a,a{color:var(--accent)}
+footer{font-size:.82rem;color:var(--muted);margin-top:24px}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---- Sticky "All units" bar + back-to-top (shared across unit pages) ---- */
+:root{--topbar-h:52px}
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.topbar-in{max-width:1180px;margin:0 auto;height:var(--topbar-h);padding-inline:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.topbar a.home{flex:0 0 auto;font-family:var(--f-mono,var(--mono));font-size:.84rem;font-weight:600;color:var(--ink);text-decoration:none;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface,var(--paper))}
+.topbar a.home:hover{border-color:var(--accent);color:var(--accent)}
+.topbar a.home:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.topbar .where{min-width:0;font-family:var(--f-mono,var(--mono));font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.to-top{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono,var(--mono));font-size:.82rem;font-weight:600;padding:10px 14px;border:1px solid var(--accent);border-radius:999px;background:var(--accent);color:var(--surface,var(--paper));cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.18);opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .2s,transform .2s,visibility 0s linear .2s}
+.to-top.show{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .2s}
+.to-top:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.to-top{transition:none}}
+
+.topbar{margin-inline:-16px}
+.topbar-in{padding-inline:16px}
+nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h) + 20px)}
+section.unit{scroll-margin-top:calc(20px + var(--topbar-h))}
+@media (max-width:900px){nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h))}section.unit{scroll-margin-top:calc(72px + var(--topbar-h))}}
+
+input[type=text],textarea,select{font:inherit;font-family:var(--mono);font-size:.92rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);max-width:100%}
+input[type=text]{width:18em}
+input.wide{width:min(34em,100%)}
+textarea{width:100%;min-height:4.6em;resize:vertical}
+input[type=range]{accent-color:var(--accent)}
+.controls label.grow{flex:1 1 280px}
+.controls label.grow input,.controls label.grow textarea{width:100%}
+.mono{font-family:var(--mono)}
+.big{font-family:var(--mono);font-size:1.05rem;letter-spacing:.06em;overflow-wrap:anywhere}
+.hlrow td{background:var(--accent-soft);font-weight:700;color:var(--accent)}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:12px 0}
+.cmp>div{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--paper);min-width:0}
+.cmp h4{margin:0 0 6px;font-family:var(--display);font-size:1.02rem}
+.cmp p{margin:0;font-size:.95rem}
+.diffbit{color:var(--bad);font-weight:700}
+@media (max-width:560px){input[type=text]{width:100%}}
+.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;font-family:var(--mono);font-size:.84rem;align-items:baseline}
+.kv .k{color:var(--muted)}
+.kv .v{overflow-wrap:anywhere}
+.pill{display:inline-block;font-family:var(--mono);font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.pill.no{background:var(--bad-soft);color:var(--bad)}
+.pill.mk{background:var(--mark-soft);color:var(--mark)}
+.note{border-left:3px solid var(--mark);background:var(--mark-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0;font-size:.95rem}
+.note .t{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mark);font-weight:600;display:block;margin-bottom:2px}
+.modes td,.modes th{text-align:left;vertical-align:top}
+.modes td.c{text-align:center}
+.bitstr{font-family:var(--mono);font-size:.8rem;overflow-wrap:anywhere;line-height:1.5}
+.bitstr b{color:var(--accent)}
+.bitstr i{font-style:normal;color:var(--muted);text-decoration:line-through}
+select{font:inherit;font-family:var(--mono);font-size:.88rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+@media (max-width:560px){.blkrow{grid-template-columns:minmax(0,1fr)}.blkrow .h{padding-top:0}canvas.px{width:150px;height:150px}.kv{grid-template-columns:minmax(0,1fr)}.kv .k{margin-top:4px}}
+.op{font-family:var(--mono);font-size:.92em}
+.seg{display:inline-flex;border:1px solid var(--accent);border-radius:6px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent;color:var(--accent)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--paper)}
+.eq sub,.kv sub{font-size:.75em}
+.pseudo{font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;overflow-x:auto;white-space:pre;line-height:1.55;font-size:.86rem}
+.pseudo .kw{color:var(--accent);font-weight:600}
+.pseudo .cm{color:var(--muted)}
+sub{line-height:0;font-size:.75em}
+/* justified prose (wider screens only: narrow columns get large word gaps) */
+@media (min-width:600px){
+section.unit p,section.unit li,.def,.note,.warn,.why,.lede,details p{text-align:justify;hyphens:auto;-webkit-hyphens:auto}
+section.unit .out,section.unit .cap,section.unit td,section.unit th,.lab-h,.kv{text-align:left;hyphens:manual;-webkit-hyphens:manual}
+section.unit .grid2 *,section.unit .cmp *,section.unit .src{text-align:left;hyphens:manual;-webkit-hyphens:manual}}
+
+/* ---- shared sub-entry nav (from Unit 6) ---- */
+nav.toc li.sub a{padding-left:calc(18px + 2.08rem);font-size:.84rem;color:var(--muted)}
+nav.toc li.sub a.active{color:var(--paper)}
+@media (max-width:900px){nav.toc li.sub a{padding-left:10px}}
+.lab-h .seg button{font-size:.76rem;padding:6px 10px}
+.controls output{color:var(--ink);font-weight:600}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);margin:6px 0}
+input[type=range]{width:150px}
+.kv .v .res{font-size:.78rem;padding:1px 8px}
+@media (max-width:560px){.m{white-space:normal;overflow-wrap:anywhere}input[type=range]{width:100%}}
+
+/* ---- Unit 7 additions (shared figure classes) ---- */
+.hidden-defs{position:absolute;width:0;height:0;overflow:hidden}
+svg .bx{fill:var(--paper);stroke:var(--ink);stroke-width:1.2}
+svg .bxa{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+svg .bxm{fill:var(--mark-soft);stroke:var(--mark);stroke-width:1.2}
+svg .bxb{fill:var(--bad-soft);stroke:var(--bad);stroke-width:1.2}
+svg .op{fill-opacity:.55}
+svg .ln{stroke:var(--ink);stroke-width:1.3;fill:none}
+svg .ln.dash{stroke-dasharray:5 4;stroke:var(--muted)}
+svg .ah{fill:var(--ink)}
+svg .tx{fill:var(--ink);font-size:12px}
+svg .tm{fill:var(--muted);font-size:11px}
+svg .hot{fill:var(--mark-soft);stroke:var(--mark);stroke-width:2.6}
+svg .lane{cursor:pointer}
+svg .lane:focus-visible rect,svg .lane:hover rect{stroke-width:2.4}
+svg .lane:focus{outline:none}
+svg .heat{fill:color-mix(in srgb,var(--accent) calc(var(--h,0) * 100%),var(--paper));stroke:var(--line);stroke-width:1}
+svg .heat.selc{stroke:var(--mark);stroke-width:2.6}
+td.newv{background:var(--mark-soft);color:var(--mark);font-weight:700}
+.yv{font-size:.82rem;line-height:1.7;margin:.3em 0 .8em}
+.yv b{color:var(--accent);font-weight:600}
+.kv .v b{overflow-wrap:anywhere}
+.mitm-pkt.p1{transform:translate(150px,28px)}
+.mitm-pkt.p2{transform:translate(420px,28px)}
+.mitm-ok{fill:var(--bad)}
+@keyframes mitm1{0%{transform:translate(105px,28px);opacity:1}40%{transform:translate(225px,28px);opacity:1}50%,100%{transform:translate(225px,28px);opacity:0}}
+@keyframes mitm2{0%,45%{transform:translate(370px,28px);opacity:0}50%{transform:translate(370px,28px);opacity:1}90%,100%{transform:translate(470px,28px);opacity:1}}
+@media (prefers-reduced-motion:no-preference){.mitm-pkt.p1{animation:mitm1 6s linear infinite}.mitm-pkt.p2{animation:mitm2 6s linear infinite}}
+#rd-svg .rd-mv{opacity:0}
+#rd-svg.play .rd-mv{animation:rdmv 1.6s ease-in-out forwards}
+#rd-svg.play .rdv{animation:rdfade 2.2s ease forwards}
+@keyframes rdmv{0%{opacity:1;transform:none}75%{opacity:1;transform:translate(var(--dx),118px)}100%{opacity:0;transform:translate(var(--dx),118px)}}
+@keyframes rdfade{0%,70%{opacity:0}100%{opacity:1}}
+#sp-svg .sp-f,#sp-svg .sp-p,#sp-svg .sp-z,#sp-svg .sp-x,#it-svg rect{transition:fill .2s,stroke-width .2s}
+#kg-svg,#k3-svg{max-width:320px}
+.seg{flex-wrap:wrap}
+.out .cap{font-family:var(--body)}
+@media (max-width:600px){.figure svg[width]{max-width:none}}
+
+/* ---- Scrollable side navbar (wide screens) + Review expand/collapse (shared across unit pages) ---- */
+@media (min-width:901px){
+  nav.toc{max-height:calc(100vh - var(--topbar-h,0px) - 40px - env(safe-area-inset-top,0px));overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--line) transparent;padding-right:6px;margin-right:-6px}
+  nav.toc::-webkit-scrollbar{width:6px}
+  nav.toc::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+  nav.toc ol{max-height:none;overflow:visible}
+}
+.rv-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 4px}
+.rv-tools button{font-family:var(--mono,var(--f-mono));font-size:.78rem;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper,var(--surface));color:var(--ink);cursor:pointer;transition:border-color .15s,color .15s}
+.rv-tools button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.rv-tools button:disabled{opacity:.45;cursor:default}
+.rv-tools button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rv-tools .rv-count{font-family:var(--mono,var(--f-mono));font-size:.74rem;color:var(--muted);margin-left:4px}
+
+/* ---- Unit 9 additions: protocol steppers, certificate fields, path tree ---- */
+svg .ahm{fill:var(--mark)}
+svg .ahb{fill:var(--bad)}
+svg .ahd{fill:var(--muted)}
+svg .lh{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+svg .lt{fill:var(--ink);font-size:12px;font-weight:600}
+svg .ll{stroke:var(--line);stroke-width:1.4;stroke-dasharray:4 4}
+svg .ms{stroke:var(--ink);stroke-width:1.4;fill:none}
+svg .ms.cur{stroke:var(--mark);stroke-width:2.4}
+svg .ms.atk{stroke:var(--bad)}
+svg .ms.todo,svg .ml.todo{opacity:.18}
+svg .ml{fill:var(--ink);font-size:11px;paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
+svg .ml.cur{fill:var(--mark);font-weight:700}
+svg .ml.atk{fill:var(--bad)}
+svg .gb{fill:var(--bg);stroke:var(--line);stroke-width:1}
+svg .gl{fill:var(--muted);font-size:10px;letter-spacing:.04em;paint-order:stroke;stroke:var(--bg);stroke-width:3px}
+svg .pk{fill:var(--mark)}
+.proto .figure{margin:4px 0 8px}
+.pctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pctl .cnt{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+.pnote{border-top:1px solid var(--line);padding-top:10px;margin-top:10px;min-height:3.6em}
+.pnote .ml1{font-family:var(--mono);font-size:.86rem;overflow-wrap:anywhere;color:var(--mark);font-weight:600}
+.pnote .ml1.atk{color:var(--bad)}
+.pnote p{margin:.35em 0 0}
+button:disabled{opacity:.45;cursor:default}
+
+.certgrid{display:grid;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:12px 0;background:var(--paper)}
+.cf{display:grid;grid-template-columns:3.4em minmax(9em,14em) minmax(0,1fr);gap:4px 12px;align-items:baseline;padding:8px 12px;border-bottom:1px solid var(--line);font-size:.92rem}
+.cf:last-child{border-bottom:0}
+.cf.sig{background:var(--mark-soft)}
+.cf b{font-family:var(--display)}
+.cf .pill{justify-self:start}
+@media (max-width:560px){.cf{grid-template-columns:3.4em minmax(0,1fr)}.cf>span:last-child{grid-column:2}}
+
+svg .nd{fill:var(--paper);stroke:var(--ink);stroke-width:1.2}
+svg .nd.u{fill:var(--mark-soft);stroke:var(--mark)}
+svg .nd.on{fill:var(--accent);stroke:var(--accent)}
+svg .nt{fill:var(--ink);font-size:13px;font-weight:700}
+svg .nt.on{fill:var(--paper)}
+svg .ed{stroke:var(--line);stroke-width:2;fill:none}
+svg .ed.x{stroke-dasharray:5 4}
+svg .ed.on{stroke:var(--accent);stroke-width:3.6}
+svg .gridl{stroke:var(--line);stroke-width:1}
+svg .c1{stroke:var(--bad);stroke-width:2.2;fill:none}
+svg .c2{stroke:var(--accent);stroke-width:2.2;fill:none}
+svg .d1{fill:var(--bad)}
+svg .d2{fill:var(--accent)}
+svg .win{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+svg .okm{fill:var(--accent)}
+svg .nom{fill:var(--bad)}
+.out .kv .v .res{white-space:normal}
+.eqg{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 32px;align-items:baseline;font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:.92rem;line-height:1.6;overflow-x:auto}
+.eqg>span{white-space:nowrap}
+.eqg .n{color:var(--muted)}
+.eqg sub{font-size:.75em}
+@media (max-width:560px){.eqg{grid-template-columns:minmax(0,1fr);gap:0}.eqg .n{margin-bottom:8px}.eqg .n:empty{display:none}}
+.pvar{margin-bottom:10px}
+.pvar .seg{flex-wrap:wrap}
+.tbl .pill{white-space:nowrap}
+
+/* ---- Unit 10 additions: packet fields, NAC/ESS figures ---- */
+.pkt{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 10px}
+.pf{display:grid;gap:2px;border:1px solid var(--line);border-radius:6px;padding:5px 9px;min-width:0;background:var(--paper)}
+.pf.a{background:var(--accent-soft);border-color:var(--accent)}
+.pf.m{background:var(--mark-soft);border-color:var(--mark)}
+.pf.d{background:var(--bg)}
+.pfl{font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.pfv{font-family:var(--mono);font-size:.84rem;overflow-wrap:anywhere}
+svg .bss{fill:var(--accent-soft);stroke:var(--accent);stroke-dasharray:5 4;opacity:.7}
+svg .rf{fill:var(--bad);font-weight:700}
+.controls label:has(input[type=checkbox]){grid-auto-flow:column;align-items:center;gap:8px}
+.seg button{white-space:nowrap}
+.pick{display:grid;grid-template-columns:minmax(190px,250px) minmax(0,1fr);gap:18px;align-items:start}
+.pick-list{display:grid;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--paper)}
+.pick-list button.pk-i{display:block;width:100%;text-align:left;white-space:normal;font-family:var(--body);font-size:.92rem;line-height:1.35;padding:10px 12px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;color:var(--ink)}
+.pick-list button.pk-i:last-child{border-bottom:0}
+.pick-list button.pk-i:hover{background:var(--bg)}
+.pick-list button.pk-i[aria-pressed=true]{background:var(--accent-soft);color:var(--accent);font-weight:700;box-shadow:inset 4px 0 0 var(--accent)}
+.pick-detail{font-family:var(--body);font-size:1rem;min-width:0}
+.pk-h{font-family:var(--display);font-size:1.1rem;margin:0 0 6px}
+@media (max-width:640px){.pick{grid-template-columns:minmax(0,1fr)}}
+.sendrow button.act{background:var(--paper);color:var(--ink);border:1px solid var(--ink);border-radius:999px;font-weight:600}
+.sendrow button.act:hover{border-color:var(--accent);color:var(--accent)}
+.sendrow .cap{margin:0;align-self:center}
+.seg.smseg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
+.seg.smseg button{white-space:normal;line-height:1.35;padding:8px 10px}
+.seg.smseg button+button{border-left:1px solid var(--accent)}
+@media (max-width:560px){.seg.smseg{grid-template-columns:minmax(0,1fr)}.seg.smseg button+button{border-left:0;border-top:1px solid var(--accent)}}
+</style>
+</head>
+<body>
+<svg class="hidden-defs" aria-hidden="true" focusable="false"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker><marker id="ahm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahm" d="M0 0 L10 5 L0 10 z"/></marker><marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahb" d="M0 0 L10 5 L0 10 z"/></marker><marker id="ahd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahd" d="M0 0 L10 5 L0 10 z"/></marker></defs></svg>
+<header class="topbar"><div class="topbar-in"><a class="home" href="./">← All units</a><span class="where">Unit 10 · Access Control &amp; Wireless</span></div></header>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <div class="lbl">Contents</div>
+  <ol>
+    <li><a href="#s161"><span>16.1</span>Network access control</a></li>
+    <li><a href="#s162"><span>16.2</span>Extensible Authentication Protocol</a></li>
+    <li><a href="#s163"><span>16.3</span>IEEE 802.1X</a></li>
+    <li><a href="#s164"><span>16.4</span>Cloud computing</a></li>
+    <li class="sub"><a href="#s164b">Reference architecture</a></li>
+    <li><a href="#s165"><span>16.5</span>Cloud risks</a></li>
+    <li><a href="#s166"><span>16.6</span>Data protection in the cloud</a></li>
+    <li><a href="#s167"><span>16.7</span>Security as a service</a></li>
+    <li><a href="#s168"><span>16.8</span>Cloud security concerns</a></li>
+    <li><a href="#s181"><span>18.1</span>Wireless security</a></li>
+    <li><a href="#s182"><span>18.2</span>Mobile device security</a></li>
+    <li><a href="#s183"><span>18.3</span>IEEE 802.11 overview</a></li>
+    <li class="sub"><a href="#s183b">Services and association</a></li>
+    <li><a href="#s184"><span>18.4</span>IEEE 802.11i security</a></li>
+    <li class="sub"><a href="#s184b">Discovery and authentication</a></li>
+    <li class="sub"><a href="#s184c">Key management</a></li>
+    <li class="sub"><a href="#s184d">Data transfer and the PRF</a></li>
+    <li><a href="#terms">Key terms</a></li>
+    <li><a href="#review">Review</a></li>
+    <li><a href="#res"><span>Ref</span>Sources</a></li>
+  </ol>
+  <div class="bar" aria-hidden="true"><i id="toc-progress"></i></div>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Unit 10 · Stallings, Chapters 16 + 18</div>
+  <h1>Access Control &amp; <em>Wireless</em></h1>
+  <p class="lede">Chapter 16 covers who gets onto a network and how: network access control, the Extensible Authentication Protocol and IEEE 802.1X port-based control, then the security of cloud computing, where an enterprise hands its resources to a provider but keeps the responsibility. Chapter 18 applies the same machinery to radio links: wireless and mobile-device threats, the IEEE 802.11 LAN architecture, and the 802.11i Robust Security Network with its key hierarchy, 4-way handshake, TKIP, CCMP and pseudorandom function.</p>
+  <div class="formula-strip">
+    <span><b>EAP Code: 1 Request · 2 Response · 3 Success · 4 Failure</b></span>
+    <span><b>PTK = KCK ‖ KEK ‖ TK</b></span>
+    <span><b>R = HMAC-SHA-1(K, A ‖ 0 ‖ B ‖ i)</b></span>
+    <span><b>PTK = PRF(PMK, “Pairwise key expansion”, …, 384)</b></span>
+  </div>
+</header>
+
+<!-- ============ 16.1 ============ -->
+<section class="unit" id="s161">
+  <h2><span class="sec">16.1</span>Network Access Control</h2>
+  <p class="why">Authenticating a user is not enough once devices arrive from anywhere. Network access control also checks the health of the device before deciding what it may reach.</p>
+  <div class="def"><b>Network access control (NAC)</b> — an umbrella term for managing access to a network: it authenticates users logging in, determines what data they can access and what actions they can perform, and examines the health of the user’s computer or mobile device (the <b>endpoint</b>).</div>
+  <h3>Elements of a NAC system</h3>
+  <div class="cmp">
+    <div><h4>Access requestor (AR)</h4><p>The node trying to access the network: any device the NAC system manages (workstations, servers, printers, cameras, other IP-enabled devices). Also called a <b>supplicant</b> or client.</p></div>
+    <div><h4>Policy server</h4><p>Decides what access to grant, from the AR’s <b>posture</b> (its security state) and the enterprise policy. Often relies on backend systems such as antivirus, patch management or a user directory.</p></div>
+    <div><h4>Network access server (NAS)</h4><p>Access control point for remote users connecting to the internal network. Also called a <b>media gateway</b>, <b>remote access server (RAS)</b> or policy server. May authenticate itself or rely on a separate authentication service.</p></div>
+  </div>
+  <p>The first step is to authenticate the AR, usually with a secure protocol and cryptographic keys. The NAS may authenticate it directly, or mediate between the supplicant and an <b>authentication server</b> that is part of, or reached by, the policy server. Authentication verifies the claimed identity (so the policy server can set privileges) and may establish <b>session keys</b> for later secure communication with enterprise resources.</p>
+  <p>Next come <b>health checks</b> (also called suitability, screening or assessment checks): software on the user’s system verifies compliance with the organization’s secure configuration baseline, for example up-to-date antimalware, a fully patched OS, and a computer owned and controlled by the organization. These checks should run before the AR is admitted.</p>
+  <div class="def"><b>Quarantine network</b> — a restricted part of the enterprise network holding the policy server and related AR suitability servers (and perhaps application servers that do not require the normal security threshold), where a device that fails its health check can be fixed by authorized personnel.</div>
+
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Admission decision</span><span class="pill">Figure 16.1</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label><span>Credentials accepted</span><input type="checkbox" id="nac-c" checked></label>
+        <label><span>Antimalware up to date</span><input type="checkbox" id="nac-a" checked></label>
+        <label><span>OS fully patched</span><input type="checkbox" id="nac-p"></label>
+        <label><span>Organization-owned</span><input type="checkbox" id="nac-o" checked></label>
+      </div>
+      <div class="figure"><svg id="nac-svg" viewBox="0 0 640 250" width="640" role="img" aria-label="Network access control context: supplicants reach network access servers; the policy server and supporting servers decide whether the device goes to network resources, the quarantine network, or is refused."></svg></div>
+      <div id="nac-out" class="out"></div>
+    </div>
+  </div>
+  <p>Once an AR is authenticated and cleared for some level of access, the NAS lets it interact with enterprise resources. The NAS may mediate every exchange to enforce the policy, or use other methods to limit the AR’s privileges.</p>
+
+  <h3>Network access enforcement methods</h3>
+  <p>Enforcement methods are the actions applied to ARs to regulate access. Vendors often support several at once.</p>
+  <div class="def"><b>Local area network (LAN)</b> — a network of devices sharing a transmission medium over a small area (a building, a campus). <b>Virtual LAN (VLAN)</b> — a logical subgroup within a LAN created in software rather than by moving cables; it groups stations and devices regardless of their physical segment. VLANs are implemented in port-switching hubs and LAN switches.</div>
+  <div class="def"><b>IP address</b> — the network-layer address that identifies a host on an IP network. <b>Dynamic Host Configuration Protocol (DHCP)</b> — an Internet protocol that dynamically allocates IP addresses to hosts.</div>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Method</th><th class="l">How it controls access</th><th class="l">Notes</th></tr>
+    <tr><td class="l"><b>IEEE 802.1X</b></td><td class="l">Link-layer protocol that enforces authorization before a port is assigned an IP address; uses EAP for authentication.</td><td class="l">By far the most commonly implemented (16.2–16.3).</td></tr>
+    <tr><td class="l"><b>VLANs</b></td><td class="l">The enterprise network is split logically into VLANs; NAC directs the AR to one based on whether it needs remediation, Internet access only, or some level of access to enterprise resources.</td><td class="l">Created dynamically; membership may overlap (a server or AR can be in several VLANs).</td></tr>
+    <tr><td class="l"><b>Firewall</b></td><td class="l">Allows or denies traffic between an enterprise host and an external user.</td><td class="l">Covered in online Chapter 23.</td></tr>
+    <tr><td class="l"><b>DHCP management</b></td><td class="l">A DHCP server intercepts DHCP requests and assigns IP addresses, so enforcement happens at the IP layer by subnet and IP assignment.</td><td class="l">Easy to install, but subject to IP spoofing: limited security.</td></tr>
+  </table></div>
+</section>
+
+<!-- ============ 16.2 ============ -->
+<section class="unit" id="s162">
+  <h2><span class="sec">16.2</span>Extensible Authentication Protocol</h2>
+  <p class="why">EAP is a framework, not one authentication method: it carries whichever method both ends support, over whatever link is in use.</p>
+  <div class="def"><b>Extensible Authentication Protocol (EAP)</b> — defined in RFC 3748; a framework for network access and authentication protocols. It provides a set of protocol messages that encapsulate various authentication methods between a client and an authentication server, and runs over point-to-point links, LANs and other networks.</div>
+  <div class="def"><b>EAP method</b> — a specific authentication protocol installed in both the EAP client and the authentication server that extends EAP’s generic transport service. Supporting many methods is what makes EAP “extensible”.</div>
+  <div class="grid2" style="align-items:center">
+  <div class="figure" role="img" aria-label="Three layers: authentication methods (EAP-TLS, EAP-TTLS, EAP-PSK, EAP-IKEv2, other) over the EAP layer (EAP, with IEEE 802.1X EAP over LAN), over the data link layer (PPP, 802.3 Ethernet, 802.11 WLAN, other).">
+  <svg viewBox="0 0 360 200" width="360">
+    <text class="tm" x="6" y="30">methods</text><text class="tm" x="6" y="98">EAP layer</text><text class="tm" x="6" y="170">data link</text>
+    <rect class="bxm" x="80" y="10" width="64" height="34" rx="4"/><text class="tx" x="112" y="32" text-anchor="middle" font-size="10.5">EAP-TLS</text>
+    <rect class="bxm" x="148" y="10" width="68" height="34" rx="4"/><text class="tx" x="182" y="32" text-anchor="middle" font-size="10.5">EAP-TTLS</text>
+    <rect class="bxm" x="220" y="10" width="64" height="34" rx="4"/><text class="tx" x="252" y="32" text-anchor="middle" font-size="10.5">EAP-PSK</text>
+    <rect class="bxm" x="288" y="10" width="68" height="34" rx="4"/><text class="tx" x="322" y="32" text-anchor="middle" font-size="10.5">EAP-IKEv2</text>
+    <rect class="bxa" x="80" y="56" width="276" height="34" rx="4"/><text class="tx" x="218" y="78" text-anchor="middle">Extensible Authentication Protocol</text>
+    <rect class="bx" x="80" y="96" width="140" height="30" rx="4"/><text class="tx" x="150" y="115" text-anchor="middle" font-size="10.5">IEEE 802.1X EAPOL</text>
+    <rect class="bx" x="80" y="146" width="62" height="40" rx="4"/><text class="tx" x="111" y="170" text-anchor="middle" font-size="10.5">PPP</text>
+    <rect class="bx" x="146" y="146" width="70" height="40" rx="4"/><text class="tx" x="181" y="164" text-anchor="middle" font-size="10.5">802.3</text><text class="tm" x="181" y="178" text-anchor="middle" font-size="9.5">Ethernet</text>
+    <rect class="bx" x="220" y="146" width="70" height="40" rx="4"/><text class="tx" x="255" y="164" text-anchor="middle" font-size="10.5">802.11</text><text class="tm" x="255" y="178" text-anchor="middle" font-size="9.5">WLAN</text>
+    <rect class="bx" x="294" y="146" width="62" height="40" rx="4"/><text class="tx" x="325" y="170" text-anchor="middle" font-size="10.5">Other</text>
+  </svg><div class="cap">Redrawn from Figure 16.2, EAP layered context.</div></div>
+  <div>
+    <div class="def"><b>Transport Layer Security (TLS)</b> (Unit 11) — the protocol that sets up an authenticated, encrypted channel; its <b>handshake protocol</b> authenticates the parties and agrees keys.</div>
+    <div class="def"><b>Pre-shared key (PSK)</b> — a secret key placed with both parties in advance, outside the protocol.</div>
+  </div>
+  </div>
+  <h3>Common EAP methods</h3>
+  <div class="cmp">
+    <div><h4>EAP-TLS <span class="pill">RFC 5216</span></h4><p>Encapsulates the TLS <b>handshake</b> (not TLS encryption) in EAP messages. Client and server authenticate each other with <b>digital certificates</b>. The client encrypts a random number with the server’s public key to make a <b>pre-master secret</b> and sends it; both sides derive the same secret key from it.</p></div>
+    <div><h4>EAP-TTLS <span class="pill">RFC 5281</span></h4><p>Tunneled TLS: only the server has a certificate and authenticates first. The secure connection (the “tunnel”) is then used to authenticate the client, and possibly the server again, with any EAP method or a legacy method such as PAP or CHAP.</p></div>
+    <div><h4>EAP-GPSK <span class="pill">RFC 5433</span></h4><p>Generalized Pre-Shared Key: mutual authentication and session key derivation from a PSK, using only secret-key algorithms, so cheap in messages and computation (minimum four messages, no public-key cryptography). Needs a PSK between each peer and the EAP server, set up at peer registration. Designed for insecure networks such as IEEE 802.11.</p></div>
+    <div><h4>EAP-IKEv2 <span class="pill">RFC 5106</span></h4><p>Based on Internet Key Exchange version 2 (Unit 11, Chapter 20). Mutual authentication and session key establishment by a variety of methods.</p></div>
+  </div>
+  <div class="def"><b>PAP</b> (Password Authentication Protocol) and <b>CHAP</b> (Challenge-Handshake Authentication Protocol) — older authentication methods used with point-to-point links; PAP sends a password, CHAP answers a challenge with a value computed from a shared secret.</div>
+  <div class="note"><span class="t">Correction</span>The book’s EAP-IKEv2 bullet says “EAP-TLS is defined in RFC 5106”; RFC 5106 defines EAP-IKEv2. EAP-TLS for TLS 1.3 is now specified in RFC 9190.</div>
+
+  <h3>EAP exchanges</h3>
+  <p>RFC 3748 defines <b>successful authentication</b> as an exchange of EAP messages after which the authenticator decides to allow access by the peer and the peer decides to use this access. The authenticator’s decision covers authentication and authorization: a peer may authenticate successfully yet be refused for policy reasons.</p>
+  <div class="def"><b>EAP peer</b> — the client computer trying to access a network. <b>EAP authenticator</b> — an access point or NAS that requires EAP authentication before granting access. <b>Authentication server</b> — negotiates the EAP method with the peer, validates its credentials and authorizes access; typically a <b>RADIUS</b> (Remote Authentication Dial-In User Service) server.</div>
+  <div class="def"><b>EAP pass-through mode</b> — the usual arrangement: the authentication server acts as a backend for many authenticators, and the authenticator then decides whether to grant access. Less commonly the authenticator itself is the EAP server, so only two parties are involved.</div>
+  <p>A lower-level protocol such as <b>PPP</b> (point-to-point protocol) or IEEE 802.1X first connects the peer to the authenticator; the software entity in the peer at this level is the <b>supplicant</b>.</p>
+  <div class="lab proto" data-protos="eap,eapnak" data-name="EAP message flow in pass-through mode"></div>
+
+  <h3>EAP message fields</h3>
+  <ul class="props">
+    <li><b>Code</b>: the type of message. Request (1), Response (2), Success (3), Failure (4).</li>
+    <li><b>Identifier</b>: matches Responses with Requests.</li>
+    <li><b>Length</b>: length in octets of the whole message, including Code, Identifier, Length and Data.</li>
+    <li><b>Data</b>: authentication information, typically a <b>Type</b> subfield (kind of data carried) and a <b>Type-Data</b> field. Success and Failure messages have no Data field.</li>
+  </ul>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Build an EAP packet</span><span class="pill">RFC 3748 §4</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>Code<select id="ep-code"><option value="1">1 Request</option><option value="2" selected>2 Response</option><option value="3">3 Success</option><option value="4">4 Failure</option></select></label>
+        <label>Identifier (0–255)<input type="number" id="ep-id" min="0" max="255" value="7"></label>
+        <label>Type<select id="ep-type"><option value="1" selected>1 Identity</option><option value="3">3 Nak</option><option value="13">13 EAP-TLS</option><option value="21">21 EAP-TTLS</option><option value="49">49 EAP-IKEv2</option><option value="51">51 EAP-GPSK</option></select></label>
+        <label class="grow">Type-Data (text)<input type="text" id="ep-data" value="alice@example.edu"></label>
+      </div>
+      <div id="ep-out" class="out"></div>
+      <p class="cap">Byte layout from RFC 3748: Code and Identifier are one octet each, Length is two octets (big-endian), Type is one octet. Type numbers from the IANA EAP registry. An Identity response carries the claimed identity as text.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 16.3 ============ -->
+<section class="unit" id="s163">
+  <h2><span class="sec">16.3</span>IEEE 802.1X Port-Based Network Access Control</h2>
+  <p class="why">802.1X turns a LAN port into a gate: until authentication succeeds, only authentication traffic gets through.</p>
+  <div class="def"><b>Protocol data unit (PDU)</b> — the block of data a protocol layer exchanges as one unit. <b>MAC address</b> — the physical (link-layer) address of a LAN interface. <b>Bridge</b> — a link-layer device joining LAN segments; its connection points are <b>bridge ports</b>.</div>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Term (Table 16.1)</th><th class="l">Meaning</th></tr>
+    <tr><td class="l"><b>Supplicant</b></td><td class="l">Entity at one end of a point-to-point LAN segment that seeks to be authenticated by an authenticator at the other end.</td></tr>
+    <tr><td class="l"><b>Authenticator</b></td><td class="l">Entity at one end of a point-to-point LAN segment that facilitates authentication of the entity at the other end.</td></tr>
+    <tr><td class="l"><b>Authentication server (AS)</b></td><td class="l">Provides an authentication service to an authenticator: decides from the supplicant’s credentials whether it may use the services of the authenticator’s system.</td></tr>
+    <tr><td class="l"><b>Authentication exchange</b></td><td class="l">The two-party conversation between systems performing an authentication process.</td></tr>
+    <tr><td class="l"><b>Authentication process</b></td><td class="l">The cryptographic operations and supporting data frames that perform the actual authentication.</td></tr>
+    <tr><td class="l"><b>Authentication transport</b></td><td class="l">The datagram session that transfers the authentication exchange between two systems.</td></tr>
+    <tr><td class="l"><b>Bridge port / edge port</b></td><td class="l">A port of an IEEE 802.1D or 802.1Q bridge / a bridge port on a LAN with no other bridges attached.</td></tr>
+    <tr><td class="l"><b>Network access port</b></td><td class="l">A point of attachment to a LAN: physical (one LAN MAC on a segment) or logical (an IEEE 802.11 association between a station and an access point).</td></tr>
+    <tr><td class="l"><b>Port access entity (PAE)</b></td><td class="l">The protocol entity associated with a port; can act as authenticator, supplicant or both.</td></tr>
+  </table></div>
+  <p>Supplicant, network access point and authentication server correspond to the EAP terms peer, authenticator and authentication server. Until the AS authenticates the supplicant, the authenticator passes only control and authentication messages: the 802.1X control channel is unblocked but the data channel is blocked. Once the supplicant is authenticated and keys are provided, data is forwarded, subject to the supplicant’s access limits.</p>
+  <div class="def"><b>Uncontrolled port</b> — lets PDUs pass between supplicant and AS regardless of the supplicant’s authentication state. <b>Controlled port</b> — lets PDUs pass between the supplicant and other systems only if the supplicant’s current state authorizes it. Ports are logical entities in the authenticator, each mapped to a physical connection.</div>
+
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Controlled and uncontrolled ports</span><span class="pill">Figure 16.5</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <span class="seg" role="group" aria-label="Supplicant state"><button type="button" data-pst="0" aria-pressed="true">Unauthorized</button><button type="button" data-pst="1" aria-pressed="false">Authorized</button></span>
+      </div>
+      <div class="controls sendrow"><span class="cap">Send from the supplicant:</span>
+        <button type="button" id="px-eap" class="act">▶ EAPOL frame</button>
+        <button type="button" id="px-data" class="act">▶ Data frame</button>
+      </div>
+      <div class="figure"><svg id="px-svg" viewBox="0 0 640 210" width="640" role="img" aria-label="Supplicant connects to a network access point with an uncontrolled port leading to the authentication server and a controlled port leading to the network or Internet."></svg></div>
+      <div id="px-out" class="out"></div>
+    </div>
+  </div>
+
+  <h3>EAPOL</h3>
+  <div class="def"><b>EAPOL (EAP over LAN)</b> — the essential protocol defined in 802.1X. It runs over an IEEE 802 LAN (Ethernet, Wi-Fi) at the link level, lets a supplicant talk to an authenticator, and carries EAP packets for authentication.</div>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Frame type (Table 16.2)</th><th class="l">Definition</th></tr>
+    <tr><td class="l"><b>EAPOL-EAP</b></td><td class="l">Contains an encapsulated EAP packet.</td></tr>
+    <tr><td class="l"><b>EAPOL-Start</b></td><td class="l">The supplicant can send this instead of waiting for a challenge from the authenticator.</td></tr>
+    <tr><td class="l"><b>EAPOL-Logoff</b></td><td class="l">Returns the port to unauthorized when the supplicant has finished using the network.</td></tr>
+    <tr><td class="l"><b>EAPOL-Key</b></td><td class="l">Exchanges cryptographic keying information (sent once the authenticator decides to admit the supplicant).</td></tr>
+  </table></div>
+  <p>On first connecting, the supplicant does not know the authenticator’s MAC address, or whether one exists. It sends EAPOL-Start to a special group-multicast address reserved for 802.1X authenticators. Often the authenticator already knows a device connected (a hub sees the cable plugged in) and preempts Start with its own message. Either way, it sends an EAP-Request/Identity inside an EAPOL-EAP packet.</p>
+  <p>EAPOL packet fields: <b>protocol version</b>; <b>packet type</b> (start, EAP, key, logoff…); <b>packet body length</b>; <b>packet body</b> (e.g. an EAP packet).</p>
+  <div class="lab proto" data-protos="eapol"></div>
+</section>
+
+<!-- ============ 16.4 ============ -->
+<section class="unit" id="s164">
+  <h2><span class="sec">16.4</span>Cloud Computing</h2>
+  <p class="why">Many organizations move much or all of their IT operations to Internet-connected infrastructure. The security questions that follow depend on which parts the provider runs.</p>
+  <div class="def"><b>Cloud computing</b> (NIST SP 800-145) — a model for enabling ubiquitous, convenient, on-demand network access to a shared pool of configurable computing resources (networks, servers, storage, applications, services) that can be rapidly provisioned and released with minimal management effort or service provider interaction. It has five essential characteristics, three service models and four deployment models.</div>
+  <div class="def"><b>Multi-tenant model</b> — one provider’s resources serve multiple consumers (tenants) at once, with resources assigned and reassigned dynamically. <b>Virtual machine</b> — a software-emulated computer running alongside others on shared physical hardware.</div>
+  <h3>Five essential characteristics</h3>
+  <ul class="props">
+    <li><b>Broad network access</b>: capabilities are available over the network through standard mechanisms used by heterogeneous thin or thick clients (phones, laptops, PDAs) and other software services.</li>
+    <li><b>Rapid elasticity</b>: resources expand and shrink with the requirement, e.g. many servers for one task, released when it finishes.</li>
+    <li><b>Measured service</b>: a metering capability (storage, processing, bandwidth, active accounts) controls and optimizes use; usage is monitored, controlled and reported for both provider and consumer.</li>
+    <li><b>On-demand self-service</b>: a consumer provisions capabilities (server time, storage) automatically, without human interaction with the provider. Resources are not permanent parts of your IT infrastructure.</li>
+    <li><b>Resource pooling</b>: resources are pooled to serve many consumers with a multi-tenant model. Location independence: the customer generally cannot control or know the exact location but may specify country, state or data center. Even private clouds pool resources between parts of one organization.</li>
+  </ul>
+  <h3>Three service models</h3>
+  <p>NIST’s service models nest: each one hands more of the stack to the provider. Pick one to see who runs each layer.</p>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Who runs which layer</span><span class="pill">Section 16.4</span></div>
+    <div class="lab-b">
+      <div class="controls"><span class="seg smseg" role="group" aria-label="Service model"><button type="button" data-sm="saas" aria-pressed="true">SaaS · Software as a Service</button><button type="button" data-sm="paas" aria-pressed="false">PaaS · Platform as a Service</button><button type="button" data-sm="iaas" aria-pressed="false">IaaS · Infrastructure as a Service</button></span></div>
+      <div class="figure"><svg id="sm-svg" viewBox="0 0 530 250" width="530" role="img" aria-label="Layer stack showing which layers the cloud provider and the consumer manage."></svg></div>
+      <div id="sm-out" class="out"></div>
+    </div>
+  </div>
+  <h3>Four deployment models</h3>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Model</th><th class="l">Infrastructure</th><th class="l">Responsibility</th></tr>
+    <tr><td class="l"><b>Public</b></td><td class="l">Available to the general public or a large industry group; owned by an organization selling cloud services.</td><td class="l">The provider is responsible for the infrastructure and for control of data and operations in the cloud.</td></tr>
+    <tr><td class="l"><b>Private</b></td><td class="l">Operated solely for one organization; managed by it or a third party, on or off premise.</td><td class="l">The provider is responsible only for the infrastructure, not for control.</td></tr>
+    <tr><td class="l"><b>Community</b></td><td class="l">Shared by several organizations with shared concerns (mission, security requirements, policy, compliance); managed by them or a third party, on or off premise.</td><td class="l">Shared among the community.</td></tr>
+    <tr><td class="l"><b>Hybrid</b></td><td class="l">Two or more clouds (private, community, public) that stay unique entities but are bound by technology enabling data and application portability, e.g. <b>cloud bursting</b> for load balancing between clouds.</td><td class="l">Per component cloud.</td></tr>
+  </table></div>
+  <p>Typical context (Figure 16.8): enterprise workstations on LANs connect through a router and a network or the Internet to the cloud service provider, which manages a large collection of servers (often blade servers) with network management, redundancy and security tools.</p>
+</section>
+
+<!-- ============ 16.4 (cont.) Reference architecture ============ -->
+<section class="unit" id="s164b">
+  <h2>Cloud Computing Reference Architecture</h2>
+  <p class="why">NIST SP 500-292 describes what cloud services provide, not how to build them: a common vocabulary for discussing and comparing cloud systems.</p>
+  <p>Its objectives: illustrate the cloud services within an overall conceptual model; give consumers a technical reference to understand, discuss, categorize and compare services; and support analysis of candidate standards for security, interoperability, portability and reference implementations.</p>
+  <div class="figure" role="img" aria-label="NIST reference architecture: cloud consumer, cloud auditor (security, privacy impact and performance audit), cloud provider (service orchestration with SaaS, PaaS, IaaS service layer, resource abstraction and control layer, physical resource layer of hardware and facility; cloud service management with business support, provisioning and configuration, portability and interoperability; security and privacy), cloud broker (service intermediation, aggregation, arbitrage), all joined by the cloud carrier.">
+  <svg viewBox="0 0 760 330" width="760">
+    <rect class="bxm" x="10" y="10" width="100" height="250" rx="6"/><text class="tx" x="60" y="131" text-anchor="middle" font-weight="700">Cloud</text><text class="tx" x="60" y="147" text-anchor="middle" font-weight="700">consumer</text>
+    <rect class="bx" x="120" y="10" width="130" height="250" rx="6"/><text class="tx" x="185" y="32" text-anchor="middle" font-weight="700">Cloud auditor</text>
+    <rect class="gb" x="130" y="60" width="110" height="44" rx="4"/><text class="tm" x="185" y="80" text-anchor="middle">Security</text><text class="tm" x="185" y="94" text-anchor="middle">audit</text><rect class="gb" x="130" y="112" width="110" height="44" rx="4"/><text class="tm" x="185" y="132" text-anchor="middle">Privacy impact</text><text class="tm" x="185" y="146" text-anchor="middle">audit</text><rect class="gb" x="130" y="164" width="110" height="44" rx="4"/><text class="tm" x="185" y="184" text-anchor="middle">Performance</text><text class="tm" x="185" y="198" text-anchor="middle">audit</text>
+    <rect class="bxa" x="260" y="10" width="340" height="250" rx="6"/><text class="tx" x="430" y="30" text-anchor="middle" font-weight="700">Cloud provider</text>
+    <rect class="bx" x="270" y="42" width="174" height="208" rx="4"/><text class="tm" x="357" y="58" text-anchor="middle">Service orchestration</text>
+    <rect class="gb" x="280" y="66" width="154" height="66" rx="3"/><text class="tm" x="357" y="80" text-anchor="middle">Service layer</text><text class="tx" x="357" y="96" text-anchor="middle" font-size="11">SaaS</text><text class="tx" x="357" y="111" text-anchor="middle" font-size="11">PaaS</text><text class="tx" x="357" y="126" text-anchor="middle" font-size="11">IaaS</text>
+    <rect class="gb" x="280" y="140" width="154" height="36" rx="3"/><text class="tm" x="357" y="155" text-anchor="middle">Resource abstraction</text><text class="tm" x="357" y="168" text-anchor="middle">and control layer</text>
+    <rect class="gb" x="280" y="184" width="154" height="56" rx="3"/><text class="tm" x="357" y="199" text-anchor="middle">Physical resource layer</text><text class="tx" x="357" y="216" text-anchor="middle" font-size="11">Hardware</text><text class="tx" x="357" y="232" text-anchor="middle" font-size="11">Facility</text>
+    <rect class="bx" x="452" y="42" width="138" height="146" rx="4"/><text class="tm" x="521" y="58" text-anchor="middle">Cloud service</text><text class="tm" x="521" y="71" text-anchor="middle">management</text>
+    <rect class="gb" x="460" y="80" width="122" height="30" rx="3"/><text class="tx" x="521" y="99" text-anchor="middle" font-size="10.5">Business support</text>
+    <rect class="gb" x="460" y="114" width="122" height="34" rx="3"/><text class="tx" x="521" y="128" text-anchor="middle" font-size="10.5">Provisioning /</text><text class="tx" x="521" y="141" text-anchor="middle" font-size="10.5">configuration</text>
+    <rect class="gb" x="460" y="152" width="122" height="32" rx="3"/><text class="tx" x="521" y="165" text-anchor="middle" font-size="10.5">Portability /</text><text class="tx" x="521" y="178" text-anchor="middle" font-size="10.5">interoperability</text>
+    <rect class="bxb" x="452" y="196" width="66" height="54" rx="4"/><text class="tx" x="485" y="227" text-anchor="middle" font-size="10.5">Security</text>
+    <rect class="bxb" x="524" y="196" width="66" height="54" rx="4"/><text class="tx" x="557" y="227" text-anchor="middle" font-size="10.5">Privacy</text>
+    <rect class="bx" x="610" y="10" width="140" height="250" rx="6"/><text class="tx" x="680" y="32" text-anchor="middle" font-weight="700">Cloud broker</text>
+    <rect class="gb" x="620" y="60" width="120" height="44" rx="4"/><text class="tm" x="680" y="80" text-anchor="middle">Service</text><text class="tm" x="680" y="94" text-anchor="middle">intermediation</text><rect class="gb" x="620" y="112" width="120" height="44" rx="4"/><text class="tm" x="680" y="132" text-anchor="middle">Service</text><text class="tm" x="680" y="146" text-anchor="middle">aggregation</text><rect class="gb" x="620" y="164" width="120" height="44" rx="4"/><text class="tm" x="680" y="184" text-anchor="middle">Service</text><text class="tm" x="680" y="198" text-anchor="middle">arbitrage</text>
+    <rect class="bxm" x="10" y="280" width="740" height="38" rx="6"/><text class="tx" x="380" y="304" text-anchor="middle" font-weight="700">Cloud carrier</text>
+    <path class="ln dash" d="M60 262 V278 M185 262 V278 M430 262 V278 M680 262 V278"/>
+  </svg><div class="cap">Redrawn from Figure 16.9, NIST cloud computing reference architecture.</div></div>
+  <div class="def"><b>Service level agreement (SLA)</b> — a contract that fixes the level of service (availability, performance, response) one party must deliver to another.</div>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Actor</th><th class="l">Role</th></tr>
+    <tr><td class="l"><b>Cloud consumer</b></td><td class="l">Person or organization that maintains a business relationship with, and uses services from, cloud providers.</td></tr>
+    <tr><td class="l"><b>Cloud provider (CP)</b></td><td class="l">Person, organization or entity responsible for making a service available. Provides storage and processing for each service model plus a cloud interface for consumers.</td></tr>
+    <tr><td class="l"><b>Cloud auditor</b></td><td class="l">Independent party that assesses cloud services, operations, performance and security, and can assure the CP conforms to a set of standards.</td></tr>
+    <tr><td class="l"><b>Cloud broker</b></td><td class="l">Manages use, performance and delivery of cloud services and negotiates relationships between CPs and consumers; useful when services are too complex for a consumer to manage.</td></tr>
+    <tr><td class="l"><b>Cloud carrier</b></td><td class="l">Intermediary (networking facility) providing connectivity and transport between CPs and consumers. A CP typically sets up SLAs with the carrier consistent with its own SLAs, and may require dedicated, secure connections.</td></tr>
+  </table></div>
+  <h3>What a broker offers</h3>
+  <ul class="props">
+    <li><b>Service intermediation</b>: value-added services such as identity management, performance reporting and enhanced security.</li>
+    <li><b>Service aggregation</b>: combines several cloud services to meet needs no single CP covers, or to optimize performance or minimize cost.</li>
+    <li><b>Service arbitrage</b>: like aggregation, but the services combined are not fixed; the broker picks from multiple agencies, e.g. using a credit-scoring service to choose the agency with the best score.</li>
+  </ul>
+  <p>Consumers by model: <b>SaaS</b> consumers are organizations giving members access to applications, end users, or application administrators; <b>PaaS</b> consumers develop, test, deploy and manage applications with the CP’s tools; <b>IaaS</b> consumers use virtual computers and similar resources for fundamental computing needs.</p>
+</section>
+
+<!-- ============ 16.5 ============ -->
+<section class="unit" id="s165">
+  <h2><span class="sec">16.5</span>Cloud Security Risks and Countermeasures</h2>
+  <p class="why">Cloud controls resemble controls in any IT environment, but the enterprise loses much control over resources, services and applications while staying accountable for security and privacy policies.</p>
+  <div class="def"><b>Application programming interface (API)</b> — the set of software interfaces a program exposes for other software to call; here, the interfaces customers use to manage and interact with cloud services.</div>
+  <p>The Cloud Security Alliance lists these top cloud-specific threats. Select one to see the suggested countermeasures.</p>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Threats · Cloud Security Alliance list</span><span class="pill">Section 16.5</span></div>
+    <div class="lab-b">
+      <div class="pick"><div class="pick-list" role="group" aria-label="Cloud threat" id="ct-seg"></div><div id="ct-out" class="out pick-detail"></div></div>
+    </div>
+  </div>
+  <p>Similar lists have been developed by ENISA (the European Network and Information Security Agency) and NIST.</p>
+</section>
+
+<!-- ============ 16.6 ============ -->
+<section class="unit" id="s166">
+  <h2><span class="sec">16.6</span>Data Protection in the Cloud</h2>
+  <p class="why">For many clients the worst outcome of a breach is losing or leaking data, and the cloud multiplies the ways data can be compromised.</p>
+  <p>Ways to compromise data: deleting or altering records with no backup; unlinking a record from its larger context; storage on unreliable media; losing an encoding key (effective destruction); and access by unauthorized parties.</p>
+  <h3>NIST guidelines (Table 16.3)</h3>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Area</th><th class="l">Guideline in brief</th></tr>
+    <tr><td class="l"><b>Governance</b></td><td class="l">Extend organizational policies, procedures and standards to cloud development and service use; audit mechanisms to ensure they are followed throughout the life cycle.</td></tr>
+    <tr><td class="l"><b>Compliance</b></td><td class="l">Know the laws and regulations that impose security and privacy obligations (data location, privacy controls, records management, electronic discovery); check the provider’s offering and contract against them; ensure e-discovery does not compromise privacy or security.</td></tr>
+    <tr><td class="l"><b>Trust</b></td><td class="l">Visibility into the provider’s security and privacy controls and their performance; clear, exclusive ownership rights over data; a flexible risk management program; continuous monitoring of security state.</td></tr>
+    <tr><td class="l"><b>Architecture</b></td><td class="l">Understand the provider’s underlying technologies and the implications of their technical controls over the full life cycle.</td></tr>
+    <tr><td class="l"><b>Identity and access management</b></td><td class="l">Adequate safeguards for authentication, authorization and other identity and access functions.</td></tr>
+    <tr><td class="l"><b>Software isolation</b></td><td class="l">Understand the virtualization and logical isolation used in the multi-tenant architecture and assess the risks.</td></tr>
+    <tr><td class="l"><b>Data protection</b></td><td class="l">Evaluate the provider’s data management: access control, securing data at rest, in transit and in use, and sanitizing it; consider collating data with high-threat or high-value organizations; weigh cryptographic key management risks.</td></tr>
+    <tr><td class="l"><b>Availability</b></td><td class="l">Contract provisions for availability, backup, recovery and disaster recovery; critical operations resume immediately after a disruption and all operations eventually.</td></tr>
+    <tr><td class="l"><b>Incident response</b></td><td class="l">Contract provisions and procedures that meet the organization’s needs; a transparent provider process; coordinated response by both parties’ roles.</td></tr>
+  </table></div>
+  <div class="note"><span class="t">Correction</span>The text cites these guidelines as “SP-800-14”; the document is NIST SP 800-144, Guidelines on Security and Privacy in Public Cloud Computing (named correctly in 16.8).</div>
+  <h3>Database models</h3>
+  <div class="def"><b>Database management system (DBMS)</b> — software that stores a database and handles queries, users and access rights. <b>Multi-instance model</b> — each subscriber gets its own DBMS on its own virtual machine instance, with complete control over roles, user authorization and other security administration. <b>Multi-tenant model</b> (for databases) — a predefined environment shared with other tenants, typically by tagging data with a subscriber identifier; it looks exclusive but relies on the CP to maintain a sound, secure database environment.</div>
+  <p>Data must be secured <b>at rest, in transit and in use</b>, and access controlled. Encryption in transit involves key management responsibilities for the CP; access control involves the CP to a degree depending on the service model. For data at rest, the ideal is for the client to encrypt the database and store only ciphertext, with the CP having no key: then the CP cannot read the data, though corruption and denial of service remain risks.</p>
+  <p>Encrypting the whole database is inflexible: the user would download and decrypt entire tables to search them. It must be possible to work with the database in encrypted form.</p>
+  <h3>An encryption scheme for a cloud-based database</h3>
+  <div class="def"><b>Relation</b> — the basic building block of a relational database: a flat table. Rows are <b>tuples</b>; columns are <b>attributes</b>. <b>Primary key</b> — one or more columns whose value uniquely identifies a row (e.g. employee ID). A primary key is a means of indexing, unrelated to cryptographic keys.</div>
+  <ul class="props">
+    <li><b>Data owner</b>: produces data for controlled release, inside or outside the organization.</li>
+    <li><b>User</b>: a human who presents queries (an employee, or an authenticated external user).</li>
+    <li><b>Client</b>: front end that transforms user queries into queries on the encrypted data.</li>
+    <li><b>Server</b>: receives encrypted data from the owner and makes it available to clients; here, a cloud server, usually run by an external provider.</li>
+  </ul>
+  <p>Simplest arrangement: every item is encrypted separately with the same key; the server stores the encrypted database without the key, the client holds a copy of the key.</p>
+  <div class="lab proto" data-protos="cdb"></div>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Querying an encrypted table</span><span class="pill">Figure 16.10</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>Query type<select id="db-q"><option value="pk">Employee ID equals …</option><option value="rng">Salary below …</option></select></label>
+        <label>Value<input type="text" id="db-v" value="1003"></label>
+        <button type="button" id="db-run">Run query</button>
+        <button type="button" id="db-key" class="ghost">New key</button>
+      </div>
+      <div id="db-out" class="out"></div>
+      <p class="cap">Real AES-128 through your browser’s Web Crypto API. Each item is encrypted on its own with one shared key and a fixed IV (AES-CBC), so equal values give equal ciphertexts and the server can match an encrypted primary key. That same determinism is what the scheme relies on; ciphertexts keep no ordering, so a range query on salary has no server-side answer.</p>
+    </div>
+  </div>
+  <p>Extensions exist: e.g. associate an unencrypted index value with an attribute and partition the table on it, so a user can retrieve a portion of the table. The details are beyond the chapter.</p>
+</section>
+
+<!-- ============ 16.7 ============ -->
+<section class="unit" id="s167">
+  <h2><span class="sec">16.7</span>Cloud Security as a Service</h2>
+  <p class="why">Security functions themselves can be bought from the cloud, shifting work from the enterprise to a security service provider.</p>
+  <div class="def"><b>Security as a Service (SecaaS)</b> — a package of security services (authentication, antivirus, antimalware/spyware, intrusion detection, security event management) offered by a service provider. In cloud computing, a segment of a CP’s SaaS offering. Cloud Security Alliance: provision of security applications and services via the cloud, to cloud-based infrastructure and software or from the cloud to customers’ on-premise systems.</div>
+  <div class="def"><b>Intrusion detection system (IDS)</b> — automated tools that detect unauthorized access to a host. <b>Intrusion prevention system (IPS)</b> — IDS functions plus mechanisms that block intruders’ traffic. <b>Virtual private network (VPN)</b> — an encrypted tunnel that makes traffic over a public network behave like a private link.</div>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Category (Figure 16.11)</th><th class="l">What it covers</th></tr>
+    <tr><td class="l"><b>Identity and access management (IAM)</b></td><td class="l">People, processes and systems that verify an entity’s identity and grant the right level of access. Identity <b>provisioning</b> and <b>deprovisioning</b>; joining the client’s federated identity scheme (Unit 9), exchanging identity attributes with its identity provider; authentication and auditable access control.</td></tr>
+    <tr><td class="l"><b>Data loss prevention (DLP)</b></td><td class="l">Monitoring, protecting and verifying data at rest, in motion and in use; much is done by the client (16.6), the CSP can enforce rules about what functions may be performed on data.</td></tr>
+    <tr><td class="l"><b>Web security</b></td><td class="l">Real-time protection, on premise or by proxying/redirecting Web traffic to the CP: malware blocking, usage policy enforcement, data backup, traffic control, Web access control.</td></tr>
+    <tr><td class="l"><b>Email security</b></td><td class="l">Control of inbound and outbound email: phishing, malicious attachments, acceptable use, spam; optionally digital signatures and email encryption.</td></tr>
+    <tr><td class="l"><b>Security assessments</b></td><td class="l">Third-party audits of cloud services; the CSP can supply tools and access points.</td></tr>
+    <tr><td class="l"><b>Intrusion management</b></td><td class="l">Detection, prevention and response: IDSs and IPSs at cloud entry points and on cloud servers.</td></tr>
+    <tr><td class="l"><b>Security information and event management (SIEM)</b></td><td class="l">Aggregates (push or pull) log and event data from virtual and real networks, applications and systems; correlates it for real-time reporting and alerting.</td></tr>
+    <tr><td class="l"><b>Encryption</b></td><td class="l">For data at rest, email, network management information and identity information; involves key management, VPN services in the cloud, application encryption and data content access.</td></tr>
+    <tr><td class="l"><b>Business continuity and disaster recovery</b></td><td class="l">Operational resiliency through economies of scale: backup at multiple locations, failover, redundancy, geographically distributed data centers, network survivability.</td></tr>
+    <tr><td class="l"><b>Network security</b></td><td class="l">Allocating access to, distributing, monitoring and protecting resource services: perimeter and server firewalls, denial-of-service protection; many categories above also contribute.</td></tr>
+  </table></div>
+</section>
+
+<!-- ============ 16.8 ============ -->
+<section class="unit" id="s168">
+  <h2><span class="sec">16.8</span>Addressing Cloud Computing Security Concerns</h2>
+  <p class="why">Guidance documents help a business decide what to demand from a provider.</p>
+  <p>Beyond SP 800-144, NIST SP 800-146 (Cloud Computing Synopsis and Recommendations) considers each service model (SaaS, IaaS, PaaS). Recommendations independent of the model: choose providers that support <b>strong encryption</b>, have <b>redundancy mechanisms</b>, employ <b>authentication mechanisms</b>, and give subscribers <b>visibility</b> into how they are protected from other subscribers and from the provider. SP 800-146 also lists the security controls to assign among cloud actors:</p>
+  <div class="cmp">
+    <div><h4>Technical</h4><p>Access control · Audit and accountability · Identification and authentication · System and communication protection</p></div>
+    <div><h4>Operational</h4><p>Awareness and training · Configuration and management · Contingency planning · Incident response · Maintenance · Media protection · Physical and environmental protection · Personnel security · System and information integrity</p></div>
+    <div><h4>Management</h4><p>Certification, accreditation and security assessment · Planning · Risk assessment · System and services acquisition</p></div>
+  </div>
+  <p class="cap">Table 16.4, Control functions and classes.</p>
+  <p>Some providers have moved to <b>Tier 4 data centers</b> to address availability and redundancy concerns.</p>
+</section>
+
+<!-- ============ 18.1 ============ -->
+<section class="unit" id="s181">
+  <h2><span class="sec">18.1</span>Wireless Security</h2>
+  <p class="why">Wireless networks carry every risk of wired ones plus their own: anyone in radio range can listen, and the devices are small, mobile and often unattended.</p>
+  <h3>Why wireless is riskier</h3>
+  <ul class="props">
+    <li><b>Channel</b>: broadcast communication is far more open to eavesdropping and jamming, and to active attacks on protocol weaknesses.</li>
+    <li><b>Mobility</b>: wireless devices are far more portable than wired ones, which brings its own risks.</li>
+    <li><b>Resources</b>: smartphones and tablets run sophisticated operating systems on limited memory and processing, with less to spend against threats such as denial of service and malware.</li>
+    <li><b>Accessibility</b>: sensors and robots may be left unattended in remote or hostile places, open to physical attack.</li>
+  </ul>
+  <div class="grid2" style="align-items:center">
+  <div class="figure" role="img" aria-label="Three points of attack: the endpoint, the wireless medium and the access point.">
+  <svg viewBox="0 0 360 120" width="360">
+    <rect class="bxa" x="10" y="30" width="90" height="56" rx="6"/><text class="tx" x="55" y="62" text-anchor="middle">Endpoint</text>
+    <rect class="bxm" x="260" y="30" width="90" height="56" rx="6"/><text class="tx" x="305" y="62" text-anchor="middle">Access point</text>
+    <path class="ln dash" d="M110 58 q 25 -22 50 0 t 50 0 t 40 0"/>
+    <text class="tm" x="180" y="100" text-anchor="middle">Wireless medium</text>
+  </svg><div class="cap">Redrawn from Figure 18.1, Wireless networking components.</div></div>
+  <div><p>The <b>wireless client</b> (cell phone, Wi-Fi laptop or tablet, sensor, Bluetooth device), the <b>wireless access point</b> (cell tower, Wi-Fi hotspot, access point to a wired LAN or WAN) and the <b>transmission medium</b> carrying the radio waves are all points of attack.</p></div>
+  </div>
+  <h3>Wireless network threats</h3>
+  <div class="def"><b>Bluetooth</b> — a short-range radio standard for personal-area devices. <b>Denial of service (DoS)</b> — preventing or inhibiting normal use of a facility, e.g. by overloading it.</div>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Threat</th><th class="l">What happens</th></tr>
+    <tr><td class="l"><b>Accidental association</b></td><td class="l">Overlapping ranges of nearby networks: a user meaning to join one LAN locks onto a neighbor’s access point, exposing that LAN’s resources.</td></tr>
+    <tr><td class="l"><b>Malicious association</b></td><td class="l">A wireless device poses as a legitimate access point, steals users’ passwords, then penetrates the wired network through a legitimate access point.</td></tr>
+    <tr><td class="l"><b>Ad hoc networks</b></td><td class="l">Peer-to-peer networks between wireless computers with no access point, so no central point of control.</td></tr>
+    <tr><td class="l"><b>Nontraditional networks</b></td><td class="l">Bluetooth personal devices, barcode readers, handheld PDAs: eavesdropping and spoofing risks.</td></tr>
+    <tr><td class="l"><b>Identity theft (MAC spoofing)</b></td><td class="l">An eavesdropper learns the MAC address of a computer with network privileges.</td></tr>
+    <tr><td class="l"><b>Man-in-the-middle</b></td><td class="l">User and access point believe they talk directly while traffic passes through an attacking device (Unit 6, Diffie–Hellman). Wireless networks are particularly vulnerable.</td></tr>
+    <tr><td class="l"><b>Denial of service</b></td><td class="l">The attacker keeps bombarding an access point or other wireless port with protocol messages that consume resources; easy because many messages are easy to direct at a target.</td></tr>
+    <tr><td class="l"><b>Network injection</b></td><td class="l">Targets access points exposed to nonfiltered traffic such as routing or network management messages, e.g. bogus reconfiguration commands that degrade routers and switches.</td></tr>
+  </table></div>
+  <h3>Wireless security measures</h3>
+  <div class="def"><b>Service set identifier (SSID)</b> — the name of a wireless LAN, broadcast by access points so devices can find it.</div>
+  <div class="cmp">
+    <div><h4>Securing transmissions</h4><p>Threats: eavesdropping, altering or inserting messages, disruption. Against eavesdropping: <b>signal hiding</b> (turn off SSID broadcasting, cryptic SSIDs, lowest workable signal strength, access points inside the building away from windows and outer walls, directional antennas, shielding) and <b>encryption</b> (effective as long as keys are secure). Encryption and authentication protocols counter altering and inserting. Against unintentional DoS: site surveys for devices on the same frequencies, adjusted signal strength, shielding.</p></div>
+    <div><h4>Securing access points</h4><p>Main threat: unauthorized access to the network. Principal defense: <b>IEEE 802.1X</b> port-based access control (16.3), which authenticates devices before they attach and stops rogue access points and other unauthorized devices becoming insecure backdoors.</p></div>
+    <div><h4>Securing networks</h4><p>(1) Use encryption. (2) Antivirus, antispyware and a firewall on every endpoint. (3) Turn off identifier broadcasting. (4) Change the router’s identifier from the default. (5) Change the router’s pre-set administration password. (6) Allow only specific MAC addresses (spoofable, so only one element of a strategy).</p></div>
+  </div>
+</section>
+
+<!-- ============ 18.2 ============ -->
+<section class="unit" id="s182">
+  <h2><span class="sec">18.2</span>Mobile Device Security</h2>
+  <p class="why">The old model of IT-controlled PCs behind a clear perimeter no longer holds. The mobile device is now central to the network, and security policy has to follow it.</p>
+  <ul class="props">
+    <li><b>Growing use of new devices</b>: employees use a combination of endpoint devices day to day.</li>
+    <li><b>Cloud-based applications</b>: applications run anywhere (physical servers, mobile virtual servers, the cloud), and users rely on cloud services for personal and professional use.</li>
+    <li><b>De-perimeterization</b>: instead of one static perimeter there are many dynamic perimeters around devices, applications, users and data, adapting to user role, device type, server virtualization mobility, network location and time of day.</li>
+    <li><b>External business requirements</b>: guests, contractors and partners need access from many devices and locations.</li>
+  </ul>
+  <p>An organization implements policy through security features built into the devices plus controls in network components that regulate their use.</p>
+  <h3>Seven security concerns, and responses</h3>
+  <div class="def"><b>QR (Quick Response) code</b> — a two-dimensional barcode read by a device camera; it translates to a URL. <b>Sandbox</b> — an isolated environment that keeps an application’s data and code apart from everything else on the device. <b>Whitelisting</b> — allowing only items on an approved list.</div>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Threat → response</span><span class="pill">Section 18.2</span></div>
+    <div class="lab-b">
+      <div class="pick"><div class="pick-list" role="group" aria-label="Mobile threat" id="mt-seg"></div><div id="mt-out" class="out pick-detail"></div></div>
+    </div>
+  </div>
+  <div class="note"><span class="t">Correction</span>The text names the source of these seven concerns “SP 800-14”; Guidelines for Managing and Securing Mobile Devices in the Enterprise is NIST SP 800-124.</div>
+  <h3>Mobile device security strategy</h3>
+  <div class="figure" role="img" aria-label="A mobile device configured to policy connects through an encrypted SSL or IPsec VPN tunnel and a firewall to the authentication and access control server, the mobile device configuration server and the application or database server.">
+  <svg viewBox="0 0 640 210" width="640">
+    <rect class="bxm" x="10" y="65" width="120" height="70" rx="8"/><text class="tx" x="70" y="97" text-anchor="middle">Mobile device</text><text class="tm" x="70" y="113" text-anchor="middle">device security</text>
+    <path class="ln" d="M132 100 H300" stroke-width="3"/><text class="tm" x="216" y="89" text-anchor="middle">SSL or IPsec VPN tunnel</text><text class="tm" x="216" y="121" text-anchor="middle">traffic security</text>
+    <rect class="bxb" x="300" y="45" width="34" height="110" rx="4"/><text class="tx" x="317" y="174" text-anchor="middle" font-size="11">Firewall</text><text class="tm" x="317" y="189" text-anchor="middle">barrier security</text>
+    <path class="ln" d="M334 100 H380 M380 35 V165 M380 35 H410 M380 100 H410 M380 165 H410"/>
+    <rect class="bxa" x="410" y="10" width="220" height="50" rx="5"/><text class="tx" x="520" y="31" text-anchor="middle" font-size="11">Authentication /</text><text class="tx" x="520" y="46" text-anchor="middle" font-size="11">access control server</text>
+    <rect class="bxa" x="410" y="75" width="220" height="50" rx="5"/><text class="tx" x="520" y="96" text-anchor="middle" font-size="11">Mobile device</text><text class="tx" x="520" y="111" text-anchor="middle" font-size="11">configuration server</text>
+    <rect class="bxa" x="410" y="140" width="220" height="50" rx="5"/><text class="tx" x="520" y="161" text-anchor="middle" font-size="11">Application /</text><text class="tx" x="520" y="176" text-anchor="middle" font-size="11">database server</text>
+  </svg><div class="cap">Redrawn from Figure 18.2, Mobile device security elements.</div></div>
+  <div class="cmp">
+    <div><h4>Device security</h4><p>Organization-issued or <b>BYOD</b> (bring-your-own-device) devices should be inspected before network access; no “rooted” or “jail-broken” devices; no corporate contacts on local storage. Controls: auto-lock; PIN or password protection (can also encrypt email and data); no auto-complete of user names or passwords; remote wipe; SSL enabled; software up to date; antivirus; sensitive data prohibited or encrypted; IT can remotely access, wipe and disable a lost device; app restrictions (signed apps with a certificate from an approved authority); restrictions on synchronization and cloud storage; training and disabling cameras against untrusted content; location services disabled.</p></div>
+    <div><h4>Traffic security</h4><p>Usual encryption and authentication: all traffic encrypted and carried by secure means such as SSL or IPv6; a VPN can carry all traffic between device and organization. Use a strong authentication protocol and preferably two layers: authenticate the device, then the user.</p></div>
+    <div><h4>Barrier security</h4><p>Protect the network from unauthorized access with firewall policies specific to mobile traffic, limiting the scope of data and application access, and intrusion detection and prevention systems with tighter rules for mobile traffic.</p></div>
+  </div>
+</section>
+
+<!-- ============ 18.3 ============ -->
+<section class="unit" id="s183">
+  <h2><span class="sec">18.3</span>IEEE 802.11 Wireless LAN Overview</h2>
+  <p class="why">802.11i security sits inside the 802.11 architecture, so its terms (stations, BSSs, MPDUs, association) come first.</p>
+  <div class="def"><b>IEEE 802</b> — the committee that develops LAN standards. <b>IEEE 802.11</b> — its working group for wireless LAN (WLAN) protocols and transmission specifications. <b>Wi-Fi</b> — the term for products certified interoperable by the <b>Wi-Fi Alliance</b> (first for 802.11b, extended to 802.11g; 802.11a certification is called Wi-Fi5). The Alliance also certifies security: <b>Wi-Fi Protected Access (WPA)</b>; its version <b>WPA2</b> includes all features of IEEE 802.11i.</div>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Term (Table 18.1)</th><th class="l">Meaning</th></tr>
+    <tr><td class="l"><b>Station (STA)</b></td><td class="l">Any device containing an IEEE 802.11 conformant MAC and physical layer.</td></tr>
+    <tr><td class="l"><b>Access point (AP)</b></td><td class="l">Any entity that has station functionality and provides access to the distribution system via the wireless medium for associated stations.</td></tr>
+    <tr><td class="l"><b>Basic service set (BSS)</b></td><td class="l">A set of stations controlled by a single coordination function.</td></tr>
+    <tr><td class="l"><b>Coordination function</b></td><td class="l">The logical function that decides when a station in a BSS may transmit and may receive PDUs.</td></tr>
+    <tr><td class="l"><b>Distribution system (DS)</b></td><td class="l">A system interconnecting BSSs and integrated LANs to create an ESS.</td></tr>
+    <tr><td class="l"><b>Extended service set (ESS)</b></td><td class="l">One or more interconnected BSSs and integrated LANs that appear as a single BSS to the LLC layer of any associated station.</td></tr>
+    <tr><td class="l"><b>MAC protocol data unit (MPDU)</b></td><td class="l">The unit of data exchanged between two peer MAC entities using the physical layer’s services.</td></tr>
+    <tr><td class="l"><b>MAC service data unit (MSDU)</b></td><td class="l">Information delivered as a unit between MAC users.</td></tr>
+  </table></div>
+
+  <h3>IEEE 802 protocol architecture</h3>
+  <div class="figure" role="img" aria-label="Protocol stack: Logical link control (flow control, error control) over Medium access control (assemble data into frame, addressing, error detection, medium access; for 802.11 reliable data delivery and wireless access control protocols) over Physical (encoding and decoding of signals, bit transmission and reception, transmission medium; for 802.11 frequency band definition and wireless signal encoding).">
+  <svg viewBox="0 0 640 200" width="640">
+    <text class="tm" x="240" y="14" text-anchor="middle">General IEEE 802 functions</text><text class="tm" x="520" y="14" text-anchor="middle">Specific IEEE 802.11 functions</text>
+    <rect class="bxa" x="10" y="22" width="120" height="50" rx="5"/><text class="tx" x="70" y="44" text-anchor="middle">Logical Link</text><text class="tx" x="70" y="60" text-anchor="middle">Control</text>
+    <rect class="bxm" x="10" y="78" width="120" height="56" rx="5"/><text class="tx" x="70" y="102" text-anchor="middle">Medium Access</text><text class="tx" x="70" y="118" text-anchor="middle">Control</text>
+    <rect class="bx" x="10" y="140" width="120" height="50" rx="5"/><text class="tx" x="70" y="170" text-anchor="middle">Physical</text>
+    <text class="tx" x="150" y="42" font-size="11">Flow control · Error control</text>
+    <text class="tx" x="150" y="98" font-size="11">Assemble data into frame · Addressing</text><text class="tx" x="150" y="114" font-size="11">Error detection · Medium access</text>
+    <text class="tx" x="150" y="160" font-size="11">Encoding/decoding of signals</text><text class="tx" x="150" y="176" font-size="11">Bit transmission/reception · Medium</text>
+    <text class="tx" x="430" y="98" font-size="11">Reliable data delivery</text><text class="tx" x="430" y="114" font-size="11">Wireless access control protocols</text>
+    <text class="tx" x="430" y="160" font-size="11">Frequency band definition</text><text class="tx" x="430" y="176" font-size="11">Wireless signal encoding</text>
+  </svg><div class="cap">Redrawn from Figure 18.3, IEEE 802.11 protocol stack.</div></div>
+  <ul class="props">
+    <li><b>Physical layer</b>: encoding/decoding of signals, bit transmission/reception, the transmission medium; for 802.11 also frequency bands and antenna characteristics.</li>
+    <li><b>Media access control (MAC)</b>: controls access to the shared medium. Receives an MSDU from the layer above (typically LLC); on transmission assembles a frame (an MPDU) with address and error-detection fields; on reception disassembles, recognizes addresses and detects errors; governs access to the medium.</li>
+    <li><b>Logical link control (LLC)</b>: the MAC layer detects errors and discards bad frames; LLC optionally tracks which frames arrived and retransmits unsuccessful ones.</li>
+  </ul>
+  <div class="def"><b>Cyclic redundancy check (CRC)</b> — an error-detecting code computed over the bits of the whole MPDU, also called the <b>Frame Check Sequence (FCS)</b>. The sender appends it; the receiver recomputes and compares, and a mismatch means bits changed in transit. It detects errors, not deliberate tampering.</div>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · MPDU and its CRC</span><span class="pill">Figure 18.4</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>Destination MAC<input type="text" id="mp-dst" value="3c:22:fb:10:9a:07"></label>
+        <label>Source MAC<input type="text" id="mp-src" value="a4:5e:60:c1:2b:3f"></label>
+        <label class="grow">MSDU (text)<input type="text" id="mp-data" value="GET /grades HTTP/1.1"></label>
+        <button type="button" id="mp-flip" class="ghost">Flip a bit in transit</button>
+      </div>
+      <div id="mp-out" class="out"></div>
+      <p class="cap">MAC header: MAC Control, destination and source addresses; MAC trailer: CRC. Stand-in code: CRC-32, the polynomial used for IEEE 802 frame check sequences; MAC Control is shown as two zero bytes.</p>
+    </div>
+  </div>
+
+  <h3>Network components and architectural model</h3>
+  <p>The smallest building block is a <b>BSS</b>: wireless stations running the same MAC protocol and competing for the same shared medium. A BSS may be isolated or connect to a backbone DS through an AP, which acts as a bridge and relay point. Stations in a BSS do not talk directly: a frame goes from the station to the AP, then to the destination (or over the DS to a remote station). A BSS corresponds to a <b>cell</b>; the DS can be a switch, a wired network or a wireless network.</p>
+  <div class="def"><b>Independent BSS (IBSS)</b> — a BSS whose stations are all mobile and communicate directly with no AP; typically an ad hoc network.</div>
+  <p>BSSs may overlap, and the association between a station and a BSS is dynamic. An <b>ESS</b> is two or more BSSs joined by a DS, appearing as a single logical LAN to the LLC level.</p>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Frame delivery in an ESS</span><span class="pill">Figure 18.5</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>From<select id="es-a"><option>STA 1</option><option selected>STA 2</option><option>STA 3</option><option>STA 4</option><option>STA 6</option><option>STA 7</option><option>STA 8</option></select></label>
+        <label>To<select id="es-b"><option>STA 1</option><option>STA 2</option><option>STA 3</option><option>STA 4</option><option>STA 6</option><option selected>STA 7</option><option>STA 8</option></select></label>
+        <button type="button" id="es-go">Send frame</button>
+      </div>
+      <div class="figure"><svg id="es-svg" viewBox="0 0 640 230" width="640" role="img" aria-label="Two basic service sets, each with an access point, joined by a distribution system."></svg></div>
+      <div id="es-out" class="out"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 18.3 (cont.) services ============ -->
+<section class="unit" id="s183b">
+  <h2>IEEE 802.11 Services and Association</h2>
+  <p class="why">A wireless LAN needs nine services to match what a wired LAN does just by being plugged in; association is how the network learns where a mobile station is.</p>
+  <div class="tbl"><table>
+    <tr><th class="l">Service (Table 18.2)</th><th class="l">Provider</th><th class="l">Used to support</th></tr>
+    <tr><td class="l">Association</td><td class="l">Distribution system</td><td class="l">MSDU delivery</td></tr>
+    <tr><td class="l">Authentication</td><td class="l">Station</td><td class="l">LAN access and security</td></tr>
+    <tr><td class="l">Deauthentication</td><td class="l">Station</td><td class="l">LAN access and security</td></tr>
+    <tr><td class="l">Disassociation</td><td class="l">Distribution system</td><td class="l">MSDU delivery</td></tr>
+    <tr><td class="l">Distribution</td><td class="l">Distribution system</td><td class="l">MSDU delivery</td></tr>
+    <tr><td class="l">Integration</td><td class="l">Distribution system</td><td class="l">MSDU delivery</td></tr>
+    <tr><td class="l">MSDU delivery</td><td class="l">Station</td><td class="l">MSDU delivery</td></tr>
+    <tr><td class="l">Privacy</td><td class="l">Station</td><td class="l">LAN access and security</td></tr>
+    <tr><td class="l">Reassociation</td><td class="l">Distribution system</td><td class="l">MSDU delivery</td></tr>
+  </table></div>
+  <p><b>Station services</b> are in every station, APs included; <b>distribution services</b> are provided between BSSs, in an AP or a special device on the DS. Three services control LAN access and confidentiality; six support MSDU delivery. An MSDU too large for one MPDU may be fragmented into several MPDUs.</p>
+  <ul class="props">
+    <li><b>Distribution</b>: the primary service for exchanging MPDUs that must cross the DS from one BSS to another (STA 2 → AP 1 → DS → AP 2 → STA 7). Within one BSS it logically goes through that BSS’s single AP.</li>
+    <li><b>Integration</b>: transfers data between a station on an 802.11 LAN and one on an <b>integrated</b> IEEE 802.x LAN (a wired LAN physically connected to the DS), handling address translation and media conversion.</li>
+  </ul>
+  <h3>Mobility and association</h3>
+  <p>Before the distribution service can deliver to or accept from a station, the station must be <b>associated</b>. Three transition types, by mobility:</p>
+  <div class="cmp">
+    <div><h4>No transition</h4><p>Stationary, or moving only within direct range of one BSS’s stations.</p></div>
+    <div><h4>BSS transition</h4><p>From one BSS to another within the same ESS; addressing must recognize the station’s new location.</p></div>
+    <div><h4>ESS transition</h4><p>From a BSS in one ESS to a BSS in another; supported only in that the station can move. Upper-layer connections cannot be guaranteed; disruption is likely.</p></div>
+  </div>
+  <p>To deliver within a DS, the distribution service must know which AP to send to, so a station keeps an association with the AP of its current BSS:</p>
+  <ul class="props">
+    <li><b>Association</b>: establishes the initial station–AP association, making the station’s identity and address known; the AP can share this with other APs in the ESS for routing.</li>
+    <li><b>Reassociation</b>: transfers an established association to another AP, letting a station move between BSSs.</li>
+    <li><b>Disassociation</b>: notification by station or AP that an association has ended; a station should send it before leaving an ESS or shutting down, but MAC management also copes with stations that vanish.</li>
+  </ul>
+</section>
+
+<!-- ============ 18.4 ============ -->
+<section class="unit" id="s184">
+  <h2><span class="sec">18.4</span>IEEE 802.11i Wireless LAN Security</h2>
+  <p class="why">A wired LAN gives a crude form of authentication and privacy for free: you must plug in to send or receive. A wireless LAN gives neither, since any station in radio range can transmit and receive.</p>
+  <div class="def"><b>Wired Equivalent Privacy (WEP)</b> — the original 802.11 privacy algorithm, with major weaknesses. <b>Robust Security Network (RSN)</b> — the final form of the 802.11i standard. WPA was a set of mechanisms based on an interim state of 802.11i; WPA2 certifies the full 802.11i specification.</div>
+  <h3>802.11i services</h3>
+  <ul class="props">
+    <li><b>Authentication</b>: a protocol defines an exchange between a user and an AS that provides mutual authentication and generates temporary keys for use between the client and the AP over the wireless link.</li>
+    <li><b>Access control</b>: enforces use of the authentication function, routes messages properly and facilitates key exchange; works with a variety of authentication protocols. (Access control as a security function, not media access control.)</li>
+    <li><b>Privacy with message integrity</b>: MAC-level data (e.g. an LLC PDU) are encrypted along with a message integrity code that ensures they were not altered.</li>
+  </ul>
+  <div class="def"><b>Message integrity code (MIC)</b> — 802.11i’s name for a message authentication code (Unit 7), because MAC already means media access control in networking.</div>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Service (Figure 18.6)</th><th class="l">Protocol</th><th class="l">Algorithms</th></tr>
+    <tr><td class="l">Access control</td><td class="l">IEEE 802.1X port-based access control</td><td class="l">—</td></tr>
+    <tr><td class="l">Authentication and key generation</td><td class="l">EAP</td><td class="l">Key generation: HMAC-SHA-1, RFC 1750 (randomness)</td></tr>
+    <tr><td class="l">Confidentiality, data origin authentication and integrity, replay protection</td><td class="l">TKIP, CCMP</td><td class="l">Confidentiality: TKIP (RC4), CCM (AES-CTR), NIST key wrap. Integrity and data origin: TKIP (Michael MIC), CCM (AES-CBC-MAC), HMAC-MD5, HMAC-SHA-1</td></tr>
+  </table></div>
+  <p>802.11i protects only the link between a STA and its AP. (1) Two STAs in one BSS via the AP: each secures its link to the AP. (2) STAs in an ad hoc IBSS: the AP function lives in a STA. (3) STAs in different BSSs: protected only within each BSS, not across the DS. (4) STA to a wired end station: only STA to AP. End-to-end security must come from a higher layer.</p>
+  <h3>Five phases of operation</h3>
+  <div class="figure" role="img" aria-label="Phases between STA, AP, AS and end station: 1 Discovery (STA and AP), 2 Authentication (STA to AS through AP), 3 Key management (STA and AP), 4 Protected data transfer (STA to end station, protected only to the AP), 5 Connection termination (STA and AP).">
+  <svg viewBox="0 0 640 250" width="640" id="ph-svg">
+    <g class="lh"><rect class="lh" x="20" y="6" width="90" height="26" rx="4"/><rect class="lh" x="190" y="6" width="90" height="26" rx="4"/><rect class="lh" x="360" y="6" width="90" height="26" rx="4"/><rect class="lh" x="530" y="6" width="90" height="26" rx="4"/></g>
+    <text class="lt" x="65" y="24" text-anchor="middle">STA</text><text class="lt" x="235" y="24" text-anchor="middle">AP</text><text class="lt" x="405" y="24" text-anchor="middle">AS</text><text class="lt" x="575" y="24" text-anchor="middle">End station</text>
+    <line class="ll" x1="65" y1="32" x2="65" y2="246"/><line class="ll" x1="235" y1="32" x2="235" y2="246"/><line class="ll" x1="405" y1="32" x2="405" y2="246"/><line class="ll" x1="575" y1="32" x2="575" y2="246"/>
+    <rect class="bxa" x="50" y="44" width="200" height="30" rx="4"/><text class="tx" x="150" y="63" text-anchor="middle">1 · Discovery</text>
+    <rect class="bxm" x="50" y="84" width="370" height="30" rx="4"/><text class="tx" x="235" y="103" text-anchor="middle">2 · Authentication</text>
+    <rect class="bxa" x="50" y="124" width="200" height="30" rx="4"/><text class="tx" x="150" y="143" text-anchor="middle">3 · Key management</text>
+    <rect class="bxm" x="50" y="164" width="200" height="30" rx="4"/><rect class="bx" x="250" y="164" width="340" height="30" rx="4"/><text class="tx" x="150" y="183" text-anchor="middle">4 · Protected data</text><text class="tm" x="420" y="183" text-anchor="middle">… unprotected by 802.11i beyond the AP</text>
+    <rect class="bxa" x="50" y="204" width="200" height="30" rx="4"/><text class="tx" x="150" y="223" text-anchor="middle">5 · Connection termination</text>
+  </svg><div class="cap">Redrawn from Figure 18.7, IEEE 802.11i phases of operation.</div></div>
+  <ol class="props">
+    <li><b>Discovery</b>: the AP advertises its 802.11i security policy in <b>Beacons</b> and <b>Probe Responses</b>; the STA identifies an AP, associates, and selects the cipher suite and authentication mechanism when there is a choice.</li>
+    <li><b>Authentication</b>: STA and AS prove their identities to each other. The AP blocks non-authentication traffic until success and only forwards traffic between STA and AS.</li>
+    <li><b>Key generation and distribution</b>: AP and STA generate cryptographic keys and place them on both; frames pass between AP and STA only.</li>
+    <li><b>Protected data transfer</b>: frames go between STA and end station through the AP; protection covers STA to AP only.</li>
+    <li><b>Connection termination</b>: AP and STA exchange frames; the secure connection is torn down and restored to its original state.</li>
+  </ol>
+</section>
+
+<!-- ============ 18.4 (cont.) discovery & authentication ============ -->
+<section class="unit" id="s184b">
+  <h2>Discovery and Authentication Phases</h2>
+  <p class="why">Discovery agrees what protection to use; authentication proves both sides are genuine before any key exists.</p>
+  <h3>Security capabilities</h3>
+  <p>The STA and AP decide: confidentiality and MPDU integrity protocols for <b>unicast</b> traffic (between this STA and AP only); the authentication method; the key management approach. Protocols for multicast/broadcast traffic are dictated by the AP, since all STAs in a group must use the same ones.</p>
+  <div class="def"><b>Cipher suite</b> — the specification of a protocol plus its chosen key length (if variable). Confidentiality and integrity options: WEP (40- or 104-bit key, for backward compatibility), TKIP, CCMP, vendor-specific. <b>Authentication and key management (AKM) suite</b> — how AP and STA mutually authenticate and derive a root key. Options: IEEE 802.1X; pre-shared key (no explicit authentication; mutual authentication implied by sharing a unique secret); vendor-specific.</div>
+  <div class="def"><b>RSN Information Element (RSN IE)</b> — the field in which an AP advertises its security capabilities.</div>
+  <p>The discovery phase has three exchanges, and the 802.1X controlled ports stay blocked throughout: no user traffic goes beyond the AP.</p>
+  <div class="lab proto" data-protos="disc"></div>
+  <h3>IEEE 802.1X access control approach</h3>
+  <p>802.11i uses 802.1X, with EAP as the authentication protocol. Supplicant and authenticator correspond to the wireless station and the AP; the AS is typically a separate device on the wired side (reached over the DS) but could sit on the authenticator. Before the AS authenticates the supplicant, the AP passes only control or authentication messages; afterwards, with keys provided, the data channel is unblocked. An AP may have just two physical ports, one to the DS and one for wireless communication in its BSS, with each logical port mapped to one of them. For an IBSS, with no AP, 802.11i uses pairwise authentication between stations.</p>
+  <h3>MPDU exchange</h3>
+  <ul class="props">
+    <li><b>Connect to AS</b>: the STA asks its AP for a connection to the AS; the AP acknowledges and sends an access request to the AS.</li>
+    <li><b>EAP exchange</b>: authenticates STA and AS to each other.</li>
+    <li><b>Secure key delivery</b>: the AS generates a <b>master session key (MSK)</b>, also called the <b>AAA key</b> (Authentication, Authorization and Accounting), and sends it to the STA. All keys the STA needs with its AP come from it. 802.11i relies on EAP for secure delivery.</li>
+  </ul>
+  <p>Typically STA–AP messages use EAPOL and AP–AS messages use RADIUS:</p>
+  <div class="lab proto" data-protos="radius"></div>
+  <p>The controlled port is still blocked to general user traffic until the temporal keys are installed in the 4-way handshake.</p>
+</section>
+
+<!-- ============ 18.4 (cont.) key management ============ -->
+<section class="unit" id="s184c">
+  <h2>Key Management Phase</h2>
+  <p class="why">One master secret per STA–AP pair is expanded into short-lived keys with separate jobs, so the master key itself never protects traffic.</p>
+  <p><b>Pairwise keys</b> protect communication between a pair of devices (usually STA and AP); <b>group keys</b> protect multicast. Each STA holds one set of pairwise keys; the AP holds one set per STA.</p>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Key hierarchies</span><span class="pill">Figure 18.9 · Table 18.3</span></div>
+    <div class="lab-b">
+      <div class="controls"><span class="seg" role="group" aria-label="Cipher suite"><button type="button" data-ks="ccmp" aria-pressed="true">CCMP sizes</button><button type="button" data-ks="tkip" aria-pressed="false">TKIP sizes</button></span><span class="cap">Select a key to read its row of Table 18.3.</span></div>
+      <div class="figure"><svg id="kh-svg" viewBox="0 0 640 300" width="640" role="img" aria-label="Pairwise key hierarchy: PSK or AAAK/MSK leads to PMK, which leads through the PRF to the PTK made of KCK, KEK and TK. Group key hierarchy: GMK leads to GTK."></svg></div>
+      <div id="kh-out" class="out"></div>
+    </div>
+  </div>
+  <h3>Pairwise keys</h3>
+  <ul class="props">
+    <li>Top of the hierarchy: a <b>pre-shared key (PSK)</b> installed outside 802.11i, or the <b>MSK</b> (AAAK) generated by 802.1X during authentication (method-dependent). Either way it is unique to one AP–STA pair.</li>
+    <li><b>Pairwise master key (PMK)</b>: the PSK itself, or the MSK truncated if necessary. Both sides have it by the 802.1X EAP Success message.</li>
+    <li><b>Pairwise transient key (PTK)</b>: HMAC-SHA-1 applied to the PMK, both MAC addresses and nonces. Addresses protect against session hijacking and impersonation; nonces add random keying material.</li>
+    <li>PTK parts: <b>EAPOL-KCK</b> (key confirmation key) gives integrity and data origin authenticity of STA-to-AP control frames during setup, and proves possession of the PMK (an access control function); <b>EAPOL-KEK</b> (key encryption key) protects confidentiality of keys and other data during association procedures; <b>TK</b> (temporal key) protects user traffic.</li>
+  </ul>
+  <h3>Group keys</h3>
+  <p>The <b>group master key (GMK)</b> is a key-generating key used to derive the <b>group temporal key (GTK)</b>. Unlike the PTK, the GTK is generated by the AP alone (method undefined, but it must be computationally indistinguishable from random), sent to its STAs under the pairwise keys, and changed every time a device leaves the network.</p>
+  <h3>4-way handshake and group key handshake</h3>
+  <div class="def"><b>Nonce</b> (Unit 9) — a value used once. Here <b>ANonce</b> is the AP’s nonce and <b>SNonce</b> the STA’s.</div>
+  <p>The handshake confirms both sides hold the PMK, verifies the cipher suite selection, and derives a fresh PTK for the coming session.</p>
+  <div class="lab proto" data-protos="fourway,groupkey" data-name="Key distribution"></div>
+</section>
+
+<!-- ============ 18.4 (cont.) protected data & PRF ============ -->
+<section class="unit" id="s184d">
+  <h2>Protected Data Transfer and the PRF</h2>
+  <p class="why">Two schemes protect data MPDUs, one built to run on old WEP hardware and one for newer hardware. A single pseudorandom function supplies their keys and nonces.</p>
+  <div class="cmp">
+    <div><h4>TKIP · Temporal Key Integrity Protocol</h4><p>Requires only software changes to WEP devices. <b>Message integrity</b>: a MIC after the data field, computed by <b>Michael</b> into 64 bits from the source and destination MAC addresses, the Data field and key material. <b>Confidentiality</b>: MPDU plus MIC encrypted with <b>RC4</b> (Unit 5). The 256-bit TK splits into two 64-bit Michael keys (STA→AP and AP→STA) and 128 bits for the RC4 key. A monotonically increasing <b>TKIP sequence counter (TSC)</b> in each MPDU, protected by the MIC, defeats replay; combined with the TK it gives a per-MPDU encryption key.</p></div>
+    <div><h4>CCMP · Counter Mode-CBC MAC Protocol</h4><p>For newer devices with hardware support. <b>Message integrity</b>: CBC-MAC (Unit 7). <b>Confidentiality</b>: AES in CTR mode (Unit 5). The same 128-bit AES key serves both. A 48-bit packet number builds a nonce that prevents replay.</p></div>
+  </div>
+  <div class="note"><span class="t">Beyond the book</span>The Wi-Fi Alliance began deprecating TKIP in 2015, and WPA3 no longer supports WPA-TKIP.</div>
+  <h3>The 802.11i pseudorandom function</h3>
+  <p>A PRF generates nonces, expands pairwise keys and generates the GTK. Good practice is separate streams for separate purposes, but for efficiency one function serves all, distinguished by a purpose string. It is built on HMAC-SHA-1 (Unit 7): a 160-bit output where changing one input bit gives an unrelated hash.</p>
+  <div class="eqg"><span>PRF(K, A, B, Len)</span><span class="n">K secret key; A purpose text; B case data; Len bits wanted</span>
+<span>R<sub>i</sub> = HMAC-SHA-1(K, A ‖ 0 ‖ B ‖ i)</span><span class="n">i = 0, 1, …, ⌈Len/160⌉ − 1; 0 is one zero byte</span>
+<span>PRF = Truncate-to-Len(R<sub>0</sub> ‖ R<sub>1</sub> ‖ …)</span><span class="n"></span></div>
+  <div class="figure" role="img" aria-label="The key K enters HMAC-SHA-1; the message is A, a zero byte, B and counter i; the output R is collected and i is incremented by one for each further block.">
+  <svg viewBox="0 0 520 150" width="520">
+    <rect class="bxm" x="10" y="20" width="60" height="30" rx="4"/><text class="tx" x="40" y="40" text-anchor="middle">A</text>
+    <rect class="bx" x="74" y="20" width="40" height="30" rx="4"/><text class="tx" x="94" y="40" text-anchor="middle">0</text>
+    <rect class="bxm" x="118" y="20" width="60" height="30" rx="4"/><text class="tx" x="148" y="40" text-anchor="middle">B</text>
+    <rect class="bxa" x="182" y="20" width="40" height="30" rx="4"/><text class="tx" x="202" y="40" text-anchor="middle">i</text>
+    <path class="ln" d="M116 52 V82 H240" marker-end="url(#ah)"/>
+    <rect class="bx" x="242" y="64" width="130" height="40" rx="5"/><text class="tx" x="307" y="89" text-anchor="middle">HMAC-SHA-1</text>
+    <text class="tx" x="307" y="140" text-anchor="middle">K</text><path class="ln" d="M307 128 V106" marker-end="url(#ah)"/>
+    <path class="ln" d="M374 84 H440" marker-end="url(#ah)"/><text class="tx" x="472" y="88" text-anchor="middle">R</text>
+    <path class="ln dash" d="M202 18 V8 H470 V70" marker-start="url(#ahd)"/><text class="tm" x="336" y="20" text-anchor="middle">+1, repeat until Len bits</text>
+  </svg><div class="cap">Redrawn from Figure 18.11, IEEE 802.11i pseudorandom function.</div></div>
+  <div class="eqg"><span>PTK = PRF(PMK, “Pairwise key expansion”, min(AP-Addr, STA-Addr) ‖ max(AP-Addr, STA-Addr) ‖ min(ANonce, SNonce) ‖ max(ANonce, SNonce), 384)</span><span class="n">CCMP</span>
+<span>Nonce = PRF(Random Number, “InitCounter”, MAC ‖ Time, 256)</span><span class="n">Time: network time</span>
+<span>GTK = PRF(GMK, “Group key expansion”, MAC ‖ GNonce, 256)</span><span class="n"></span></div>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Derive a PTK</span><span class="pill">Figure 18.11</span></div>
+    <div class="lab-b">
+      <div class="pvar"><span class="seg" role="group" aria-label="PRF input"><button type="button" data-pm="ptk" aria-pressed="true">PTK derivation</button><button type="button" data-pm="tv" aria-pressed="false">IEEE test vector</button></span></div>
+      <div class="controls" id="pr-ptk">
+        <label class="grow">PMK (64 hex digits = 256 bits)<input type="text" id="pr-pmk" class="wide" value=""></label>
+        <label>AP MAC<input type="text" id="pr-ap" value="00:14:6c:7e:40:80"></label>
+        <label>STA MAC<input type="text" id="pr-sta" value="00:13:46:fe:32:0c"></label>
+        <label class="grow">ANonce (64 hex)<input type="text" id="pr-an" class="wide" value=""></label>
+        <label class="grow">SNonce (64 hex)<input type="text" id="pr-sn" class="wide" value=""></label>
+        <label>Suite<select id="pr-suite"><option value="384">CCMP (384 bits)</option><option value="512">TKIP (512 bits)</option></select></label>
+        <button type="button" id="pr-new" class="ghost">New nonces</button>
+      </div>
+      <div id="pr-out" class="out"></div>
+      <p class="cap">Real HMAC-SHA-1 through Web Crypto, with the counter i as one byte. The test vector mode runs K = 20 bytes of 0x0b, A = “prefix”, B = “Hi There”, Len = 512 and compares with the published result from the IEEE 802.11 standard’s PRF test vectors. Split of the TKIP PTK beyond KCK, KEK and TK follows Table 18.3 (TK holds the two Michael MIC keys).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Key terms ============ -->
+<section class="unit" id="terms">
+  <h2>Key Terms</h2>
+  <p class="why">The key-term lists of Chapters 16 and 18, plus the intermediate terms they depend on, one line each.</p>
+  <h3>Chapter 16</h3>
+  <dl class="gloss">
+    <dt>Network access control (NAC)</dt><dd>Managing network access: authenticate users, decide what they may access and do, check endpoint health.</dd>
+    <dt>Access requestor (AR) / supplicant</dt><dd>The node trying to access the network; also called a client.</dd>
+    <dt>Policy server</dt><dd>Decides what access an AR gets from its posture and enterprise policy.</dd>
+    <dt>Network access server (NAS)</dt><dd>Access control point for remote users; also media gateway or remote access server (RAS).</dd>
+    <dt>Authentication server</dt><dd>Validates a supplicant’s credentials and authorizes access (typically RADIUS).</dd>
+    <dt>Quarantine network</dt><dd>Restricted segment where devices that fail health checks are fixed.</dd>
+    <dt>Virtual LAN (VLAN)</dt><dd>Logical subgroup of a LAN created in software; NAC assigns ARs to VLANs.</dd>
+    <dt>DHCP</dt><dd>Dynamic Host Configuration Protocol: dynamic allocation of IP addresses; weak NAC (IP spoofing).</dd>
+    <dt>Firewall</dt><dd>Allows or denies traffic between an enterprise host and an external user.</dd>
+    <dt>Extensible Authentication Protocol (EAP)</dt><dd>RFC 3748 framework carrying many authentication methods between client and server.</dd>
+    <dt>EAP method</dt><dd>A specific authentication protocol run inside EAP.</dd>
+    <dt>EAP-TLS</dt><dd>TLS handshake inside EAP; mutual certificate authentication.</dd>
+    <dt>EAP-TTLS</dt><dd>Server certificate only; the TLS tunnel then carries client authentication.</dd>
+    <dt>EAP-GPSK</dt><dd>Mutual authentication and key derivation from a pre-shared key, symmetric cryptography only.</dd>
+    <dt>EAP-IKEv2</dt><dd>EAP method based on Internet Key Exchange version 2.</dd>
+    <dt>EAP peer / EAP authenticator</dt><dd>The client seeking access / the access point or NAS requiring EAP before granting it.</dd>
+    <dt>EAP pass-through mode</dt><dd>A backend authentication server authenticates peers for many authenticators.</dd>
+    <dt>IEEE 802.1X</dt><dd>Port-based network access control for LANs, using controlled and uncontrolled ports.</dd>
+    <dt>Controlled / uncontrolled port</dt><dd>Passes PDUs only when the supplicant is authorized / always passes supplicant–AS PDUs.</dd>
+    <dt>EAP over LAN (EAPOL)</dt><dd>802.1X protocol carrying EAP between supplicant and authenticator over an IEEE 802 LAN.</dd>
+    <dt>Cloud / cloud computing</dt><dd>On-demand network access to a shared pool of configurable resources, rapidly provisioned and released (NIST).</dd>
+    <dt>Software as a Service (SaaS)</dt><dd>Consumer uses the provider’s applications running on cloud infrastructure.</dd>
+    <dt>Platform as a Service (PaaS)</dt><dd>Consumer deploys its own applications on the provider’s platform: “an operating system in the cloud”.</dd>
+    <dt>Infrastructure as a Service (IaaS)</dt><dd>Consumer provisions processing, storage and networks and runs arbitrary software, OS included.</dd>
+    <dt>Public / private cloud</dt><dd>Open to the public, owned by a cloud seller / operated solely for one organization.</dd>
+    <dt>Community / hybrid cloud</dt><dd>Shared by organizations with common concerns / two or more clouds bound for portability.</dd>
+    <dt>Cloud consumer / cloud provider</dt><dd>Uses cloud services / makes a service available.</dd>
+    <dt>Cloud auditor</dt><dd>Independent assessor of cloud services, operations, performance and security.</dd>
+    <dt>Cloud broker</dt><dd>Manages use, performance and delivery of services; intermediation, aggregation, arbitrage.</dd>
+    <dt>Cloud carrier</dt><dd>Intermediary providing connectivity and transport between providers and consumers.</dd>
+    <dt>Multi-instance / multi-tenant model</dt><dd>Own DBMS per subscriber / shared environment with data tagged by subscriber.</dd>
+    <dt>Security as a Service (SecaaS)</dt><dd>Security applications and services provided via the cloud.</dd>
+  </dl>
+  <h3>Chapter 18</h3>
+  <dl class="gloss">
+    <dt>Wireless LAN (WLAN)</dt><dd>A LAN using a wireless medium.</dd>
+    <dt>IEEE 802.11</dt><dd>The IEEE 802 working group and standards for wireless LANs.</dd>
+    <dt>Wi-Fi</dt><dd>Wi-Fi Alliance interoperability certification of 802.11 products.</dd>
+    <dt>Access point (AP)</dt><dd>Station giving associated stations access to the distribution system.</dd>
+    <dt>Basic service set (BSS)</dt><dd>Stations under one coordination function; the basic building block of an 802.11 WLAN.</dd>
+    <dt>Independent BSS (IBSS)</dt><dd>BSS with no AP; stations talk directly (ad hoc).</dd>
+    <dt>Distribution system (DS)</dt><dd>Interconnects BSSs and integrated LANs into an ESS.</dd>
+    <dt>Extended service set (ESS)</dt><dd>Interconnected BSSs appearing as one logical LAN to LLC.</dd>
+    <dt>Media access control (MAC)</dt><dd>Layer that frames data, addresses, detects errors and governs medium access.</dd>
+    <dt>Logical link control (LLC)</dt><dd>Layer above MAC that optionally retransmits unsuccessful frames.</dd>
+    <dt>MAC protocol data unit (MPDU)</dt><dd>Frame exchanged between peer MAC entities.</dd>
+    <dt>MAC service data unit (MSDU)</dt><dd>Data delivered as a unit between MAC users.</dd>
+    <dt>Wired Equivalent Privacy (WEP)</dt><dd>Original, weak 802.11 privacy algorithm.</dd>
+    <dt>Wi-Fi Protected Access (WPA)</dt><dd>Wi-Fi Alliance security certification; WPA2 covers full 802.11i.</dd>
+    <dt>IEEE 802.11i</dt><dd>WLAN security standard: authentication, access control, privacy with message integrity.</dd>
+    <dt>Robust Security Network (RSN)</dt><dd>The final form of 802.11i.</dd>
+    <dt>Message integrity code (MIC)</dt><dd>802.11i’s name for a message authentication code.</dd>
+    <dt>Pairwise keys</dt><dd>Keys for one STA–AP pair: PSK or MSK → PMK → PTK (KCK, KEK, TK).</dd>
+    <dt>Group keys</dt><dd>Keys for multicast: GMK → GTK, generated by the AP.</dd>
+    <dt>4-way handshake</dt><dd>EAPOL-Key exchange that confirms the PMK, verifies the cipher suite and derives a fresh PTK.</dd>
+    <dt>Temporal Key Integrity Protocol (TKIP)</dt><dd>Software upgrade for WEP hardware: Michael MIC + RC4.</dd>
+    <dt>Michael</dt><dd>TKIP’s 64-bit MIC algorithm over addresses, data and key material.</dd>
+    <dt>Counter Mode-CBC MAC Protocol (CCMP)</dt><dd>AES-CBC-MAC integrity + AES-CTR confidentiality with one 128-bit key.</dd>
+    <dt>Pseudorandom function (PRF)</dt><dd>802.11i HMAC-SHA-1 construction producing nonces, PTK and GTK.</dd>
+  </dl>
+</section>
+
+<!-- ============ Review ============ -->
+<section class="unit" id="review">
+  <h2>Review Questions</h2>
+  <p class="why">Review questions 16.1–16.9 and 18.1–18.8 from the book. Answer first, then open to check.</p>
+  <div class="rv-tools" role="group" aria-label="Review answers"><button type="button" data-rv="open">Expand all</button><button type="button" data-rv="close">Collapse all</button><span class="rv-count" aria-live="polite"></span></div>
+  <h3>Chapter 16</h3>
+  <details><summary>16.1 Provide a brief definition of network access control.</summary><p>An umbrella term for managing access to a network: NAC authenticates users logging in, determines what data they can access and what actions they can perform, and examines the health of their endpoints (computers or mobile devices).</p></details>
+  <details><summary>16.2 What is an EAP?</summary><p>The Extensible Authentication Protocol (RFC 3748): a framework for network access and authentication that provides protocol messages encapsulating various authentication methods between a client and an authentication server. It runs over many link types (point-to-point, LANs and others) and is extended by methods installed in both the client and the server.</p></details>
+  <details><summary>16.3 List and briefly define four EAP authentication methods.</summary><p><b>EAP-TLS</b>: TLS handshake in EAP; client and server authenticate each other with certificates and derive a key from a pre-master secret. <b>EAP-TTLS</b>: only the server has a certificate; the TLS tunnel then carries client authentication by any EAP or legacy method (PAP, CHAP). <b>EAP-GPSK</b>: mutual authentication and session key derivation from a pre-shared key using only secret-key algorithms. <b>EAP-IKEv2</b>: mutual authentication and session key establishment based on IKEv2.</p></details>
+  <details><summary>16.4 What is DHCP? How useful is it to help achieve security of IP addresses?</summary><p>The Dynamic Host Configuration Protocol dynamically allocates IP addresses to hosts. As a NAC method, a DHCP server intercepts DHCP requests and assigns addresses, enforcing access at the IP layer by subnet and address assignment. It is easy to install and configure but subject to various forms of IP spoofing, so it provides only limited security.</p></details>
+  <details><summary>16.5 Why is EAPOL an essential element of IEEE 802.1X?</summary><p>EAPOL is the protocol that lets a supplicant communicate with an authenticator over an IEEE 802 LAN and carries the EAP packets used for authentication. Its frames start the exchange (EAPOL-Start), carry EAP (EAPOL-EAP), deliver keys (EAPOL-Key) and end the session (EAPOL-Logoff), all over the uncontrolled port before the supplicant has any other access.</p></details>
+  <details><summary>16.6 What are the essential characteristics of cloud computing?</summary><p>Broad network access, rapid elasticity, measured service, on-demand self-service and resource pooling.</p></details>
+  <details><summary>16.7 List and briefly define the deployment models of cloud computing.</summary><p><b>Public</b>: available to the public or a large industry group, owned by a cloud seller responsible for infrastructure and control. <b>Private</b>: operated solely for one organization, on or off premise; the provider handles only infrastructure. <b>Community</b>: shared by several organizations with shared concerns. <b>Hybrid</b>: two or more clouds kept distinct but bound by technology for data and application portability.</p></details>
+  <details><summary>16.8 What is the cloud computing reference architecture?</summary><p>NIST SP 500-292: a model of what cloud services provide (not how to build them), used to describe, discuss and develop system-specific architectures with a common frame of reference. It defines five actors: cloud consumer, cloud provider, cloud auditor, cloud broker and cloud carrier, with the provider’s service orchestration (SaaS/PaaS/IaaS, resource abstraction, physical resources), service management, security and privacy.</p></details>
+  <details><summary>16.9 Describe some of the main cloud-specific security threats.</summary><p>Abuse and nefarious use (easy registration lets attackers spam, spread malware, launch DoS); insecure interfaces and APIs; malicious insiders at the provider; shared technology issues (components not designed for strong multi-tenant isolation); data loss or leakage; account or service hijacking with stolen credentials; and an unknown risk profile, since the client cedes control to the provider.</p></details>
+  <h3>Chapter 18</h3>
+  <details><summary>18.1 What is the basic building block of an 802.11 WLAN?</summary><p>The basic service set (BSS): wireless stations executing the same MAC protocol and competing for the same shared medium, possibly connected to a distribution system through an access point.</p></details>
+  <details><summary>18.2 List and briefly define threats to a wireless network.</summary><p>Accidental association (locking onto a neighbor’s access point); malicious association (a fake access point steals passwords); ad hoc networks (no central control); nontraditional networks (Bluetooth, barcode readers, PDAs: eavesdropping and spoofing); identity theft by MAC spoofing; man-in-the-middle; denial of service by bombarding access points; network injection of bogus routing or management messages.</p></details>
+  <details><summary>18.3 List and briefly define IEEE 802.11 services.</summary><p><b>Association</b>: initial station–AP association. <b>Reassociation</b>: moving it to another AP. <b>Disassociation</b>: ending it. <b>Authentication</b> and <b>deauthentication</b>: establishing and ending a station’s identity for LAN access. <b>Privacy</b>: protecting message contents. <b>Distribution</b>: moving MPDUs across the DS between BSSs. <b>Integration</b>: transfer between an 802.11 station and one on an integrated 802.x LAN. <b>MSDU delivery</b>: the basic delivery of data.</p></details>
+  <details><summary>18.4 List some security threats related to mobile devices.</summary><p>Lack of physical security controls (theft, tampering); use of untrusted mobile devices; use of untrusted networks; applications created by unknown parties; interaction with other systems (synchronization, cloud storage); untrusted content such as malicious QR codes; and location services revealing where the device and user are.</p></details>
+  <details><summary>18.5 How is the concept of an association related to that of mobility?</summary><p>The DS must know which AP currently serves a destination station. Association records a station with the AP of its current BSS. With no transition nothing changes; for a BSS transition within an ESS, reassociation moves the association to the new AP so delivery continues; an ESS transition is supported only in that the station can move, and connections are likely disrupted.</p></details>
+  <details><summary>18.6 What security areas are addressed by IEEE 802.11i?</summary><p>Authentication (mutual, between user and AS, generating temporary keys), access control (enforcing authentication, routing messages, facilitating key exchange) and privacy with message integrity (encrypting MAC-level data with a message integrity code).</p></details>
+  <details><summary>18.7 Briefly describe the five IEEE 802.11i phases of operation.</summary><p><b>Discovery</b>: the AP advertises its policy; the STA associates and selects cipher and authentication suites. <b>Authentication</b>: STA and AS prove identities while the AP forwards only authentication traffic. <b>Key generation and distribution</b>: AP and STA generate and install keys. <b>Protected data transfer</b>: frames between STA and end station through the AP, protected STA–AP only. <b>Connection termination</b>: the secure connection is torn down.</p></details>
+  <details><summary>18.8 What is the difference between TKIP and CCMP?</summary><p>TKIP needs only software changes to WEP devices: Michael MIC for integrity and RC4 for confidentiality, with a TSC against replay. CCMP is for newer hardware: AES-CBC-MAC for integrity and AES-CTR for confidentiality, one 128-bit key, a 48-bit packet number for replay protection.</p></details>
+</section>
+
+<!-- ============ Sources ============ -->
+<section class="unit" id="res">
+  <h2><span class="sec">Ref</span>References / Sources</h2>
+  <ul>
+    <li>W. Stallings, <i>Cryptography and Network Security: Principles and Practice</i>, 7th ed., Global Edition, Pearson, 2017. Chapter 16, pp. 519–545 and Chapter 18, pp. 581–611. All content not marked otherwise.</li>
+    <li><b>In the book:</b> Chapter 5 (CTR mode, RC4), Chapter 10 (man-in-the-middle), Chapter 12 (HMAC, CBC-MAC/CCM, key wrapping), Chapter 15 (federated identity), Chapters 17 and 20 (TLS, IKEv2).</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc3748" target="_blank" rel="noopener">RFC 3748, Extensible Authentication Protocol (EAP)</a> — packet format for the EAP packet lab.</li>
+    <li><a href="https://www.iana.org/assignments/eap-numbers/eap-numbers.xhtml" target="_blank" rel="noopener">IANA, Extensible Authentication Protocol (EAP) Registry</a> — method Type numbers.</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc5216" target="_blank" rel="noopener">RFC 5216 (EAP-TLS)</a>, <a href="https://www.rfc-editor.org/rfc/rfc5281" target="_blank" rel="noopener">RFC 5281 (EAP-TTLS)</a>, <a href="https://www.rfc-editor.org/rfc/rfc5433" target="_blank" rel="noopener">RFC 5433 (EAP-GPSK)</a>, <a href="https://www.rfc-editor.org/rfc/rfc5106" target="_blank" rel="noopener">RFC 5106 (EAP-IKEv2)</a>, <a href="https://www.rfc-editor.org/rfc/rfc9190.html" target="_blank" rel="noopener">RFC 9190 (EAP-TLS 1.3)</a>.</li>
+    <li><a href="https://csrc.nist.gov/pubs/sp/800/145/final" target="_blank" rel="noopener">NIST SP 800-145, The NIST Definition of Cloud Computing</a>; <a href="https://csrc.nist.gov/pubs/sp/800/144/final" target="_blank" rel="noopener">NIST SP 800-144, Guidelines on Security and Privacy in Public Cloud Computing</a>; <a href="https://csrc.nist.gov/pubs/sp/800/146/final" target="_blank" rel="noopener">NIST SP 800-146, Cloud Computing Synopsis and Recommendations</a>; NIST SP 500-292, Cloud Computing Reference Architecture.</li>
+    <li><a href="https://csrc.nist.gov/pubs/sp/800/124/r2/final" target="_blank" rel="noopener">NIST SP 800-124, Guidelines for Managing the Security of Mobile Devices in the Enterprise</a>.</li>
+    <li><a href="https://wi-fi.org/beacon/bob-sayle/lets-talk-about-new-wireless-security-certifications" target="_blank" rel="noopener">Wi-Fi Alliance, “Let’s talk about new wireless security certifications”</a> — WPA3 and TKIP deprecation.</li>
+    <li>IEEE Std 802.11, Annex (PRF test vectors) — the test vector reproduced in the PTK lab.</li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto" target="_blank" rel="noopener">MDN, SubtleCrypto</a> — browser API used by the encrypted-table and PTK labs.</li>
+  </ul>
+  <footer>Content follows W. Stallings, <i>Cryptography and Network Security: Principles and Practice</i>, 7th ed., Global Edition, Chapters 16 and 18. Protocol steppers show messages as the book’s figures name them. The cryptographic labs run real AES, HMAC-SHA-1 and CRC-32 in your browser; nothing is sent anywhere, and the keys are for study only.</footer>
+</section>
+</main>
+</div>
+
+<script>
+/* ===== Unit 10: protocol steppers and labs ===== */
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const on=(id,ev,f)=>{const e=$(id);if(e)e.addEventListener(ev,f)};
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const kv=rows=>'<div class="kv">'+rows.map(([k,v])=>'<span class="k">'+k+'</span><span class="v">'+v+'</span>').join('')+'</div>';
+const res=(ok,t)=>'<span class="res '+(ok?'ok':'no')+'">'+t+'</span>';
+const err=t=>'<p class="err">'+t+'</p>';
+const hex=b=>Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');
+const SVGNS='http://www.w3.org/2000/svg';
+
+/* ---------- subscript mini-syntax: X_ab or X_{a,b} ---------- */
+function segs(s){const out=[];let i=0,buf='';
+  while(i<s.length){const c=s[i];
+    if(c==='_'){if(buf){out.push({t:buf});buf=''}i++;let sb='';
+      if(s[i]==='{'){const j=s.indexOf('}',i);sb=s.slice(i+1,j);i=j+1}
+      else{while(i<s.length&&/[A-Za-z0-9#]/.test(s[i]))sb+=s[i++]}
+      out.push({t:sb,sub:true})}
+    else{buf+=c;i++}}
+  if(buf)out.push({t:buf});return out}
+const html=s=>segs(s).map(g=>g.sub?'<sub>'+esc(g.t)+'</sub>':esc(g.t)).join('');
+function svgText(s){let o='',down=false;segs(s).forEach(g=>{
+  if(g.sub){o+='<tspan dy="3" font-size="8.5">'+esc(g.t)+'</tspan>';down=true}
+  else{o+='<tspan'+(down?' dy="-3"':'')+'>'+esc(g.t)+'</tspan>';down=false}});return o}
+const textW=s=>segs(s).reduce((w,g)=>w+g.t.length*(g.sub?5.1:6.6),0);
+
+/* ---------- Unit 10 protocol definitions (messages as the book's figures name them) ---------- */
+const P={
+eap:{fig:'Figure 16.4',title:'Method accepted',lanes:['EAP peer','EAP authenticator','Authentication server (RADIUS)'],sum:'A lower-level exchange (e.g. 802.1X) has already established that an EAP exchange is needed. Press Next to step through.',m:[
+ [1,0,'EAP-Request/Identity','The authenticator requests the peer’s identity. The first Request/Response pair is of Type identity.'],
+ [0,1,'EAP-Response/Identity','The peer returns its claimed identity.'],
+ [1,2,'EAP-Response/Identity','The Response passes through the authenticator to the authentication server. From now on EAP messages run between the peer and the server.'],
+ [2,0,'EAP-Request/Auth','The server selects an EAP method and sends the first message with a Type field for that authentication method.'],
+ [0,2,'EAP-Response/Auth','The peer supports and accepts the method, so it replies with a Response of the same Type. Authentication information, including key material, is exchanged.'],
+ [2,0,'EAP-Request/Auth','The selected method determines how many Request/Response pairs are needed.'],
+ [0,2,'EAP-Response/Auth',''],
+ [2,0,'EAP-Success/Failure','The exchange ends when the server decides authentication has succeeded, or that no further attempt can be made. Success and Failure carry no Data field.']]},
+eapnak:{fig:'Section 16.2',title:'Peer refuses a method',lanes:['EAP peer','EAP authenticator','Authentication server (RADIUS)'],sum:'What happens when the peer does not support the method the server picks.',m:[
+ [1,0,'EAP-Request/Identity',''],
+ [0,2,'EAP-Response/Identity','Relayed through the authenticator to the server.'],
+ [2,0,'EAP-Request/Auth (method A)','The server selects a method.'],
+ [0,2,'EAP-Response/Nak','The peer does not support or accept method A, so it sends a NAK.',{atk:1}],
+ [2,0,'EAP-Request/Auth (method B)','The server selects another method (or aborts the EAP execution with a failure message).'],
+ [0,2,'EAP-Response/Auth (method B)','Accepted: a Response of the same Type.'],
+ [2,0,'EAP-Success','Authentication succeeded.']]},
+eapol:{fig:'Figure 16.6',title:'Example timing diagram for IEEE 802.1X',lanes:['EAP peer','EAP authenticator','Authentication server (RADIUS)'],sum:'EAP carried in EAPOL frames between supplicant and authenticator.',m:[
+ [0,1,'EAPOL-Start','Sent to the group-multicast address reserved for 802.1X authenticators: finds out whether an authenticator is present and says the supplicant is ready. The authenticator may preempt it if hardware already told it a device connected.'],
+ [1,0,'EAPOL-EAP (EAP-Request/Identity)','EAPOL-EAP is the frame type that carries EAP packets.'],
+ [0,2,'EAPOL-EAP (EAP-Response/Identity)','Relayed to the authentication server.'],
+ [2,0,'EAPOL-EAP (EAP-Request/Auth)',''],
+ [0,2,'EAPOL-EAP (EAP-Response/Auth)',''],
+ [2,0,'EAPOL-EAP (EAP-Request/Auth)',''],
+ [0,2,'EAPOL-EAP (EAP-Response/Auth)',''],
+ [2,0,'EAPOL-EAP (EAP-Success)','The supplicant is admitted; keys can follow in EAPOL-Key frames.'],
+ [0,1,'EAPOL-Logoff','The supplicant has finished using the network; the port returns to unauthorized.']]},
+cdb:{fig:'Figure 16.10',title:'Query on an encrypted database',lanes:['User','Client (query processor)','Cloud server'],sum:'The data owner encrypted the database and stored it at the server; the client holds the key, the server does not.',m:[
+ [0,1,'original query','The user issues a query for fields from one or more records with a specific primary key value.',{n:'1'}],
+ [1,2,'transformed query','The query processor encrypts the primary key, modifies the query accordingly and transmits it.',{n:'2'}],
+ [2,2,'query executor: match encrypted key','The server processes the query using the encrypted primary key value. Someone who hacks the server sees only encrypted data.',{n:''}],
+ [2,1,'encrypted result','The server returns the matching record or records, still encrypted.',{n:'3'}],
+ [1,0,'plaintext result','The query processor decrypts the data and returns the results.',{n:'4'}]]},
+disc:{fig:'Figure 18.8',title:'Capability discovery and association',lanes:['STA','AP','AS'],sum:'The STA and AP recognize each other, agree on security capabilities and associate. 802.1X-controlled ports are blocked throughout.',groups:[[0,1,'network and security capability discovery'],[2,3,'open system authentication'],[4,5,'association']],m:[
+ [0,1,'Probe request','The station sends a request to join the network. (It can also passively monitor Beacon frames, in which the AP periodically broadcasts its capabilities in the RSN IE.)'],
+ [1,0,'Probe response','The AP sends the possible security parameters: its capability set per the security policy.'],
+ [0,1,'Open system authentication request','The station asks for null authentication. This provides no security; it keeps backward compatibility with the 802.11 state machine. The devices simply exchange identifiers.'],
+ [1,0,'Open system authentication response','The AP performs null authentication.'],
+ [0,1,'Association request','The station asks to associate, naming one matching set of capabilities from those advertised: one AKM suite, one pairwise cipher suite, one group-key cipher suite. With no match the AP refuses; the STA blocks too, in case of a rogue AP or illicit frames on its channel.'],
+ [1,0,'Association response','The AP sends the associated security parameters and the station sets them. Controlled ports stay blocked: no user traffic goes beyond the AP.']]},
+radius:{fig:'Figure 18.8',title:'EAP exchange with EAPOL and RADIUS',lanes:['STA (supplicant)','AP (authenticator)','AS (RADIUS server)'],sum:'EAPOL between STA and AP, RADIUS between AP and AS.',m:[
+ [1,0,'EAP-Request/Identity','The AP begins the EAP exchange.'],
+ [0,1,'EAP-Response/Identity','Received on the AP’s uncontrolled port.'],
+ [1,2,'RADIUS-Access-Request','The packet is encapsulated in RADIUS over EAP and passed to the RADIUS server.'],
+ [2,1,'RADIUS-Access-Challenge','The AAA server replies with a challenge.'],
+ [1,0,'EAP-Request','Passed on to the STA: the appropriate authentication type, with the challenge information.'],
+ [0,1,'EAP-Response','The STA formulates its response for the AS.'],
+ [1,2,'RADIUS-Access-Request','The AP translates the response into a RADIUS-Access-Request with the answer as a data field. These challenge/response steps may repeat; TLS tunneling methods commonly need 10 to 20 round trips.'],
+ [2,1,'RADIUS-Access-Accept (key material)','The AAA server grants access; key material (the MSK) is delivered for the STA.'],
+ [1,0,'EAP-Success','The controlled port is authorized and the user may begin to access the network once keys are installed: ports stay blocked to general traffic until the 4-way handshake installs the temporal keys.']]},
+fourway:{fig:'Figure 18.10',title:'4-way handshake',lanes:['STA','AP'],sum:'Confirms that both sides hold the PMK, verifies the cipher suite and derives a fresh PTK. The AP’s 802.1X-controlled port is blocked until the end.',m:[
+ [1,0,'EAPOL-key (ANonce, Unicast)','Includes the AP’s MAC address and nonce ANonce, so the STA can generate the PTK.',{n:'1'}],
+ [0,0,'compute PTK','The STA generates its own nonce SNonce and computes the PTK from the PMK, both MAC addresses and both nonces.',{n:''}],
+ [0,1,'EAPOL-key (SNonce, Unicast, MIC)','Includes the STA’s MAC address and SNonce so the AP can compute the same PTK. Protected by a MIC (HMAC-MD5 or HMAC-SHA-1-128) keyed with KCK. Shows the AP that the STA is alive, the PTK is fresh, and there is no man-in-the-middle.',{n:'2'}],
+ [1,0,'EAPOL-key (Install PTK, Unicast, MIC)','The AP computes the PTK and repeats the first message’s information, now with a MIC: the authenticator is alive, the PTK is fresh, no man-in-the-middle.',{n:'3'}],
+ [0,1,'EAPOL-key (Unicast, MIC)','An acknowledgment of message 3 protected by a MIC; it serves no cryptographic function and ensures a reliable start of the group key handshake. The AP’s port is now unblocked for unicast traffic.',{n:'4'}]]},
+groupkey:{fig:'Figure 18.10',title:'Group key handshake',lanes:['STA','AP'],sum:'The AP generates a GTK and sends it to each STA in the multicast group.',m:[
+ [1,0,'EAPOL-key (GTK, MIC)','A new GTK, encrypted with KEK (RC4, or AES with a key wrapping algorithm), with the whole message integrity protected by a MIC.',{n:'1'}],
+ [0,0,'decrypt and install GTK','The STA decrypts the GTK and installs it for use.',{n:''}],
+ [0,1,'EAPOL-key (MIC)','An acknowledgment to the AP, with a MIC. The AP installs the GTK.',{n:'2'}]]}
+};
+
+/* ---------- stepper ---------- */
+function drawProto(p,i){
+  const W=p.w||(p.lanes.length>3?660:620),n=p.lanes.length,mx=W/(2*n)+14,sp=(W-2*mx)/(n-1);
+  const lx=k=>mx+k*sp, grp=p.groups||[];
+  const hw=Math.min(150,sp-10),hl=p.lanes.map(l=>{if(textW(l)*1.12<=hw-14)return [l];const w=l.split(' ');let best=null;
+    for(let c=1;c<w.length;c++){const a=w.slice(0,c).join(' '),b=w.slice(c).join(' '),m=Math.max(textW(a),textW(b));if(!best||m<best[2])best=[a,b,m]}
+    return best?[best[0],best[1]]:[l]}),two=hl.some(x=>x.length>1),hh=two?42:30;
+  let y=8+hh+26;const ys=[];
+  p.m.forEach((m,k)=>{if(grp.some(g=>g[0]===k))y+=26;ys.push(y);y+=m[0]===m[1]?50:40});
+  const H=y+4;let s='';
+  grp.forEach(g=>{const y0=ys[g[0]]-38,y1=ys[g[1]]+(p.m[g[1]][0]===p.m[g[1]][1]?26:12);
+    s+='<rect class="gb" x="2" y="'+y0+'" width="'+(W-4)+'" height="'+(y1-y0)+'" rx="6"/><text class="gl" x="8" y="'+(y0+11)+'">'+esc(g[2])+'</text>'});
+  p.lanes.forEach((l,k)=>{const x=lx(k),L=hl[k];s+='<line class="ll" x1="'+x+'" y1="'+(10+hh)+'" x2="'+x+'" y2="'+(H-2)+'"/>'+
+    '<rect class="lh" x="'+(x-hw/2)+'" y="8" width="'+hw+'" height="'+hh+'" rx="5"/>'+
+    (L.length>1?'<text class="lt" x="'+x+'" y="25" text-anchor="middle">'+svgText(L[0])+'</text><text class="lt" x="'+x+'" y="40" text-anchor="middle">'+svgText(L[1])+'</text>'
+      :'<text class="lt" x="'+x+'" y="'+(8+hh/2+4)+'" text-anchor="middle">'+svgText(L[0])+'</text>')});
+  p.m.forEach((m,k)=>{const st=i<0||k<i?'':k===i?' cur':' todo',atk=m[4]&&m[4].atk?' atk':'',x1=lx(m[0]),x2=lx(m[1]),yy=ys[k];
+    const mk=k===i?'ahm':atk?'ahb':'ah';const lab=(m[4]&&m[4].short)||m[2];
+    const nn=(m[4]&&m[4].n!=null)?m[4].n:(k+1),num=(p.nonum||nn==='')?'':'('+nn+') ';const t=num+lab,tw=textW(t);
+    if(x1===x2){s+='<path class="ms'+st+atk+'" d="M'+x1+' '+(yy-8)+' h28 v18 h-24" marker-end="url(#'+mk+')"/>';
+      let tx=x1+34,anc='start';if(tx+tw>W-4){tx=x1-8;anc='end'}
+      s+='<text class="ml'+st+atk+'" x="'+tx+'" y="'+(yy+5)+'" text-anchor="'+anc+'">'+svgText(t)+'</text>'}
+    else{const dir=x2>x1?1:-1;s+='<path class="ms'+st+atk+'" d="M'+x1+' '+yy+' H'+(x2-dir*3)+'" marker-end="url(#'+mk+')"/>';
+      let cx=(x1+x2)/2;cx=Math.max(4+tw/2,Math.min(W-4-tw/2,cx));
+      s+='<text class="ml'+st+atk+'" x="'+cx+'" y="'+(yy-7)+'" text-anchor="middle">'+svgText(t)+'</text>'}});
+  return {svg:s,W,H,ys,lx}}
+function initProto(el){
+  const ids=el.dataset.protos.split(',');let pid=ids[0],i=-1,anim=0;
+  const P0=P[pid],name=el.dataset.name||P0.title;
+  el.innerHTML='<div class="lab-h"><span class="t">Protocol · '+esc(name)+'</span>'+
+    (P0.fig?'<span class="pill">'+P0.fig+'</span>':'')+'</div><div class="lab-b">'+
+    (ids.length>1?'<div class="pvar"><span class="seg" role="group" aria-label="Protocol variant">'+ids.map((d,k)=>'<button type="button" data-v="'+d+'" aria-pressed="'+(k?'false':'true')+'">'+esc(P[d].title)+'</button>').join('')+'</span></div>':'')+
+    '<div class="figure"><svg role="img"></svg></div>'+
+    '<div class="pctl"><button type="button" class="ghost" data-a="prev">◀ Back</button><button type="button" data-a="next">Next ▶</button><button type="button" class="ghost" data-a="all">Show all</button><span class="cnt" aria-live="polite"></span></div><div class="pnote"></div></div>';
+  const svg=el.querySelector('svg'),note=el.querySelector('.pnote'),cnt=el.querySelector('.cnt'),bp=el.querySelector('[data-a=prev]'),bn=el.querySelector('[data-a=next]'),ba=el.querySelector('[data-a=all]');
+  function render(fwd){const p=P[pid],d=drawProto(p,i);
+    svg.setAttribute('viewBox','0 0 '+d.W+' '+d.H);svg.setAttribute('width',d.W);svg.innerHTML=d.svg;
+    svg.setAttribute('aria-label',p.title+': '+p.lanes.join(', ')+'. '+p.m.length+' messages.');
+    const nm=p.m.length;cnt.textContent=i<0?'All '+nm+' messages':'Message '+(i+1)+' of '+nm;
+    bp.disabled=i<0;bn.disabled=i>=nm-1;ba.disabled=i<0;
+    if(i<0){note.innerHTML='<p>'+html(p.sum)+'</p>'}
+    else{const m=p.m[i],atk=m[4]&&m[4].atk,nn=(m[4]&&m[4].n!=null)?m[4].n:(i+1),num=(p.nonum||nn==='')?'':'('+nn+') ';
+      note.innerHTML='<div class="ml1'+(atk?' atk':'')+'">'+esc(num)+html(p.lanes[m[0]])+(m[0]===m[1]?'':' → '+html(p.lanes[m[1]]))+': '+html(m[2])+'</div>'+(m[3]?'<p>'+html(m[3])+'</p>':'')}
+    if(fwd&&i>=0&&!reduce){const m=p.m[i];if(m[0]===m[1])return;const x1=d.lx(m[0]),x2=d.lx(m[1]),y=d.ys[i];
+      const c=document.createElementNS(SVGNS,'circle');c.setAttribute('class','pk');c.setAttribute('r','5');c.setAttribute('cy',y);svg.appendChild(c);
+      const t0=performance.now(),me=++anim;(function f(t){if(me!==anim){c.remove();return}const u=Math.min(1,(t-t0)/550),e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
+        c.setAttribute('cx',x1+(x2-x1)*e);if(u<1)requestAnimationFrame(f);else c.remove()})(t0)}}
+  bn.addEventListener('click',()=>{if(i<P[pid].m.length-1){i++;render(true)}});
+  bp.addEventListener('click',()=>{if(i>=0){i--;render(false)}});
+  ba.addEventListener('click',()=>{i=-1;render(false)});
+  el.querySelectorAll('[data-v]').forEach(b=>b.addEventListener('click',()=>{pid=b.dataset.v;i=-1;
+    el.querySelectorAll('[data-v]').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));render(false)}));
+  render(false)}
+document.querySelectorAll('.lab.proto').forEach(initProto);
+
+const fmtHex=(b,max)=>{let h=hex(b);if(max&&h.length>max)h=h.slice(0,max)+'…';return h};
+const hexBytes=s=>{s=s.replace(/[\s:.-]/g,'');if(!/^([0-9a-fA-F]{2})*$/.test(s))return null;const o=new Uint8Array(s.length/2);for(let k=0;k<o.length;k++)o[k]=parseInt(s.substr(2*k,2),16);return o};
+const rhex=n=>hex(crypto.getRandomValues(new Uint8Array(n)));
+const seg=(sel,attr,f)=>{document.querySelectorAll('['+attr+']').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('['+attr+']').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));f(b.getAttribute(attr))}))};
+function anim(svg,pts,cls,dur,done){if(reduce){done&&done();return}
+  const c=document.createElementNS(SVGNS,'circle');c.setAttribute('class',cls||'pk');c.setAttribute('r','6');svg.appendChild(c);
+  const L=[];let tot=0;for(let k=1;k<pts.length;k++){const d=Math.hypot(pts[k][0]-pts[k-1][0],pts[k][1]-pts[k-1][1]);L.push(d);tot+=d}
+  const t0=performance.now();(function f(t){const u=Math.min(1,(t-t0)/dur);let s=u*tot,k=0;while(k<L.length-1&&s>L[k]){s-=L[k];k++}
+    const r=L[k]?s/L[k]:0,x=pts[k][0]+(pts[k+1][0]-pts[k][0])*r,y=pts[k][1]+(pts[k+1][1]-pts[k][1])*r;c.setAttribute('cx',x);c.setAttribute('cy',y);
+    if(u<1)requestAnimationFrame(f);else{c.remove();done&&done()}})(t0)}
+
+/* ---------- 16.1 NAC admission ---------- */
+function nac(){const c=$('nac-c').checked,a=$('nac-a').checked,p=$('nac-p').checked,o=$('nac-o').checked,h=a&&p&&o;
+  const dest=!c?'deny':h?'res':'quar';
+  const box=(x,y,w,hh,t,cl,id)=>'<rect class="'+cl+'" x="'+x+'" y="'+y+'" width="'+w+'" height="'+hh+'" rx="5"'+(id?' id="'+id+'"':'')+'/>'+t.split('|').map((s,k,A)=>'<text class="tx" x="'+(x+w/2)+'" y="'+(y+hh/2+4+(k-(A.length-1)/2)*14)+'" text-anchor="middle" font-size="9.5">'+s+'</text>').join('');
+  let s='';
+  s+='<text class="tm" x="40" y="16" text-anchor="middle">Supplicants</text>';
+  ['Laptop','Phone','Printer'].forEach((t,k)=>s+=box(6,26+k*44,68,34,t,'bxm'));
+  s+=box(104,57,104,60,'Network|access|server','bxa');
+  s+='<rect class="gb" x="230" y="6" width="404" height="238" rx="8"/><text class="gl" x="240" y="20">ENTERPRISE NETWORK</text>';
+  const sv=on2=>on2?'bxa':'bx';
+  s+=box(244,30,104,34,'Authentication|server',sv(true))+box(244,74,104,34,'Policy server',sv(c))+box(244,118,104,30,'DHCP server',sv(c))+box(244,156,104,30,'VLAN server',sv(c));
+  s+='<rect class="'+(dest==='quar'?'hot':'gb')+'" x="384" y="30" width="238" height="96" rx="6"/><text class="gl" x="394" y="44">QUARANTINE NETWORK</text>';
+  s+=box(390,52,72,30,'Patch mgmt','bx')+box(466,52,66,30,'Antivirus','bx')+box(536,52,82,30,'Antispyware','bx');
+  s+='<text class="tm" x="503" y="110" text-anchor="middle">fix security deficiencies here</text>';
+  s+='<rect class="'+(dest==='res'?'hot':'bx')+'" x="384" y="150" width="238" height="40" rx="6"/><text class="tx" x="503" y="175" text-anchor="middle">Network resources</text>';
+  s+='<path class="ln" d="M76 43 H90 M76 87 H90 M76 131 H90 M90 43 V131 M90 87 H104"/>';
+  s+='<path class="ln dash" d="M208 87 H242" marker-end="url(#ahd)"/>';
+  s+='<rect class="'+(dest==='deny'?'bxb':'gb')+'" x="104" y="176" width="104" height="40" rx="5"/><text class="tx'+(dest==='deny'?' rf':'')+'" x="156" y="194" text-anchor="middle" font-size="10">Network access</text><text class="tx'+(dest==='deny'?' rf':'')+'" x="156" y="207" text-anchor="middle" font-size="10">refused</text>';
+  if(dest==='deny')s+='<path class="ms atk" d="M156 117 V172" marker-end="url(#ahb)"/>';
+  else s+='<path class="ln dash" d="M156 117 V174" opacity=".35"/>';
+  if(dest!=='deny')s+='<path class="ms cur" d="M208 108 H222 V214 H356 V'+(dest==='res'?'170':'86')+' H382" marker-end="url(#ahm)"/>';
+  $('nac-svg').innerHTML=s;
+  const rows=[['authentication server','checks the credentials: '+res(c,c?'identity verified':'rejected')],['policy server',c?'runs the health check against the secure configuration baseline':'<span class="pill">not reached</span>'],['DHCP / VLAN servers',c?'enforce the decision: the AR gets an IP address in, or is placed in a VLAN for, '+(h?'enterprise resources':'the quarantine network'):'<span class="pill">not reached</span>'],['health check',c?res(h,h?'meets baseline':'fails: '+[!a&&'antimalware',!p&&'patches',!o&&'ownership'].filter(Boolean).join(', ')):'<span class="pill">not reached</span>'],
+    ['decision',dest==='deny'?res(false,'deny network access'):dest==='quar'?'<span class="pill mk">limited access: quarantine network</span>':res(true,'cleared: NAS lets the AR reach enterprise resources')]];
+  $('nac-out').innerHTML=kv(rows)+'<p class="cap">'+(dest==='quar'?'Acceptable credentials but a failed health check: the user and computer should be denied or limited to the quarantine network so authorized personnel can fix the deficiencies.':dest==='deny'?'Without a verified identity the policy server cannot assign any privileges.':'The NAS may now mediate every exchange to enforce policy, or limit privileges in other ways (e.g. VLAN assignment).')+'</p>'}
+['nac-c','nac-a','nac-p','nac-o'].forEach(i=>on(i,'change',nac));nac();
+
+/* ---------- 16.2 EAP packet ---------- */
+function eapPkt(){const code=+$('ep-code').value,id=+$('ep-id').value,t=+$('ep-type').value,o=$('ep-out');
+  if(!Number.isInteger(id)||id<0||id>255){o.innerHTML=err('Identifier is one octet: enter a whole number from 0 to 255.');return}
+  const hasData=code<3;$('ep-type').disabled=!hasData;$('ep-data').disabled=!hasData;
+  const td=hasData?new TextEncoder().encode($('ep-data').value):new Uint8Array(0);
+  const len=4+(hasData?1+td.length:0);if(len>65535){o.innerHTML=err('Too long for the 16-bit Length field.');return}
+  const b=new Uint8Array(len);b[0]=code;b[1]=id;b[2]=len>>8;b[3]=len&255;if(hasData){b[4]=t;b.set(td,5)}
+  const cell=(lab,bytes,cl)=>'<span class="pf '+cl+'"><span class="pfl">'+lab+'</span><span class="pfv">'+hex(bytes).replace(/(..)/g,'$1 ').trim()+'</span></span>';
+  let h='<div class="pkt">'+cell('Code',b.slice(0,1),'a')+cell('Identifier',b.slice(1,2),'m')+cell('Length',b.slice(2,4),'a');
+  if(hasData)h+=cell('Type',b.slice(4,5),'m')+(td.length?cell('Type-Data',td.length>24?td.slice(0,24):td,'d')+(td.length>24?'<span class="pf d"><span class="pfl"> </span><span class="pfv">…</span></span>':''):'');
+  h+='</div>';
+  const names={1:'Request',2:'Response',3:'Success',4:'Failure'};
+  o.innerHTML=h+kv([['message',names[code]+(hasData?' / Type '+t:' (no Data field)')],['Length',len+' octets = 4 header'+(hasData?' + 1 Type + '+td.length+' Type-Data':'')],['packet',' <span class="bitstr">'+hex(b)+'</span>']])}
+['ep-code','ep-id','ep-type','ep-data'].forEach(i=>{on(i,'input',eapPkt);on(i,'change',eapPkt)});eapPkt();
+
+/* ---------- 16.3 controlled / uncontrolled ports ---------- */
+let pst=0;const PX={sup:[60,105],ap:[270,105],up:[330,60],cp:[330,150],as:[560,60],net:[560,150]};
+function pxDraw(){let s='';const b=(x,y,w,h,t,cl)=>'<rect class="'+cl+'" x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="6"/>'+t.split('|').map((q,k,A)=>'<text class="tx" x="'+(x+w/2)+'" y="'+(y+h/2+4+(k-(A.length-1)/2)*14)+'" text-anchor="middle">'+q+'</text>').join('');
+  s+=b(10,80,100,50,'Supplicant','bxm');
+  s+='<rect class="gb" x="190" y="20" width="200" height="170" rx="8"/><text class="gl" x="200" y="36">NETWORK ACCESS POINT</text>';
+  s+=b(282,44,100,32,'Uncontrolled','bx')+'<rect class="'+(pst?'bxa':'bxb')+'" x="282" y="134" width="100" height="32" rx="6"/><text class="tx" x="332" y="154" text-anchor="middle">Controlled</text>';
+  s+='<text class="tm" x="332" y="186" text-anchor="middle">'+(pst?'switch closed':'switch open')+'</text>';
+  s+=b(470,40,150,44,'Authentication|server','bx')+b(470,128,150,44,'Network or|Internet','bx');
+  s+='<path class="ln" d="M110 105 H230 M230 105 V60 H282 M230 105 V150 '+(pst?'H282':'H256')+'"/>';
+  if(!pst)s+='<path class="ln" d="M256 150 L278 136"/>';
+  s+='<path class="ln" d="M382 60 H470 M382 150 H470"/>';
+  $('px-svg').innerHTML=s}
+function px(kind){const sv=$('px-svg'),o=$('px-out');
+  if(kind==='eap'){anim(sv,[[110,105],[230,105],[230,60],[382,60],[470,60]],'pk',1300);o.innerHTML=kv([['EAPOL frame',res(true,'passes the uncontrolled port to the AS')],['why','The uncontrolled port carries supplicant–AS PDUs regardless of authentication state.']])}
+  else if(pst){anim(sv,[[110,105],[230,105],[230,150],[382,150],[470,150]],'pk',1300);o.innerHTML=kv([['data frame',res(true,'forwarded through the controlled port')],['why','The supplicant is authenticated and keys are provided, so the data channel is unblocked, subject to its access limits.']])}
+  else{anim(sv,[[110,105],[230,105],[230,150],[254,150]],'pk',800);o.innerHTML=kv([['data frame',res(false,'dropped at the controlled port')],['why','Until the AS authenticates the supplicant, only control and authentication messages pass.']])}}
+seg(0,'data-pst',v=>{pst=+v;pxDraw();$('px-out').innerHTML=kv([['state',pst?'authorized':'unauthorized'],['data channel',pst?'unblocked':'blocked']])});
+on('px-eap','click',()=>px('eap'));on('px-data','click',()=>px('data'));pxDraw();
+$('px-out').innerHTML=kv([['state','unauthorized'],['data channel','blocked']]);
+
+/* ---------- 16.4 service models ---------- */
+const LAY=[['Applications','apps'],['Platform: runtime, databases, middleware','plat'],['Operating system','os'],['Servers, storage, networks','hw'],['Facility (hosting)','fac']];
+const SMV={saas:{cp:['apps','plat','os','hw','fac'],t:'Consumer uses the provider’s applications through a thin client such as a Web browser. The CP deploys, configures, maintains and updates the applications; no installation, maintenance, upgrades or patches for the consumer. Examples: Gmail, Salesforce.com.'},
+  paas:{cp:['plat','os','hw','fac'],t:'Consumer deploys its own or acquired applications, built with the provider’s languages and tools. The CP manages the computing infrastructure and runs the platform: runtime execution stack, databases, middleware. In effect, an operating system in the cloud.'},
+  iaas:{cp:['hw','fac'],t:'Consumer provisions processing, storage, networks and other fundamental resources, and deploys and runs arbitrary software including operating systems and applications. The CP acquires the physical computing resources: servers, networks, storage and hosting infrastructure.'}};
+function sm(m){const v=SMV[m];let s='<text class="gl" x="175" y="14" text-anchor="middle">LAYER</text><text class="gl" x="440" y="14" text-anchor="middle">MANAGED BY</text>';
+  LAY.forEach(([n,k],i)=>{const cp=v.cp.includes(k),y=22+i*44;
+    s+='<rect class="'+(cp?'bxa':'bxm')+'" x="10" y="'+y+'" width="330" height="38" rx="5"/><text class="tx" x="175" y="'+(y+23)+'" text-anchor="middle">'+n+'</text>'+
+      '<rect class="'+(cp?'bxa':'bxm')+'" x="360" y="'+(y+6)+'" width="160" height="26" rx="13"/><text class="tx" x="440" y="'+(y+23)+'" text-anchor="middle" font-weight="700">'+(cp?'cloud provider':'consumer')+'</text>'});
+  $('sm-svg').innerHTML=s;$('sm-out').innerHTML='<p class="cap">'+v.t+'</p>'}
+seg(0,'data-sm',sm);sm('saas');
+
+/* ---------- 16.5 cloud threats ---------- */
+const CT=[['Abuse and nefarious use','Easy registration (some free trials) lets attackers inside the cloud to spam, spread malicious code and launch denial of service. PaaS providers suffered most; attackers now target IaaS too. The CP must protect against this, but clients must monitor activity on their data and resources.',['Stricter initial registration and validation','Enhanced credit card fraud monitoring and coordination','Comprehensive introspection of customer network traffic','Monitoring public blacklists for one’s own network blocks']],
+ ['Insecure interfaces and APIs','The security and availability of cloud services depend on the APIs customers use to manage them; from authentication and access control to encryption and monitoring, they must resist accidental and malicious attempts to circumvent policy.',['Analyze the security model of CP interfaces','Strong authentication and access controls together with encrypted transmission','Understand the dependency chain associated with the API']],
+ ['Malicious insiders','The organization gives up direct control and places unprecedented trust in the CP. Some roles are extremely high risk: CP system administrators, managed security service providers.',['Strict supply chain management and comprehensive supplier assessment','Human resource requirements as part of the legal contract','Transparency into security and management practices, and compliance reporting','Determined security breach notification processes']],
+ ['Shared technology issues','IaaS shares infrastructure; components such as CPU caches and GPUs were not designed for strong multi-tenant isolation. Isolated virtual machines per client help but remain attackable, so they are only part of a strategy.',['Security best practices for installation and configuration','Monitor the environment for unauthorized changes or activity','Strong authentication and access control for administrative access','Enforce SLAs for patching and vulnerability remediation','Vulnerability scanning and configuration audits']],
+ ['Data loss or leakage','For many clients the most devastating impact of a breach (see 16.6).',['Strong API access control','Encrypt and protect integrity of data in transit','Analyze data protection at design time and run time','Strong key generation, storage, management and destruction practices']],
+ ['Account or service hijacking','Usually with stolen credentials: attackers reach critical areas of deployed services and compromise their confidentiality, integrity and availability.',['Prohibit sharing account credentials between users and services','Strong two-factor authentication where possible','Proactive monitoring for unauthorized activity','Understand CP security policies and SLAs']],
+ ['Unknown risk profile','The client cedes control to the CP on issues that affect security, so roles and responsibilities for managing risk must be defined; e.g. employees may deploy applications and data at the CP without normal privacy, security and oversight procedures.',['Disclosure of applicable logs and data','Partial or full disclosure of infrastructure details (patch levels, firewalls)','Monitoring and alerting on necessary information']]];
+function pick(list,segId,outId){const sg=$(segId);sg.innerHTML=list.map((c,k)=>'<button type="button" class="pk-i" data-k="'+k+'" aria-pressed="'+(k?'false':'true')+'">'+esc(c[0])+'</button>').join('');
+  const show=k=>{const c=list[k];$(outId).innerHTML='<h4 class="pk-h">'+esc(c[0])+'</h4><p>'+esc(c[1])+'</p><p class="cap" style="margin-top:8px">'+(list===CT?'Countermeasures':'Response')+'</p><ul class="props">'+c[2].map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>'};
+  sg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{sg.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));show(+b.dataset.k)}));show(0)}
+pick(CT,'ct-seg','ct-out');
+
+/* ---------- 16.6 encrypted table (Web Crypto AES-CBC, fixed IV) ---------- */
+const EMP=[[1001,'Ana Silva','Sales',64000],[1002,'Bao Tran','IT',82000],[1003,'Chen Wei','Finance',71000],[1004,'Dara Okafor','IT',58000],[1005,'Eli Novak','HR',69000]];
+let dbKey=null,dbEnc=null;const IV0=new Uint8Array(16);
+async function encS(s){return new Uint8Array(await crypto.subtle.encrypt({name:'AES-CBC',iv:IV0},dbKey,new TextEncoder().encode(String(s))))}
+async function decS(b){return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-CBC',iv:IV0},dbKey,b))}
+async function dbInit(){dbKey=await crypto.subtle.generateKey({name:'AES-CBC',length:128},false,['encrypt','decrypt']);dbEnc=[];for(const r of EMP)dbEnc.push(await Promise.all(r.map(encS)))}
+async function dbRun(){const o=$('db-out');if(!(window.crypto&&crypto.subtle)){o.innerHTML=err('This lab needs the Web Crypto API (a current browser over https).');return}
+  try{if(!dbKey)await dbInit();const q=$('db-q').value,v=$('db-v').value.trim();
+    const tbl=(hi)=>'<div class="tbl"><table><tr><th>ID (encrypted)</th><th>Name</th><th>Dept</th><th>Salary</th></tr>'+dbEnc.map((r,k)=>'<tr'+(hi.includes(k)?' class="hlrow"':'')+'>'+r.map(c=>'<td class="l"><span class="bitstr">'+fmtHex(c,12)+'</span></td>').join('')+'</tr>').join('')+'</table></div>';
+    if(q==='pk'){if(!/^\d+$/.test(v)){o.innerHTML=err('Enter an employee ID such as 1003.');return}
+      const ek=await encS(v),eh=hex(ek),hit=dbEnc.map((r,k)=>hex(r[0])===eh?k:-1).filter(k=>k>=0);
+      let res2='no matching record';if(hit.length){const r=await Promise.all(dbEnc[hit[0]].map(decS));res2=esc(r.join(' · '))}
+      o.innerHTML=kv([['1. user query','SELECT * WHERE ID = '+esc(v)],['2. transformed query','WHERE ID = <span class="bitstr">'+fmtHex(ek,32)+'</span>'],['3. server result',hit.length?res(true,'1 encrypted row matched'):res(false,'no ciphertext matched')],['4. decrypted at client',res2]])+'<p class="cap">What the cloud server stores (every item encrypted separately):</p>'+tbl(hit)}
+    else{const n=+v.replace(/[^\d]/g,'');if(!n){o.innerHTML=err('Enter a salary such as 70000.');return}
+      const want=EMP.filter(r=>r[3]<n).map(r=>r[0]);
+      o.innerHTML=kv([['1. user query','SELECT * WHERE Salary &lt; '+n.toLocaleString('en-US')],['2. transformed query',res(false,'no way to express it: encrypted salaries do not preserve order')],['3. server result','the whole encrypted table, for the client to download and decrypt'],['4. answer after decrypting all rows',want.length?want.join(', '):'none']])+tbl([])}
+  }catch(e){o.innerHTML=err(esc(e.message))}}
+on('db-run','click',dbRun);on('db-key','click',async()=>{dbKey=null;await dbRun()});
+on('db-q','change',()=>{$('db-v').value=$('db-q').value==='pk'?'1003':'70000';dbRun()});dbRun();
+
+/* ---------- 18.2 mobile threats ---------- */
+const MT=[['Lack of physical security controls','Devices are fully under the user’s control and kept in many places outside the organization’s control; even on premises they move between secure and nonsecured locations. Assume any device may be stolen or accessed: data recovered from it, or the device used to reach the organization’s resources.',['Auto-lock with PIN or password; data encrypted under it','Remote wipe; IT can remotely access, wipe and disable a lost device','Sensitive data prohibited from the device or encrypted']],
+ ['Use of untrusted mobile devices','Assume personal (BYOD) devices are not trustworthy: they may not use encryption, and restrictions on security or OS use may have been bypassed.',['Inspect each device before network access','No rooted or jail-broken devices; configuration guidelines for OS and apps','Two-layer authentication: the device, then its user']],
+ ['Use of untrusted networks','Off premises, traffic goes over Wi-Fi or cellular to the Internet, open to eavesdropping and man-in-the-middle. Assume the networks in between are untrustworthy.',['Encrypt all traffic (SSL, IPv6); route it through a VPN','Strong authentication protocol to limit access to resources']],
+ ['Applications created by unknown parties','Third-party apps are easy to find and install, with the obvious risk of malware.',['Prohibit third-party installs, whitelist approved apps, or use a secure sandbox','Approved apps carry a digital signature and a certificate from an approved authority']],
+ ['Interaction with other systems','Automatic synchronization of data, apps, contacts and photos with other devices and cloud storage risks storing data in unsecured places and importing malware.',['Restrict which devices may synchronize','Restrict use of cloud-based storage']],
+ ['Use of untrusted content','Content other devices never meet, e.g. a malicious QR code that translates to a URL for a malicious Web site.',['Train personnel on the risks of untrusted content','Disable camera use on corporate devices']],
+ ['Use of location services','GPS location useful for presence services also tells an attacker where the device and user are.',['Security policy disables location services on all mobile devices']]];
+pick(MT,'mt-seg','mt-out');
+
+/* ---------- 18.3 MPDU + CRC-32 ---------- */
+const CRCT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+const crc32=b=>{let c=0xFFFFFFFF;for(const x of b)c=CRCT[(c^x)&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0};
+let mpFlip=-1;
+function mp(){const o=$('mp-out'),d=hexBytes($('mp-dst').value),s=hexBytes($('mp-src').value);
+  if(!d||d.length!==6||!s||s.length!==6){o.innerHTML=err('A MAC address is 6 bytes, written like 3c:22:fb:10:9a:07.');return}
+  const body=new TextEncoder().encode($('mp-data').value),f=new Uint8Array(14+body.length);f.set([0,0],0);f.set(d,2);f.set(s,8);f.set(body,14);
+  const c=crc32(f),ch=c.toString(16).padStart(8,'0');
+  const rx=f.slice();let bitInfo='';if(mpFlip>=0&&body.length){const bi=mpFlip%(body.length*8);rx[14+(bi>>3)]^=1<<(bi&7);bitInfo='bit '+(bi&7)+' of MSDU byte '+(bi>>3)}
+  const rc=crc32(rx).toString(16).padStart(8,'0'),ok=rc===ch;
+  const cell=(l,v,cl)=>'<span class="pf '+cl+'"><span class="pfl">'+l+'</span><span class="pfv">'+v+'</span></span>';
+  o.innerHTML='<div class="pkt">'+cell('MAC Control','00 00','a')+cell('Destination','<span class="bitstr">'+hex(d)+'</span>','a')+cell('Source','<span class="bitstr">'+hex(s)+'</span>','a')+cell('MSDU',esc(body.length>20?$('mp-data').value.slice(0,20)+'…':$('mp-data').value)+' ('+body.length+' B)','d')+cell('CRC','<span class="bitstr">'+ch+'</span>','m')+'</div>'+
+   kv([['sender CRC-32',ch],['received MSDU',mpFlip>=0?esc(new TextDecoder().decode(rx.slice(14)))+' <span class="pill no">'+bitInfo+' flipped</span>':esc($('mp-data').value)],['receiver recomputes',rc+' '+res(ok,ok?'match: frame accepted':'mismatch: bits altered, frame discarded')]]);
+  $('mp-flip').textContent=mpFlip>=0?'Deliver unaltered':'Flip a bit in transit'}
+['mp-dst','mp-src','mp-data'].forEach(i=>on(i,'input',mp));on('mp-flip','click',()=>{mpFlip=mpFlip>=0?-1:Math.floor(Math.random()*1e6);mp()});mp();
+
+/* ---------- 18.3 ESS delivery ---------- */
+const ES={'STA 1':[50,60],'STA 2':[50,150],'STA 3':[190,40],'STA 4':[200,170],'AP 1':[130,105],'STA 6':[450,40],'STA 7':[590,105],'STA 8':[450,170],'AP 2':[480,105]};
+const BSS=k=>['STA 1','STA 2','STA 3','STA 4'].includes(k)?1:2;
+function esDraw(hl){let s='<ellipse cx="128" cy="105" rx="122" ry="92" class="bss"/><ellipse cx="512" cy="105" rx="122" ry="92" class="bss"/>';
+  s+='<text class="gl" x="128" y="210" text-anchor="middle">BASIC SERVICE SET</text><text class="gl" x="512" y="210" text-anchor="middle">BASIC SERVICE SET</text>';
+  s+='<rect class="bxm" x="250" y="92" width="140" height="26" rx="4"/><text class="tx" x="320" y="109" text-anchor="middle" font-size="11">Distribution System</text>';
+  s+='<path class="ln" d="M150 105 H250 M390 105 H460"/>';
+  Object.entries(ES).forEach(([k,[x,y]])=>{const ap=k.startsWith('AP'),on2=hl&&hl.includes(k);
+    s+=(ap?'<rect class="'+(on2?'nd on':'nd u')+'" x="'+(x-22)+'" y="'+(y-14)+'" width="44" height="28" rx="5"/>':'<circle class="nd'+(on2?' on':'')+'" cx="'+x+'" cy="'+y+'" r="22"/>')+'<text class="nt'+(on2?' on':'')+'" x="'+x+'" y="'+(y+4)+'" text-anchor="middle" font-size="9.5">'+k+'</text>'});
+  $('es-svg').innerHTML=s}
+function es(go){const a=$('es-a').value,b=$('es-b').value,o=$('es-out');
+  if(a===b){esDraw([]);o.innerHTML=err('Pick two different stations.');return}
+  const same=BSS(a)===BSS(b),ap1='AP '+BSS(a),ap2='AP '+BSS(b);
+  const hops=same?[a,ap1,b]:[a,ap1,'DS',ap2,b];esDraw(hops.filter(h=>h!=='DS'));
+  const pt=h=>h==='DS'?[320,105]:ES[h];
+  if(go)anim($('es-svg'),hops.map(pt),'pk',same?900:1600);
+  o.innerHTML=kv([['path',hops.join(' → ')],['service',same?'Distribution, logically through the single AP of the BSS':'Distribution across the DS from one BSS to another'],['needs',same?'both stations associated with '+ap1:'the DS must know '+b+' is associated with '+ap2]])}
+['es-a','es-b'].forEach(i=>on(i,'change',()=>es(false)));on('es-go','click',()=>es(true));es(false);
+
+/* ---------- 18.4 key hierarchy ---------- */
+const KH={psk:['PSK','Pre-shared key','Becomes the PMK in pre-shared key environments; installed outside 802.11i (out-of-band path).',{ccmp:'256',tkip:'256'},'Key generation key, root key'],
+ aaak:['AAAK / MSK','Authentication, Accounting and Authorization key (master session key)','Used to derive the PMK, with the IEEE 802.1X authentication and key management approach; generated during EAP authentication (EAP method path).',{ccmp:'≥ 256',tkip:'≥ 256'},'Key generation key, root key'],
+ pmk:['PMK','Pairwise master key','Used with other inputs to derive the PTK. The PSK itself, or the MSK truncated if necessary; held by both sides after EAP Success.',{ccmp:'256',tkip:'256'},'Key generation key'],
+ ptk:['PTK','Pairwise transient key','Derived from the PMK by the PRF during the 4-way handshake. Comprises EAPOL-KCK, EAPOL-KEK and TK (and, for TKIP, the MIC key). Figure 18.9: changes based on policy (disassociation, deauthentication).',{ccmp:'384',tkip:'512'},'Composite key'],
+ kck:['EAPOL-KCK','EAPOL-Key confirmation key','Integrity protection for key material distributed during the 4-way handshake; proof of possession of the PMK.',{ccmp:'128',tkip:'128'},'Message integrity key'],
+ kek:['EAPOL-KEK','EAPOL-Key encryption key','Ensures confidentiality of the GTK and other key material in the 4-way handshake.',{ccmp:'128',tkip:'128'},'Traffic key / key encryption key'],
+ tk:['TK','Temporal key','Used with TKIP or CCMP for confidentiality and integrity of unicast user traffic. For TKIP it includes the two 64-bit Michael MIC keys.',{ccmp:'128',tkip:'256'},'Traffic key'],
+ gmk:['GMK','Group master key','Used with other inputs to derive the GTK. Figure 18.9: changes periodically or if compromised.',{ccmp:'128',tkip:'128'},'Key generation key'],
+ gtk:['GTK','Group temporal key','Derived from the GMK by the AP; confidentiality and integrity for multicast/broadcast traffic. Sent to STAs under KEK; changed whenever a device leaves.',{ccmp:'128',tkip:'256'},'Traffic key']};
+let khS='ccmp',khSel='ptk';
+function kh(){const N={psk:[90,40],aaak:[290,40],pmk:[190,110],ptk:[190,180],kck:[80,262],kek:[190,262],tk:[300,262],gmk:[530,110],gtk:[530,200]};
+  let s='<text class="gl" x="190" y="12" text-anchor="middle">(A) PAIRWISE KEY HIERARCHY</text><text class="gl" x="530" y="12" text-anchor="middle">(B) GROUP KEY HIERARCHY</text>';
+  const e=(a,b,lab,dx)=>{const p=N[a],q=N[b];s+='<path class="ln" d="M'+p[0]+' '+(p[1]+17)+' L'+q[0]+' '+(q[1]-19)+'" marker-end="url(#ah)"/>'+(lab?'<text class="tm" x="'+((p[0]+q[0])/2+(dx||8))+'" y="'+((p[1]+q[1])/2+4)+'">'+lab+'</text>':'')};
+  e('psk','pmk','no modification',-118);e('aaak','pmk','possible truncation',10);e('pmk','ptk','PRF (HMAC-SHA-1)',10);e('ptk','kck');e('ptk','kek');e('ptk','tk');e('gmk','gtk','PRF',10);
+  s+='<text class="tm" x="200" y="298" text-anchor="middle" font-size="10">PTK components, derived in the 4-way handshake</text>';
+  Object.entries(N).forEach(([k,[x,y]])=>{const d=KH[k],on2=k===khSel,w=k==='aaak'?92:80;
+    s+='<g class="lane" tabindex="0" role="button" data-kh="'+k+'" aria-label="'+d[1]+'"><rect class="'+(on2?'nd on':'nd'+(k==='psk'||k==='aaak'?' u':''))+'" x="'+(x-w/2)+'" y="'+(y-18)+'" width="'+w+'" height="36" rx="6"/><text class="nt'+(on2?' on':'')+'" x="'+x+'" y="'+(y-1)+'" text-anchor="middle" font-size="12">'+d[0]+'</text><text class="'+(on2?'nt on':'tm')+'" x="'+x+'" y="'+(y+12)+'" text-anchor="middle" font-size="10">'+d[3][khS]+' bits</text></g>'});
+  const sv=$('kh-svg');sv.innerHTML=s;
+  sv.querySelectorAll('[data-kh]').forEach(g=>{const f=()=>{khSel=g.dataset.kh;kh()};g.addEventListener('click',f);g.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();f()}})});
+  const d=KH[khSel];$('kh-out').innerHTML=kv([['key','<b>'+d[0]+'</b> · '+d[1]],['purpose',d[2]],['size ('+khS.toUpperCase()+')',d[3][khS]+' bits'],['type',d[4]]])}
+seg(0,'data-ks',v=>{khS=v;kh()});kh();
+
+/* ---------- 18.4 PRF / PTK (Web Crypto HMAC-SHA-1) ---------- */
+let prMode='ptk',prN=0;
+async function hmac1(k,m){const key=await crypto.subtle.importKey('raw',k,{name:'HMAC',hash:'SHA-1'},false,['sign']);return new Uint8Array(await crypto.subtle.sign('HMAC',key,m))}
+const cmpB=(a,b)=>{for(let k=0;k<Math.min(a.length,b.length);k++)if(a[k]!==b[k])return a[k]-b[k];return a.length-b.length};
+const cat=(...a)=>{const o=new Uint8Array(a.reduce((n,x)=>n+x.length,0));let p=0;a.forEach(x=>{o.set(x,p);p+=x.length});return o};
+async function prf(K,A,B,Len){const blocks=[];for(let i=0;i<Math.ceil(Len/160);i++)blocks.push(await hmac1(K,cat(new TextEncoder().encode(A),new Uint8Array([0]),B,new Uint8Array([i]))));return {blocks,out:cat(...blocks).slice(0,Len/8)}}
+const TV='bcd4c650b30b9684951829e0d75f9d54b862175ed9f00606e17d8da35402ffee75df78c3d31e0f889f012120c0862beb67753e7439ae242edb8373698356cf5a';
+async function pr(){const o=$('pr-out'),my=++prN;if(!(window.crypto&&crypto.subtle)){o.innerHTML=err('This lab needs the Web Crypto API (a current browser over https).');return}
+  $('pr-ptk').hidden=prMode!=='ptk';
+  try{if(prMode==='tv'){const r=await prf(new Uint8Array(20).fill(11),'prefix',new TextEncoder().encode('Hi There'),512);if(my!==prN)return;
+      o.innerHTML=kv([['K','0b × 20 bytes'],['A ‖ 0 ‖ B','“prefix” ‖ 00 ‖ “Hi There”']].concat(r.blocks.map((b,i)=>['R<sub>'+i+'</sub> (i = '+i+')','<span class="bitstr">'+hex(b)+'</span>']),[['PRF-512','<span class="bitstr"><b>'+hex(r.out)+'</b></span>'],['IEEE expected',hex(r.out)===TV?res(true,'matches the published vector'):res(false,'does not match')]]));return}
+    const pmk=hexBytes($('pr-pmk').value),ap=hexBytes($('pr-ap').value),st=hexBytes($('pr-sta').value),an=hexBytes($('pr-an').value),sn=hexBytes($('pr-sn').value),L=+$('pr-suite').value;
+    if(!pmk||pmk.length!==32){o.innerHTML=err('PMK must be 64 hex digits (256 bits).');return}
+    if(!ap||ap.length!==6||!st||st.length!==6){o.innerHTML=err('Each MAC address is 6 bytes, like 00:14:6c:7e:40:80.');return}
+    if(!an||an.length!==32||!sn||sn.length!==32){o.innerHTML=err('Each nonce must be 64 hex digits (32 bytes).');return}
+    const lo=cmpB(ap,st)<0,B=cat(lo?ap:st,lo?st:ap,cmpB(an,sn)<0?an:sn,cmpB(an,sn)<0?sn:an);
+    const r=await prf(pmk,'Pairwise key expansion',B,L);if(my!==prN)return;const p=r.out;
+    const rows=[['B (min/max ordered)','<span class="bitstr">'+hex(B)+'</span>'],['HMAC runs',r.blocks.length+' × 160 bits = '+r.blocks.length*160+', truncated to '+L]];
+    rows.push(['EAPOL-KCK (128)','<span class="bitstr"><b>'+hex(p.slice(0,16))+'</b></span>'],['EAPOL-KEK (128)','<span class="bitstr"><b>'+hex(p.slice(16,32))+'</b></span>']);
+    if(L===384)rows.push(['TK (128, CCMP)','<span class="bitstr"><b>'+hex(p.slice(32,48))+'</b></span>']);
+    else rows.push(['TK (256, TKIP)','<span class="bitstr"><b>'+hex(p.slice(32,64))+'</b></span>'],['TK: RC4 part (128)','<span class="bitstr">'+hex(p.slice(32,48))+'</span>'],['TK: Michael keys (2 × 64)','<span class="bitstr">'+hex(p.slice(48,56))+' · '+hex(p.slice(56,64))+'</span>']);
+    o.innerHTML=kv(rows)+'<p class="cap">Change one nonce digit and every PTK bit changes: the nonces make each session’s PTK fresh, and the MAC addresses tie it to this STA–AP pair. The exact split of the two Michael keys inside the TK is from the IEEE standard, not the book.</p>'}
+  catch(e){if(my===prN)o.innerHTML=err(esc(e.message))}}
+function prNew(){$('pr-an').value=rhex(32);$('pr-sn').value=rhex(32);pr()}
+if(window.crypto&&crypto.getRandomValues){$('pr-pmk').value=rhex(32);$('pr-an').value=rhex(32);$('pr-sn').value=rhex(32)}
+['pr-pmk','pr-ap','pr-sta','pr-an','pr-sn'].forEach(i=>on(i,'input',pr));on('pr-suite','change',pr);on('pr-new','click',prNew);
+seg(0,'data-pm',v=>{prMode=v;pr()});pr();
+
+/* ===== scroll-following contents ===== */
+const links=[...document.querySelectorAll('nav.toc a')];
+const secs=links.map(l=>document.querySelector(l.getAttribute('href'))).filter(Boolean);
+const list=document.querySelector('nav.toc ol');let current=null,ticking=false;
+function spy(){ticking=false;const line=window.innerHeight*0.3;let idx=0;
+  secs.forEach((s,k)=>{if(s.getBoundingClientRect().top<=line)idx=k});
+  if((window.innerHeight+window.scrollY)>=document.documentElement.scrollHeight-4)idx=secs.length-1;
+  const l=links[idx];
+  if(l!==current){if(current){current.classList.remove('active');current.removeAttribute('aria-current')}
+    l.classList.add('active');l.setAttribute('aria-current','true');current=l;
+    if(list.scrollWidth>list.clientWidth){list.scrollTo({left:l.parentElement.offsetLeft-list.clientWidth/2+l.parentElement.offsetWidth/2,behavior:reduce?'auto':'smooth'})}}
+  const max=document.documentElement.scrollHeight-window.innerHeight;
+  $('toc-progress').style.width=(max>0?Math.min(100,window.scrollY/max*100):0)+'%'}
+window.addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(spy)}},{passive:true});
+window.addEventListener('resize',spy);spy();
+})();
+</script>
+<button class="to-top" id="to-top" type="button" aria-label="Back to top">↑ Top</button>
+<script>
+(function(){
+  var btn=document.getElementById('to-top');if(!btn)return;
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches,tick=false;
+  function upd(){tick=false;btn.classList.toggle('show',window.scrollY>600)}
+  window.addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(upd)}},{passive:true});
+  btn.addEventListener('click',function(){window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});var h=document.querySelector('.topbar a.home');if(h)h.focus({preventScroll:true})});
+  upd();
+})();
+</script>
+<script>
+/* Phones: keep wide diagrams readable; they scroll inside their own box instead of shrinking */
+(function(){var mq=window.matchMedia&&matchMedia('(max-width:600px)');if(!mq)return;
+  function fit(){document.querySelectorAll('.figure svg[viewBox]').forEach(function(s){var w=s.viewBox.baseVal.width;
+    if(mq.matches&&w>=480){s.style.minWidth=Math.round(w*0.8)+'px';s.style.maxWidth='none'}else{s.style.minWidth='';s.style.maxWidth=''}})}
+  fit();document.addEventListener('click',function(){setTimeout(fit,60)});document.addEventListener('input',function(){setTimeout(fit,60)});
+  if(mq.addEventListener)mq.addEventListener('change',fit)})();
+</script>
+<script>
+/* Side navbar: keep the highlighted entry in view while the page scrolls (wide screens only) */
+(function(){var nav=document.querySelector('nav.toc');if(!nav||!window.MutationObserver)return;
+  var wide=window.matchMedia('(min-width:901px)');
+  new MutationObserver(function(ms){if(!wide.matches||nav.scrollHeight<=nav.clientHeight)return;
+    for(var i=0;i<ms.length;i++){var a=ms[i].target;if(!/(^|\s)(active|on)(\s|$)/.test(a.className))continue;
+      var n=nav.getBoundingClientRect(),r=a.getBoundingClientRect(),pad=24;
+      if(r.top<n.top+pad)nav.scrollTop-= (n.top+pad-r.top);else if(r.bottom>n.bottom-pad)nav.scrollTop+= (r.bottom-(n.bottom-pad));break}
+  }).observe(nav,{subtree:true,attributes:true,attributeFilter:['class']});
+})();
+/* Review Questions: Expand all / Collapse all */
+(function(){var sec=document.getElementById('review');if(!sec)return;var bar=sec.querySelector('.rv-tools');if(!bar)return;
+  var ds=[].slice.call(sec.querySelectorAll('details'));if(!ds.length){bar.remove();return}
+  var op=bar.querySelector('[data-rv="open"]'),cl=bar.querySelector('[data-rv="close"]'),ct=bar.querySelector('.rv-count');
+  function upd(){var n=ds.filter(function(d){return d.open}).length;op.disabled=n===ds.length;cl.disabled=n===0;ct.textContent=n+' of '+ds.length+' open'}
+  op.addEventListener('click',function(){ds.forEach(function(d){d.open=true});upd()});
+  cl.addEventListener('click',function(){ds.forEach(function(d){d.open=false});upd()});
+  ds.forEach(function(d){d.addEventListener('toggle',upd)});upd();
+})();
+</script>
+<script src="notation.js" data-unit="10" defer></script>
+</body>
+</html>
