@@ -1,0 +1,1192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unit 8 · Digital Signatures</title>
+<meta name="description" content="Study guide for Stallings, Cryptography and Network Security, Chapter 13: digital signature properties, attacks and forgeries, requirements, direct digital signatures, the Elgamal and Schnorr schemes, the NIST Digital Signature Algorithm (DSA), ECDSA, and RSA-PSS with MGF1.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,700;1,400&family=Cousine:wght@400;700&family=Noto+Sans+Mono:wght@400;600&family=Noto+Sans+Math&display=swap">
+<style>
+/* Layout: graph-paper study notebook (shared with Units 1–7) — sticky contents rail on desktop, single column on phones; each section = one book section */
+:root{
+  --bg:#f3f4f8; --paper:#ffffff; --ink:#191b2b; --muted:#585d78; --line:#d9dce8;
+  --grid:rgba(25,27,43,.045);
+  --accent:#3f46c4; --accent-soft:#e5e7fb; --mark:#b8580f; --mark-soft:#fcebdc;
+  --bad:#b4372f; --bad-soft:#f9e1de;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Noto Sans Math", "Segoe UI", system-ui, sans-serif;
+  --mono:"Cousine", "Noto Sans Mono", "Noto Sans Math", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10121c; --paper:#171a28; --ink:#e6e8f2; --muted:#9ca1bb; --line:#2c3048;
+  --grid:rgba(230,232,242,.04);
+  --accent:#9ea6ff; --accent-soft:#232955; --mark:#f6a25a; --mark-soft:#3b2615;
+  --bad:#f08c84; --bad-soft:#3c1d1a; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#10121c; --paper:#171a28; --ink:#e6e8f2; --muted:#9ca1bb; --line:#2c3048;
+  --grid:rgba(230,232,242,.04);
+  --accent:#9ea6ff; --accent-soft:#232955; --mark:#f6a25a; --mark-soft:#3b2615;
+  --bad:#f08c84; --bad-soft:#3c1d1a; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16.5px;line-height:1.6;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;padding-inline:16px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;padding-block:32px 80px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr);gap:16px}}
+
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;font-size:.88rem}
+nav.toc .lbl{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+nav.toc a{display:flex;gap:10px;padding:5px 8px;border-radius:6px;color:var(--ink);text-decoration:none}
+nav.toc a span{font-family:var(--mono);color:var(--accent);min-width:2.6em;font-size:.8rem;padding-top:2px}
+nav.toc a{position:relative;transition:background .15s,color .15s}
+nav.toc a:hover,nav.toc a:focus-visible{background:var(--accent-soft);outline:none}
+nav.toc a.active{background:var(--accent);color:var(--paper);font-weight:700}
+nav.toc a.active span{color:var(--paper)}
+nav.toc .bar{height:3px;background:var(--line);border-radius:2px;margin:12px 0 0;overflow:hidden}
+nav.toc .bar i{display:block;height:100%;width:0;background:var(--accent)}
+@media (max-width:900px){
+  nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border:1px solid var(--line);border-radius:0 0 10px 10px;padding:8px 10px;margin-inline:-4px}
+  nav.toc .lbl{display:none}
+  nav.toc ol{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth}
+  nav.toc ol::-webkit-scrollbar{display:none}
+  nav.toc li{flex:0 0 auto}
+  nav.toc a{white-space:nowrap;padding:5px 10px}
+  nav.toc .bar{margin-top:8px}
+  section.unit{scroll-margin-top:72px}}
+
+main{min-width:0}
+header.hero{padding-block:8px 28px;border-bottom:2px solid var(--ink);margin-bottom:28px}
+.eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,6vw,4rem);line-height:1;margin:.25em 0 .3em;letter-spacing:-.02em;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{max-width:65ch;color:var(--muted);margin:0}
+.formula-strip{font-family:var(--mono);font-size:.85rem;color:var(--muted);margin-top:18px;display:flex;flex-wrap:wrap;gap:8px 18px}
+.formula-strip b{color:var(--ink);font-weight:600}
+
+section.unit{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:28px clamp(18px,4vw,40px);margin-bottom:28px;scroll-margin-top:20px}
+h2{font-family:var(--display);font-weight:700;font-size:1.75rem;line-height:1.15;margin:0 0 4px;text-wrap:balance;display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
+h2 .sec{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:600}
+h3{font-family:var(--display);font-weight:700;font-size:1.2rem;margin:28px 0 8px}
+.why{color:var(--muted);font-size:.95rem;margin:0 0 18px;max-width:70ch}
+p,li{max-width:70ch}
+code,.m{font-family:var(--mono);font-size:.9em}
+.m{white-space:nowrap}
+.m.wr{white-space:normal;overflow-wrap:anywhere}
+.def,.ex,.warn{min-width:0;overflow-wrap:break-word}
+.gk{font-family:var(--mono);font-style:normal}
+
+.def{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+.def b:first-child{font-family:var(--display);font-weight:700}
+.eq{font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;overflow-x:auto;white-space:pre;line-height:1.7;font-size:.92rem}
+.eq .n{color:var(--muted)}
+.eqrows{display:grid;gap:8px;margin:12px 0}
+.eqrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px 14px;align-items:center;font-family:var(--mono);font-size:.92rem;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.eqrow .ex1{min-width:0;line-height:1.6}
+.eqrow .n{color:var(--muted)}
+.eqrow .tag{font-size:.75rem;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--accent-soft);color:var(--accent)}
+.tag.no{background:var(--bad-soft);color:var(--bad)}
+@media (max-width:560px){.eqrow{grid-template-columns:minmax(0,1fr) auto}.eqrow .ex1{grid-column:1 / -1}}
+.ex{border:1px dashed var(--mark);background:var(--mark-soft);border-radius:8px;padding:10px 16px;margin:12px 0}
+.ex .t{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mark);font-weight:600}
+.ex .eq{background:transparent;border:0;padding:4px 0;margin:2px 0}
+.warn{border-left:3px solid var(--bad);background:var(--bad-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+ul.props{padding-left:1.2em}
+ul.props li{margin:4px 0}
+
+/* tables */
+.tbl{overflow-x:auto;margin:12px 0}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.9rem}
+th,td{border:1px solid var(--line);padding:5px 9px;text-align:center}
+th{background:var(--bg);font-family:var(--mono);font-weight:600;font-size:.8rem}
+td.l,th.l{text-align:left}
+td.hi{background:var(--accent-soft);font-weight:700}
+td.one{background:var(--mark-soft);font-weight:700}
+td.dim{color:var(--muted)}
+
+/* interactive lab */
+.lab{border:1px solid var(--line);border-radius:12px;margin:18px 0;overflow:hidden}
+.lab-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--line)}
+.lab-h .t{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.lab-b{padding:14px}
+.controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:end;margin-bottom:12px}
+.controls label{display:grid;gap:3px;font-size:.78rem;font-family:var(--mono);color:var(--muted)}
+input[type=number]{width:9.5em;font:inherit;font-family:var(--mono);font-size:.95rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+button{font-family:var(--mono);font-size:.82rem;padding:7px 12px;border:1px solid var(--accent);background:var(--accent);color:var(--paper);border-radius:6px;cursor:pointer}
+button.ghost{background:transparent;color:var(--accent)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.out{font-family:var(--mono);font-size:.9rem}
+.out .res{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:600}
+.res.ok{background:var(--accent-soft);color:var(--accent)}
+.res.no{background:var(--bad-soft);color:var(--bad)}
+.err{color:var(--bad);font-family:var(--mono);font-size:.85rem}
+svg text{font-family:var(--mono)}
+.figure{margin:16px 0;overflow-x:auto}
+.figure svg{display:block;max-width:100%;height:auto}
+.cap{font-size:.82rem;color:var(--muted);margin-top:6px}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.grid2>*{min-width:0}
+
+/* totient grid */
+.cells{display:flex;flex-wrap:wrap;gap:4px}
+.cells span{font-family:var(--mono);font-size:.78rem;width:2.6em;text-align:center;padding:4px 0;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.cells span.on{background:var(--accent);border-color:var(--accent);color:var(--paper);font-weight:600}
+
+/* mapping row */
+.maprow{display:grid;grid-template-columns:7.5em repeat(8,minmax(2.2em,1fr));gap:4px;font-family:var(--mono);font-size:.85rem;min-width:420px}
+.maprow div{padding:5px 0;text-align:center;border-radius:4px}
+.maprow .h{text-align:left;color:var(--muted);font-size:.75rem;padding-top:7px}
+.maprow .c{background:var(--bg)}
+.maprow .dup{background:var(--bad-soft);color:var(--bad);font-weight:600}
+.maprow .uni{background:var(--accent-soft);color:var(--accent);font-weight:600}
+
+/* glossary & review */
+dl.gloss{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr);gap:0;margin:0}
+dl.gloss dt,dl.gloss dd{padding:9px 0;border-bottom:1px solid var(--line);margin:0}
+dl.gloss dt{font-family:var(--display);font-weight:700;padding-right:16px}
+@media (max-width:560px){dl.gloss{grid-template-columns:minmax(0,1fr)} dl.gloss dt{border-bottom:0;padding-bottom:0}}
+details{border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:8px 0;background:var(--paper)}
+summary{cursor:pointer;font-weight:700}
+details p{margin:.6em 0 0}
+.src{font-size:.85rem;color:var(--muted)}
+.src a,a{color:var(--accent)}
+footer{font-size:.82rem;color:var(--muted);margin-top:24px}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---- Sticky "All units" bar + back-to-top (shared across unit pages) ---- */
+:root{--topbar-h:52px}
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.topbar-in{max-width:1180px;margin:0 auto;height:var(--topbar-h);padding-inline:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.topbar a.home{flex:0 0 auto;font-family:var(--f-mono,var(--mono));font-size:.84rem;font-weight:600;color:var(--ink);text-decoration:none;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface,var(--paper))}
+.topbar a.home:hover{border-color:var(--accent);color:var(--accent)}
+.topbar a.home:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.topbar .where{min-width:0;font-family:var(--f-mono,var(--mono));font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.to-top{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono,var(--mono));font-size:.82rem;font-weight:600;padding:10px 14px;border:1px solid var(--accent);border-radius:999px;background:var(--accent);color:var(--surface,var(--paper));cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.18);opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .2s,transform .2s,visibility 0s linear .2s}
+.to-top.show{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .2s}
+.to-top:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.to-top{transition:none}}
+
+.topbar{margin-inline:-16px}
+.topbar-in{padding-inline:16px}
+nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h) + 20px)}
+section.unit{scroll-margin-top:calc(20px + var(--topbar-h))}
+@media (max-width:900px){nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h))}section.unit{scroll-margin-top:calc(72px + var(--topbar-h))}}
+
+input[type=text],textarea,select{font:inherit;font-family:var(--mono);font-size:.92rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);max-width:100%}
+input[type=text]{width:18em}
+input.wide{width:min(34em,100%)}
+textarea{width:100%;min-height:4.6em;resize:vertical}
+input[type=range]{accent-color:var(--accent)}
+.controls label.grow{flex:1 1 280px}
+.controls label.grow input,.controls label.grow textarea{width:100%}
+.mono{font-family:var(--mono)}
+.big{font-family:var(--mono);font-size:1.05rem;letter-spacing:.06em;overflow-wrap:anywhere}
+.hlrow td{background:var(--accent-soft);font-weight:700;color:var(--accent)}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:12px 0}
+.cmp>div{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--paper);min-width:0}
+.cmp h4{margin:0 0 6px;font-family:var(--display);font-size:1.02rem}
+.cmp p{margin:0;font-size:.95rem}
+.diffbit{color:var(--bad);font-weight:700}
+@media (max-width:560px){input[type=text]{width:100%}}
+.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;font-family:var(--mono);font-size:.84rem;align-items:baseline}
+.kv .k{color:var(--muted)}
+.kv .v{overflow-wrap:anywhere}
+.pill{display:inline-block;font-family:var(--mono);font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.pill.no{background:var(--bad-soft);color:var(--bad)}
+.pill.mk{background:var(--mark-soft);color:var(--mark)}
+.note{border-left:3px solid var(--mark);background:var(--mark-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0;font-size:.95rem}
+.note .t{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mark);font-weight:600;display:block;margin-bottom:2px}
+.modes td,.modes th{text-align:left;vertical-align:top}
+.modes td.c{text-align:center}
+.bitstr{font-family:var(--mono);font-size:.8rem;overflow-wrap:anywhere;line-height:1.5}
+.bitstr b{color:var(--accent)}
+.bitstr i{font-style:normal;color:var(--muted);text-decoration:line-through}
+select{font:inherit;font-family:var(--mono);font-size:.88rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+@media (max-width:560px){.blkrow{grid-template-columns:minmax(0,1fr)}.blkrow .h{padding-top:0}canvas.px{width:150px;height:150px}.kv{grid-template-columns:minmax(0,1fr)}.kv .k{margin-top:4px}}
+.op{font-family:var(--mono);font-size:.92em}
+.seg{display:inline-flex;border:1px solid var(--accent);border-radius:6px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent;color:var(--accent)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--paper)}
+.eq sub,.kv sub{font-size:.75em}
+.pseudo{font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;overflow-x:auto;white-space:pre;line-height:1.55;font-size:.86rem}
+.pseudo .kw{color:var(--accent);font-weight:600}
+.pseudo .cm{color:var(--muted)}
+sub{line-height:0;font-size:.75em}
+/* justified prose (wider screens only: narrow columns get large word gaps) */
+@media (min-width:600px){
+section.unit p,section.unit li,.def,.note,.warn,.why,.lede,details p{text-align:justify;hyphens:auto;-webkit-hyphens:auto}
+section.unit .out,section.unit .cap,section.unit td,section.unit th,.lab-h,.kv{text-align:left;hyphens:manual;-webkit-hyphens:manual}
+section.unit .grid2 *,section.unit .cmp *,section.unit .src{text-align:left;hyphens:manual;-webkit-hyphens:manual}}
+
+/* ---- shared sub-entry nav (from Unit 6) ---- */
+nav.toc li.sub a{padding-left:calc(18px + 2.08rem);font-size:.84rem;color:var(--muted)}
+nav.toc li.sub a.active{color:var(--paper)}
+@media (max-width:900px){nav.toc li.sub a{padding-left:10px}}
+.lab-h .seg button{font-size:.76rem;padding:6px 10px}
+.controls output{color:var(--ink);font-weight:600}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);margin:6px 0}
+input[type=range]{width:150px}
+.kv .v .res{font-size:.78rem;padding:1px 8px}
+@media (max-width:560px){.m{white-space:normal;overflow-wrap:anywhere}input[type=range]{width:100%}}
+
+
+
+/* ---- Unit 8 additions ---- */
+.hidden-defs{position:absolute;width:0;height:0;overflow:hidden}
+svg .bx{fill:var(--paper);stroke:var(--ink);stroke-width:1.2}
+svg .bxa{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+svg .bxm{fill:var(--mark-soft);stroke:var(--mark);stroke-width:1.2}
+svg .bxb{fill:var(--bad-soft);stroke:var(--bad);stroke-width:1.2}
+svg .ln{stroke:var(--ink);stroke-width:1.3;fill:none}
+svg .ln.dash{stroke-dasharray:5 4;stroke:var(--muted)}
+svg .ah{fill:var(--ink)}
+svg .tx{fill:var(--ink);font-size:12px}
+svg .tm{fill:var(--muted);font-size:11px}
+svg .tb{fill:var(--ink);font-size:12px;font-weight:700}
+/* Figure 13.1 animation: each stage lights up in turn */
+.sf{transition:none}
+@keyframes sfp{0%,2%{fill:var(--paper);stroke-width:1.2}6%,13%{fill:var(--mark-soft);stroke:var(--mark);stroke-width:2.6}17%,100%{fill:var(--paper);stroke-width:1.2}}
+@keyframes sfl{0%,2%{stroke:var(--ink);stroke-width:1.3}6%,13%{stroke:var(--mark);stroke-width:2.6}17%,100%{stroke:var(--ink);stroke-width:1.3}}
+@media (prefers-reduced-motion:no-preference){
+  #sf-svg.play rect.sf{animation:sfp 10s linear infinite}
+  #sf-svg.play path.sf{animation:sfl 10s linear infinite}
+}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-family:var(--mono);font-size:.82rem;margin:6px 0}
+.flow .c{border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:3px 8px;white-space:nowrap}
+.flow .c.k{border-color:var(--mark);background:var(--mark-soft);color:var(--mark)}
+.flow .c.o{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
+.flow .ar{color:var(--muted)}
+.ladder{display:grid;gap:6px;margin:8px 0;padding:0;list-style:none}
+.ladder li{display:grid;grid-template-columns:minmax(0,1fr);gap:2px;position:relative;padding:8px 12px 8px 14px;border:1px solid var(--line);border-radius:8px;background:var(--paper);max-width:none}
+.ladder li::before{content:"";position:absolute;left:0;top:0;bottom:0;width:calc(var(--lv) * 1.4px + 4px);background:var(--accent);opacity:.18;border-radius:8px 0 0 8px}
+.ladder.bad li::before{background:var(--bad)}
+.ladder b{font-family:var(--display)}
+.ladder .lvl{font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+svg .pt{fill:var(--muted)}
+svg .ptG{fill:var(--accent)}
+svg .ptQ{fill:var(--mark)}
+svg .ptK{fill:none;stroke:var(--bad);stroke-width:2.4}
+svg .ptX{fill:none;stroke:var(--accent);stroke-width:2;stroke-dasharray:3 2}
+svg .gridl{stroke:var(--line);stroke-width:.6}
+.emseg{font-family:var(--mono);font-size:.78rem;overflow-wrap:anywhere;line-height:1.55}
+.emseg .s1{background:var(--accent-soft);color:var(--accent)}
+.emseg .s2{background:var(--mark-soft);color:var(--mark)}
+.emseg .s3{background:var(--bad-soft);color:var(--bad);font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-family:var(--mono);font-size:.74rem;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.lab-b .sub-t{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px;font-weight:600}
+#ec-svg{max-width:340px}
+
+/* result pills never wrap or shrink inside narrow value columns */
+.out .res,.kv .v .res{white-space:nowrap;max-width:none}
+.kv .v:has(> .res){overflow-wrap:normal}
+@media (max-width:760px){#s135 .lab .grid2{grid-template-columns:minmax(0,1fr)}}
+
+/* ---- Scrollable side navbar (wide screens) + Review expand/collapse (shared across unit pages) ---- */
+@media (min-width:901px){
+  nav.toc{max-height:calc(100vh - var(--topbar-h,0px) - 40px - env(safe-area-inset-top,0px));overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--line) transparent;padding-right:6px;margin-right:-6px}
+  nav.toc::-webkit-scrollbar{width:6px}
+  nav.toc::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+  nav.toc ol{max-height:none;overflow:visible}
+}
+.rv-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 4px}
+.rv-tools button{font-family:var(--mono,var(--f-mono));font-size:.78rem;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper,var(--surface));color:var(--ink);cursor:pointer;transition:border-color .15s,color .15s}
+.rv-tools button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.rv-tools button:disabled{opacity:.45;cursor:default}
+.rv-tools button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rv-tools .rv-count{font-family:var(--mono,var(--f-mono));font-size:.74rem;color:var(--muted);margin-left:4px}
+</style>
+</head>
+<body>
+<svg class="hidden-defs" aria-hidden="true" focusable="false"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker></defs></svg>
+<header class="topbar"><div class="topbar-in"><a class="home" href="./">← All units</a><span class="where">Unit 8 · Digital Signatures</span></div></header>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <div class="lbl">Contents</div>
+  <ol>
+    <li><a href="#s131"><span>13.1</span>Digital signatures</a></li>
+    <li class="sub"><a href="#s131b">Attacks, forgeries &amp; requirements</a></li>
+    <li class="sub"><a href="#s131c">Direct digital signature</a></li>
+    <li><a href="#s132"><span>13.2</span>Elgamal signatures</a></li>
+    <li><a href="#s133"><span>13.3</span>Schnorr signatures</a></li>
+    <li><a href="#s134"><span>13.4</span>NIST DSA</a></li>
+    <li class="sub"><a href="#s134b">The DSA algorithm</a></li>
+    <li><a href="#s135"><span>13.5</span>ECDSA</a></li>
+    <li><a href="#s136"><span>13.6</span>RSA-PSS</a></li>
+    <li class="sub"><a href="#s136b">Signing &amp; verification</a></li>
+    <li><a href="#terms"><span>13.7</span>Key terms</a></li>
+    <li><a href="#review"><span>13.7</span>Review</a></li>
+    <li><a href="#res"><span>Ref</span>Sources</a></li>
+  </ol>
+  <div class="bar" aria-hidden="true"><i id="toc-progress"></i></div>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Unit 8 · Stallings, Chapter 13</div>
+  <h1>Digital <em>Signatures</em></h1>
+  <p class="lede">A MAC protects two parties from outsiders, but not from each other. A digital signature is made with a key only the signer holds and is checked with a public key, so a third party can settle disputes. This chapter covers the properties and requirements of signatures, the attacks they must resist, and five schemes: Elgamal, Schnorr, the NIST Digital Signature Algorithm (DSA), the Elliptic Curve DSA (ECDSA), and RSA-PSS.</p>
+  <div class="formula-strip">
+    <span><b>S<sub>2</sub> = K<sup>−1</sup>(m − X<sub>A</sub>S<sub>1</sub>) mod (q − 1)</b></span>
+    <span><b>s = k<sup>−1</sup>(H(M) + xr) mod q</b></span>
+    <span><b>s = k<sup>−1</sup>(e + dr) mod n</b></span>
+    <span><b>s = m<sup>d</sup> mod n</b></span>
+  </div>
+</header>
+
+<!-- ============ 13.1 ============ -->
+<section class="unit" id="s131">
+  <h2><span class="sec">13.1</span>Digital Signatures</h2>
+  <p class="why">Every scheme in this chapter has the same shape (Figure 13.1): hash the message, combine the hash with the signer’s private key to get a short signature, and let anyone check it with the signer’s public key.</p>
+
+  <div class="def"><b>Private key / public key</b> — the two keys of a public-key pair (Unit 6). The private key PR<sub>a</sub> is known only to its owner A; the matching public key PU<sub>a</sub> is published. Deriving the private key from the public key must be computationally infeasible.</div>
+  <div class="def"><b>Hash value</b> — the fixed-length output h = H(M) of a cryptographic hash function such as SHA-512 (Unit 7). Signing the short hash instead of the whole message keeps the signature short.</div>
+  <div class="def"><b>Digital signature</b> — a short block computed from the hash of a message and the signer’s private key and attached to the message. A <b>signature generation algorithm</b> produces it; a <b>signature verification algorithm</b> takes the message, the signature and the signer’s public key and returns “valid” or “not valid”.</div>
+
+  <div class="figure" role="img" aria-label="Animation of Figure 13.1. Top: Bob hashes message M and feeds the hash and his private key into the signature generation algorithm, producing signature S, which he sends with M. Bottom: Alice hashes M, feeds the hash, S and Bob's public key into the verification algorithm, which returns valid or not valid.">
+  <svg viewBox="0 0 660 300" width="660" id="sf-svg" class="play">
+    <text class="tm" x="10" y="16">(a) Bob signs a message</text>
+    <rect class="bx sf" style="animation-delay:0s" x="10" y="50" width="90" height="40" rx="5"/><text class="tx" x="55" y="74" text-anchor="middle">Message M</text>
+    <path class="ln sf" style="animation-delay:.8s" d="M100 70 H138" marker-end="url(#ah)"/>
+    <rect class="bx sf" style="animation-delay:1.2s" x="140" y="50" width="110" height="40" rx="5"/><text class="tx" x="195" y="68" text-anchor="middle">Cryptographic</text><text class="tx" x="195" y="83" text-anchor="middle">hash function</text>
+    <path class="ln sf" style="animation-delay:2s" d="M250 70 H298" marker-end="url(#ah)"/><text class="tm" x="274" y="64" text-anchor="middle">h</text>
+    <rect class="bxm" x="300" y="6" width="130" height="24" rx="4"/><text class="tx" x="365" y="22" text-anchor="middle">Bob’s private key</text>
+    <path class="ln" d="M365 30 V48" marker-end="url(#ah)"/>
+    <rect class="bx sf" style="animation-delay:2.4s" x="300" y="50" width="130" height="40" rx="5"/><text class="tx" x="365" y="68" text-anchor="middle">Signature</text><text class="tx" x="365" y="83" text-anchor="middle">generation</text>
+    <path class="ln sf" style="animation-delay:3.2s" d="M430 70 H478" marker-end="url(#ah)"/><text class="tm" x="454" y="64" text-anchor="middle">S</text>
+    <rect class="bx sf" style="animation-delay:3.6s" x="480" y="50" width="170" height="40" rx="5"/><text class="tx" x="565" y="74" text-anchor="middle">M + Bob’s signature S</text>
+    <path class="ln dash sf" style="animation-delay:4.4s" d="M565 90 C565 140 60 130 60 178" marker-end="url(#ah)"/><text class="tm" x="575" y="116">sent to Alice</text>
+    <text class="tm" x="10" y="292">(b) Alice verifies the signature</text>
+    <rect class="bx sf" style="animation-delay:4.8s" x="10" y="180" width="100" height="40" rx="5"/><text class="tx" x="60" y="204" text-anchor="middle">M, S</text>
+    <path class="ln sf" style="animation-delay:5.6s" d="M110 194 H148" marker-end="url(#ah)"/><text class="tm" x="129" y="188" text-anchor="middle">M</text>
+    <rect class="bx sf" style="animation-delay:6s" x="150" y="174" width="110" height="40" rx="5"/><text class="tx" x="205" y="192" text-anchor="middle">Cryptographic</text><text class="tx" x="205" y="207" text-anchor="middle">hash function</text>
+    <path class="ln sf" style="animation-delay:6.8s" d="M260 194 H308" marker-end="url(#ah)"/><text class="tm" x="284" y="188" text-anchor="middle">h</text>
+    <path class="ln sf" style="animation-delay:6.8s" d="M60 220 V262 H372 V236" marker-end="url(#ah)"/><text class="tm" x="215" y="256" text-anchor="middle">S</text>
+    <rect class="bxa" x="440" y="134" width="130" height="24" rx="4"/><text class="tx" x="505" y="150" text-anchor="middle">Bob’s public key</text>
+    <path class="ln" d="M440 152 L420 172" marker-end="url(#ah)"/>
+    <rect class="bx sf" style="animation-delay:7.2s" x="310" y="174" width="130" height="60" rx="5"/><text class="tx" x="375" y="200" text-anchor="middle">Signature</text><text class="tx" x="375" y="215" text-anchor="middle">verification</text>
+    <path class="ln sf" style="animation-delay:8s" d="M440 204 H498" marker-end="url(#ah)"/>
+    <rect class="bx sf" style="animation-delay:8.4s" x="500" y="184" width="150" height="40" rx="5"/><text class="tx" x="575" y="208" text-anchor="middle">valid / not valid</text>
+  </svg>
+  <div class="cap">Redrawn from Figure 13.1, Simplified depiction of essential elements of the digital signature process. Each stage lights up in order.</div></div>
+
+  <p>If the verification algorithm returns “valid”, Alice knows Bob signed the message: no one else holds Bob’s private key, so no one else could make a signature that verifies under Bob’s public key. The message also cannot be altered without that key. The signature therefore authenticates both the <b>source</b> and the <b>data integrity</b>. It does not keep the message secret.</p>
+
+  <h3>Properties</h3>
+  <p>Message authentication (a MAC with a shared key, Unit 7) protects two parties from a third party, but not from each other. Suppose John sends Mary a MAC-authenticated message:</p>
+  <ul class="props">
+    <li><b>Mary forges.</b> Mary writes a different message and attaches a valid MAC with the shared key, then claims John sent it (e.g. raising the amount in a funds transfer).</li>
+    <li><b>John denies.</b> Because Mary could have made the MAC, there is no way to prove John sent a message (e.g. stockbroker instructions that turned out badly).</li>
+  </ul>
+  <p>Where sender and receiver do not fully trust each other, a digital signature is needed. It must:</p>
+  <ul class="props">
+    <li>verify the <b>author</b> and the <b>date and time</b> of the signature;</li>
+    <li>authenticate the <b>contents</b> at the time of the signature;</li>
+    <li>be <b>verifiable by third parties</b>, to resolve disputes.</li>
+  </ul>
+  <p>So the digital signature function includes the authentication function.</p>
+</section>
+
+<section class="unit" id="s131b">
+  <h2>Attacks, Forgeries and Requirements</h2>
+  <p class="why">The attack list says what the attacker may learn; the forgery list says what counts as breaking the scheme. A good scheme resists the strongest attack at the weakest level of success.</p>
+  <p>A is the user whose signature method is attacked; C is the attacker. Both lists are in order of increasing severity [GOLD88].</p>
+  <div class="grid2">
+    <div>
+      <h3 style="margin-top:0">Types of attack (what C gets)</h3>
+      <ol class="ladder">
+        <li style="--lv:1"><b>Key-only attack</b><span>C knows only A’s public key.</span></li>
+        <li style="--lv:2"><b>Known message attack</b><span>C is given a set of messages and their signatures.</span></li>
+        <li style="--lv:3"><b>Generic chosen message attack</b><span>C picks messages before seeing A’s public key and gets A’s signatures on them. The same list works against everyone.</span></li>
+        <li style="--lv:4"><b>Directed chosen message attack</b><span>As above, but the list is chosen after C knows A’s public key (still before seeing any signatures).</span></li>
+        <li style="--lv:5"><b>Adaptive chosen message attack</b><span>C uses A as an <b>oracle</b>: each request may depend on signatures already obtained.</span></li>
+      </ol>
+    </div>
+    <div>
+      <h3 style="margin-top:0">Levels of success (what C achieves)</h3>
+      <ol class="ladder bad">
+        <li style="--lv:1"><b>Existential forgery</b><span>C forges a signature on at least one message, with no control over which. May be only a minor nuisance.</span></li>
+        <li style="--lv:2"><b>Selective forgery</b><span>C forges a signature on a particular message C chose.</span></li>
+        <li style="--lv:3"><b>Universal forgery</b><span>C finds an efficient signing algorithm that can sign arbitrary messages.</span></li>
+        <li style="--lv:4"><b>Total break</b><span>C determines A’s private key.</span></li>
+      </ol>
+    </div>
+  </div>
+  <p class="cap">Success means C can do the item with non-negligible probability.</p>
+
+  <h3>Digital signature requirements</h3>
+  <ul class="props">
+    <li>The signature must be a bit pattern that <b>depends on the message</b> being signed.</li>
+    <li>It must use some information <b>only known to the sender</b>, to prevent both forgery and denial.</li>
+    <li>It must be relatively <b>easy to produce</b>.</li>
+    <li>It must be relatively <b>easy to recognize and verify</b>.</li>
+    <li>It must be <b>computationally infeasible to forge</b>, either by building a new message for an existing signature or by building a fraudulent signature for a given message.</li>
+    <li>It must be practical to <b>retain a copy</b> of the signature in storage.</li>
+  </ul>
+  <p>A secure hash function inside a scheme like Figure 13.1 provides a basis for these requirements, but the details of the scheme must still be designed with care.</p>
+</section>
+
+<section class="unit" id="s131c">
+  <h2>Direct Digital Signature</h2>
+  <p class="why">The simplest arrangement: only the two communicating parties are involved. Its weak point is the security of the sender’s private key.</p>
+  <div class="def"><b>Direct digital signature</b> — a signature scheme that involves only the communicating parties (source and destination). The destination is assumed to know the source’s public key.</div>
+  <div class="def"><b>Confidentiality function</b> — encryption that hides the message, here the whole message plus signature encrypted with a shared secret key (symmetric encryption).</div>
+  <h3>Order: sign first, then encrypt</h3>
+  <div class="grid2">
+    <div class="cmp" style="margin:0"><div><h4>Signature inside <span class="pill">correct</span></h4>
+      <div class="flow"><span class="c">M</span><span class="ar">→</span><span class="c k">sign (PR<sub>a</sub>)</span><span class="ar">→</span><span class="c">M ‖ S</span><span class="ar">→</span><span class="c o">encrypt (K)</span></div>
+      <p>The recipient decrypts once and can store the plaintext message with its signature for later disputes. A third party checks the signature without any decryption key.</p></div></div>
+    <div class="cmp" style="margin:0"><div><h4>Signature outside <span class="pill no">avoid</span></h4>
+      <div class="flow"><span class="c">M</span><span class="ar">→</span><span class="c o">encrypt (K)</span><span class="ar">→</span><span class="c k">sign (PR<sub>a</sub>)</span></div>
+      <p>The signature covers ciphertext, so a third party settling a dispute also needs the decryption key to read the original message.</p></div></div>
+  </div>
+  <h3>Threats</h3>
+  <ul class="props">
+    <li><b>Claimed key loss.</b> A sender who wants to deny a message can claim the private key was lost or stolen and that someone else forged the signature. Administrative controls weaken this ploy: require a <b>timestamp</b> (date and time) in every signed message and prompt reporting of compromised keys to a central authority.</li>
+    <li><b>Actual key theft.</b> If X’s private key is stolen at time T, the opponent can sign messages stamped with a time before or equal to T.</li>
+  </ul>
+  <div class="note"><span class="t">Next unit</span>The universally accepted answer to these threats is digital certificates and certificate authorities (Chapter 14, Unit 9).</div>
+</section>
+
+<!-- ============ 13.2 ============ -->
+<section class="unit" id="s132">
+  <h2><span class="sec">13.2</span>Elgamal Digital Signature Scheme</h2>
+  <p class="why">Elgamal and Schnorr are the building blocks of the NIST DSA. Elgamal signs with the private key and verifies with the public key, the reverse of Elgamal encryption (Unit 6). Its security rests on the difficulty of discrete logarithms.</p>
+  <div class="def"><b>Order of a (mod q)</b> — the least positive exponent m with a<sup>m</sup> ≡ 1 (mod q) (Unit 2).</div>
+  <div class="def"><b>Primitive root</b> — <span class="gk">α</span> is a primitive root of prime q if its order is q − 1, so <span class="gk">α</span>, <span class="gk">α</span><sup>2</sup>, …, <span class="gk">α</span><sup>q−1</sup> are distinct (mod q) and give every value 1 to q − 1. The primitive roots of 19 are 2, 3, 10, 13, 14, 15.</div>
+  <div class="def"><b>Multiplicative inverse</b> — K<sup>−1</sup> mod n is the value with K·K<sup>−1</sup> ≡ 1 (mod n). It exists only when gcd(K, n) = 1, and the extended Euclidean algorithm finds it (Unit 2).</div>
+  <div class="def"><b>Discrete logarithm</b> — for b ≡ <span class="gk">α</span><sup>i</sup> (mod q), the exponent i is dlog<sub><span class="gk">α</span>,q</sub>(b). Computing <span class="gk">α</span><sup>i</sup> is easy; recovering i is infeasible for large q.</div>
+  <p>The scheme needs one number-theory result. If <span class="gk">α</span> is a primitive root of q, then:</p>
+  <ol>
+    <li>for any integer m, <span class="m"><span class="gk">α</span><sup>m</sup> ≡ 1 (mod q)</span> if and only if <span class="m">m ≡ 0 (mod q − 1)</span>;</li>
+    <li>for any integers i, j, <span class="m"><span class="gk">α</span><sup>i</sup> ≡ <span class="gk">α</span><sup>j</sup> (mod q)</span> if and only if <span class="m">i ≡ j (mod q − 1)</span>.</li>
+  </ol>
+  <p>So exponents are worked <b>mod (q − 1)</b>, not mod q.</p>
+
+  <div class="grid2">
+    <div>
+      <h3>Global elements and keys</h3>
+      <div class="eq">q            prime number
+<span class="gk">α</span>            primitive root of q
+X<sub>A</sub>           random, 1 &lt; X<sub>A</sub> &lt; q − 1   <span class="n">(private)</span>
+Y<sub>A</sub> = <span class="gk">α</span><sup>X<sub>A</sub></sup> mod q            <span class="n">(public: {q, <span class="gk">α</span>, Y<sub>A</sub>})</span></div>
+    </div>
+    <div>
+      <h3>Signing (hash m = H(M), 0 ≤ m ≤ q − 1)</h3>
+      <div class="eq">1. random K, 1 ≤ K ≤ q − 1, gcd(K, q − 1) = 1
+2. S<sub>1</sub> = <span class="gk">α</span><sup>K</sup> mod q            <span class="n">(= C<sub>1</sub> of Elgamal encryption)</span>
+3. K<sup>−1</sup> mod (q − 1)
+4. S<sub>2</sub> = K<sup>−1</sup>(m − X<sub>A</sub>S<sub>1</sub>) mod (q − 1)
+5. signature = (S<sub>1</sub>, S<sub>2</sub>)</div>
+    </div>
+  </div>
+  <h3>Verification (any user B)</h3>
+  <div class="eq">V<sub>1</sub> = <span class="gk">α</span><sup>m</sup> mod q
+V<sub>2</sub> = (Y<sub>A</sub>)<sup>S<sub>1</sub></sup>(S<sub>1</sub>)<sup>S<sub>2</sub></sup> mod q          valid if V<sub>1</sub> = V<sub>2</sub></div>
+  <p>Why it works:</p>
+  <div class="eq"><span class="gk">α</span><sup>m</sup> mod q = <span class="gk">α</span><sup>X<sub>A</sub>S<sub>1</sub></sup><span class="gk">α</span><sup>KS<sub>2</sub></sup> mod q        <span class="n">substitute Y<sub>A</sub> and S<sub>1</sub></span>
+<span class="gk">α</span><sup>m − X<sub>A</sub>S<sub>1</sub></sup> mod q = <span class="gk">α</span><sup>KS<sub>2</sub></sup> mod q        <span class="n">rearrange</span>
+m − X<sub>A</sub>S<sub>1</sub> ≡ KS<sub>2</sub> (mod q − 1)            <span class="n">property 2 of primitive roots</span>
+m − X<sub>A</sub>S<sub>1</sub> ≡ KK<sup>−1</sup>(m − X<sub>A</sub>S<sub>1</sub>) (mod q − 1)   <span class="n">substitute S<sub>2</sub></span></div>
+
+  <div class="ex"><span class="t">Book example · GF(19), <span class="gk">α</span> = 10</span>
+    <div class="eq">X<sub>A</sub> = 16 → Y<sub>A</sub> = 10<sup>16</sup> mod 19 = 4;  public key {19, 10, 4}
+m = 14, K = 5 (gcd(5, 18) = 1)
+S<sub>1</sub> = 10<sup>5</sup> mod 19 = 3;  K<sup>−1</sup> = 5<sup>−1</sup> mod 18 = 11
+S<sub>2</sub> = 11(14 − 16·3) mod 18 = −374 mod 18 = 4
+V<sub>1</sub> = 10<sup>14</sup> mod 19 = 16;  V<sub>2</sub> = 4<sup>3</sup>·3<sup>4</sup> mod 19 = 5184 mod 19 = 16  ✓</div></div>
+
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Elgamal sign &amp; verify</span><span class="pill">Section 13.2</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>q (prime)<input type="number" id="eg-q" value="19" min="5"></label>
+        <label><span>primitive root <span class="gk">α</span></span><input type="number" id="eg-a" value="10" min="2"></label>
+        <label><span>private X<sub>A</sub></span><input type="number" id="eg-x" value="16" min="2"></label>
+        <label>hash m<input type="number" id="eg-m" value="14" min="0"></label>
+        <label>random K<input type="number" id="eg-k" value="5" min="1"></label>
+        <button type="button" id="eg-rk" class="ghost">Random K</button>
+      </div>
+      <div class="controls"><label>hash received by B, m′<input type="number" id="eg-mr" value="14" min="0"></label><span class="cap">Change m′ to see verification fail.</span></div>
+      <div id="eg-out" class="out" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 13.3 ============ -->
+<section class="unit" id="s133">
+  <h2><span class="sec">13.3</span>Schnorr Digital Signature Scheme</h2>
+  <p class="why">Also based on discrete logarithms, but designed so that most of the signing work does not depend on the message and can be done in advance, during the processor’s idle time.</p>
+  <p>The message-dependent part of signing is only a multiplication of a 2n-bit integer by an n-bit integer. The modulus p is prime and p − 1 has a prime factor q of appropriate size, i.e. <span class="m">p − 1 ≡ 0 (mod q)</span>. Typically <span class="m">p ≈ 2<sup>1024</sup></span> and <span class="m">q ≈ 2<sup>160</sup></span>, the length of a SHA-1 hash.</p>
+  <div class="grid2">
+    <div>
+      <h3>Key generation</h3>
+      <div class="eq">1. primes p, q with q | (p − 1)
+2. <span class="gk">α</span> with <span class="gk">α</span><sup>q</sup> = 1 mod p     <span class="n">(p, q, <span class="gk">α</span>: global public key,</span>
+                          <span class="n"> common to a group of users)</span>
+3. random s, 0 &lt; s &lt; q              <span class="n">(private key)</span>
+4. v = <span class="gk">α</span><sup>−s</sup> mod p              <span class="n">(public key)</span></div>
+    </div>
+    <div>
+      <h3>Signing</h3>
+      <div class="eq">1. random r, 0 &lt; r &lt; q;  x = <span class="gk">α</span><sup>r</sup> mod p
+   <span class="n">(preprocessing: independent of M)</span>
+2. e = H(M ‖ x)
+3. y = (r + se) mod q
+   signature = (e, y)</div>
+    </div>
+  </div>
+  <h3>Verification</h3>
+  <div class="eq">1. x′ = <span class="gk">α</span><sup>y</sup>v<sup>e</sup> mod p
+2. valid if e = H(M ‖ x′)
+
+because  x′ ≡ <span class="gk">α</span><sup>y</sup>v<sup>e</sup> ≡ <span class="gk">α</span><sup>y</sup><span class="gk">α</span><sup>−se</sup> ≡ <span class="gk">α</span><sup>y−se</sup> ≡ <span class="gk">α</span><sup>r</sup> ≡ x (mod p),  so H(M ‖ x′) = H(M ‖ x)</div>
+  <p class="cap">The step <span class="m"><span class="gk">α</span><sup>y−se</sup> ≡ <span class="gk">α</span><sup>r</sup></span> uses <span class="m"><span class="gk">α</span><sup>q</sup> = 1 mod p</span>: exponents can be reduced mod q, and y − se ≡ r (mod q).</p>
+
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Schnorr sign &amp; verify (toy sizes)</span><span class="pill">Section 13.3</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>p (prime)<input type="number" id="sc-p" value="607"></label>
+        <label>q (prime, q | p − 1)<input type="number" id="sc-q" value="101"></label>
+        <label><span><span class="gk">α</span> (<span class="gk">α</span><sup>q</sup> = 1 mod p)</span><input type="number" id="sc-a" value="64"></label>
+        <label>private s<input type="number" id="sc-s" value="37"></label>
+        <label>random r<input type="number" id="sc-r" value="58"></label>
+        <button type="button" id="sc-rr" class="ghost">Random r</button>
+      </div>
+      <div class="controls"><label class="grow">Message M<input type="text" id="sc-m" value="Transfer 100 to Carol"></label><label class="grow">Message received, M′<input type="text" id="sc-mr" value="Transfer 100 to Carol"></label></div>
+      <div id="sc-out" class="out" aria-live="polite"></div>
+      <p class="cap">Here H(M ‖ x) is SHA-256 of the text M followed by the decimal digits of x, reduced mod q so it fits these toy numbers. Real parameters use a full hash and a q of at least 160 bits.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 13.4 ============ -->
+<section class="unit" id="s134">
+  <h2><span class="sec">13.4</span>NIST Digital Signature Algorithm</h2>
+  <p class="why">DSA (FIPS 186) is built from the Elgamal and Schnorr ideas. It is a public-key technique that provides only the digital signature function: unlike RSA, it cannot be used for encryption or key exchange.</p>
+  <p>The DSA uses the Secure Hash Algorithm (SHA). FIPS 186-4 (2013) also includes signature algorithms based on RSA and on elliptic curve cryptography.</p>
+  <h3>The DSA approach compared with RSA (Figure 13.2)</h3>
+  <div class="cmp">
+    <div><h4>(a) RSA approach</h4>
+      <div class="flow"><span class="c">M</span><span class="ar">→</span><span class="c">H</span><span class="ar">→</span><span class="c k">E(PR<sub>a</sub>, H(M))</span><span class="ar">→ send</span><span class="c">M ‖ signature</span></div>
+      <div class="flow"><span class="c">H(M)</span><span class="ar">vs</span><span class="c k">D(PU<sub>a</sub>, signature)</span><span class="ar">→</span><span class="c o">compare</span></div>
+      <p>The hash code is encrypted with the sender’s private key. The recipient hashes the message, decrypts the signature with the sender’s public key, and accepts if the two match.</p></div>
+    <div><h4>(b) DSA approach</h4>
+      <div class="flow"><span class="c">H(M)</span><span class="ar">+</span><span class="c">k</span><span class="ar">+</span><span class="c k">PR<sub>a</sub></span><span class="ar">+</span><span class="c">PU<sub>G</sub></span><span class="ar">→</span><span class="c">Sig</span><span class="ar">→</span><span class="c">(s, r)</span></div>
+      <div class="flow"><span class="c">H(M′), s, r</span><span class="ar">+</span><span class="c k">PU<sub>a</sub></span><span class="ar">+</span><span class="c">PU<sub>G</sub></span><span class="ar">→</span><span class="c">Ver</span><span class="ar">→</span><span class="c o">v = r ?</span></div>
+      <p>The hash code goes into a signature function with a random number k made for this signature, the private key and the global public key. The verification function outputs a value equal to r if the signature is valid.</p></div>
+  </div>
+  <div class="def"><b>Global public key (PU<sub>G</sub>)</b> — a set of parameters known to a group of communicating principals and shared by all of them. (They could vary per user as part of each user’s public key, but a separate global public key is more likely in practice.)</div>
+  <div class="def"><b>Per-message secret number k</b> — a random or pseudorandom integer generated for each signature and kept secret. Because k changes, signing the same message twice gives two different signatures.</div>
+</section>
+
+<section class="unit" id="s134b">
+  <h2>The Digital Signature Algorithm</h2>
+  <p class="why">DSA relies on the difficulty of discrete logarithms, and its global public-key components are the same as in the Schnorr scheme.</p>
+  <div class="def"><b>q divides (p − 1)</b> — written q | (p − 1): (p − 1)/q leaves no remainder (Unit 2).</div>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l" colspan="2">Figure 13.3 · The Digital Signature Algorithm</th></tr>
+    <tr><td class="l"><b>Global public-key components</b></td><td class="l"><span class="m">p</span>: prime, 2<sup>L−1</sup> &lt; p &lt; 2<sup>L</sup>, 512 ≤ L ≤ 1024, L a multiple of 64<br><span class="m">q</span>: prime divisor of (p − 1), 2<sup>N−1</sup> &lt; q &lt; 2<sup>N</sup> (N bits)<br><span class="m">g = h<sup>(p−1)/q</sup> mod p</span>, any h with 1 &lt; h &lt; p − 1 such that g &gt; 1 (so g has order q mod p)</td></tr>
+    <tr><td class="l"><b>User’s private key</b></td><td class="l"><span class="m">x</span>: random or pseudorandom, 0 &lt; x &lt; q</td></tr>
+    <tr><td class="l"><b>User’s public key</b></td><td class="l"><span class="m">y = g<sup>x</sup> mod p</span>. Finding x from y is the discrete logarithm of y to base g, mod p: infeasible.</td></tr>
+    <tr><td class="l"><b>Per-message secret</b></td><td class="l"><span class="m">k</span>: random or pseudorandom, 0 &lt; k &lt; q, unique for each signing</td></tr>
+    <tr><td class="l"><b>Signing</b></td><td class="l mono">r = (g<sup>k</sup> mod p) mod q<br>s = [k<sup>−1</sup>(H(M) + xr)] mod q<br>signature = (r, s)</td></tr>
+    <tr><td class="l"><b>Verifying</b><br><span class="cap">M′, r′, s′ = received versions</span></td><td class="l mono">w = (s′)<sup>−1</sup> mod q<br>u<sub>1</sub> = [H(M′)w] mod q<br>u<sub>2</sub> = (r′)w mod q<br>v = [(g<sup>u<sub>1</sub></sup>y<sup>u<sub>2</sub></sup>) mod p] mod q<br>TEST: v = r′</td></tr>
+  </table></div>
+  <ul class="props">
+    <li><b>The final test is on r, which does not depend on the message.</b> r is a function of k and the three global components. k<sup>−1</sup> mod q goes into a function with the hash and the private key, built so the receiver can recover r from the message, signature and public keys. (A proof is in the book’s online Appendix K.)</li>
+    <li>Given the difficulty of discrete logarithms, an opponent cannot recover k from r or x from s.</li>
+    <li><b>Precomputation.</b> The only demanding signing step, g<sup>k</sup> mod p, does not depend on the message, so values of r can be computed ahead of time. So can the inverses k<sup>−1</sup>.</li>
+  </ul>
+
+  <h3>Comparing Elgamal, Schnorr and DSA</h3>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l"></th><th class="l">Elgamal</th><th class="l">Schnorr</th><th class="l">DSA</th></tr>
+    <tr><td class="l">Global values</td><td class="l">prime q, primitive root <span class="gk">α</span></td><td class="l">primes p, q with q | p − 1; <span class="gk">α</span><sup>q</sup> = 1 mod p</td><td class="l">same as Schnorr (p, q, g)</td></tr>
+    <tr><td class="l">Key pair</td><td class="l">X<sub>A</sub>; Y<sub>A</sub> = <span class="gk">α</span><sup>X<sub>A</sub></sup> mod q</td><td class="l">s; v = <span class="gk">α</span><sup>−s</sup> mod p</td><td class="l">x; y = g<sup>x</sup> mod p</td></tr>
+    <tr><td class="l">Per-signature random</td><td class="l">K, gcd(K, q − 1) = 1</td><td class="l">r</td><td class="l">k</td></tr>
+    <tr><td class="l">Signature</td><td class="l">(S<sub>1</sub>, S<sub>2</sub>)</td><td class="l">(e, y)</td><td class="l">(r, s)</td></tr>
+    <tr><td class="l">Exponent arithmetic</td><td class="l">mod (q − 1)</td><td class="l">mod q</td><td class="l">mod q</td></tr>
+    <tr><td class="l">Message-independent work</td><td class="l"><span class="gk">α</span><sup>K</sup> mod q</td><td class="l">x = <span class="gk">α</span><sup>r</sup> mod p</td><td class="l">r and k<sup>−1</sup></td></tr>
+    <tr><td class="l">Check</td><td class="l">V<sub>1</sub> = V<sub>2</sub></td><td class="l">e = H(M ‖ x′)</td><td class="l">v = r′</td></tr>
+  </table></div>
+
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · DSA sign &amp; verify (toy sizes)</span><span class="pill">Figures 13.3–13.4</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>p (prime)<input type="number" id="ds-p" value="607"></label>
+        <label>q (prime, q | p − 1)<input type="number" id="ds-q" value="101"></label>
+        <label>h (gives g)<input type="number" id="ds-h" value="2"></label>
+        <label>private x<input type="number" id="ds-x" value="57"></label>
+        <label>per-message k<input type="number" id="ds-k" value="23"></label>
+        <button type="button" id="ds-rk" class="ghost">Sign again with a new k</button>
+      </div>
+      <div class="controls"><label class="grow">Message M<input type="text" id="ds-m" value="Buy 20 shares"></label><label class="grow">Message received, M′<input type="text" id="ds-mr" value="Buy 20 shares"></label></div>
+      <div id="ds-out" class="out" aria-live="polite"></div>
+      <p class="cap">H(M) here is SHA-256 of the text, reduced mod q to fit the toy q. If r or s comes out 0, choose another k.</p>
+    </div>
+  </div>
+  <div class="note"><span class="t">Current standard</span>FIPS 186-5 (2023) removes DSA as an approved method for generating signatures and keeps it only for verifying existing ones. The approved schemes are RSA, ECDSA and EdDSA, a deterministic elliptic curve scheme (RFC 8032). See Sources.</div>
+</section>
+
+<!-- ============ 13.5 ============ -->
+<section class="unit" id="s135">
+  <h2><span class="sec">13.5</span>Elliptic Curve Digital Signature Algorithm</h2>
+  <p class="why">ECDSA (in FIPS 186 since 2009) follows the DSA pattern on an elliptic curve group. It is gaining acceptance because elliptic curve cryptography gives comparable security with a smaller key bit length.</p>
+  <div class="def"><b>Elliptic curve E<sub>q</sub>(a, b)</b> — the points (x, y) with <span class="m">y<sup>2</sup> = x<sup>3</sup> + ax + b</span> over Z<sub>q</sub> (q prime), plus a point at infinity <b>O</b> (Unit 6). ECDSA uses these <b>prime curves</b>, not binary curves over GF(2<sup>m</sup>).</div>
+  <div class="def"><b>Point addition and scalar multiple</b> — points on the curve can be added, with O as the identity. kG means G added to itself k times; computing kG is easy, but recovering k from G and kG is infeasible for large curves.</div>
+  <div class="def"><b>Order of a point</b> — the smallest positive integer n with nG = O.</div>
+
+  <p>The four elements of ECDSA:</p>
+  <ol>
+    <li>All participants use the same <b>global domain parameters</b>, which define a curve and a point of origin (base point) on it.</li>
+    <li>A signer generates a key pair: a random private number, and the public key, another curve point computed from it and the base point.</li>
+    <li>A hash of the message, the private key and the domain parameters give a signature of two integers, r and s.</li>
+    <li>The verifier uses the signer’s public key, the domain parameters and s to compute a value v, and accepts if v = r.</li>
+  </ol>
+  <div class="grid2">
+    <div>
+      <h3>Global domain parameters</h3>
+      <div class="eq">q     a prime number
+a, b  curve y<sup>2</sup> = x<sup>3</sup> + ax + b over Z<sub>q</sub>
+G     base point (x<sub>g</sub>, y<sub>g</sub>) on the curve
+n     order of G (smallest n, nG = O);
+      also the number of points on the curve</div>
+      <h3>Key generation (Bob)</h3>
+      <div class="eq">1. random d ∈ [1, n − 1]     <span class="n">(private key)</span>
+2. Q = dG, a point in E<sub>q</sub>(a, b)   <span class="n">(public key)</span></div>
+    </div>
+    <div>
+      <h3>Signing message m</h3>
+      <div class="eq">1. random k ∈ [1, n − 1]
+2. P = (x, y) = kG;  r = x mod n
+   if r = 0, go to 1
+3. t = k<sup>−1</sup> mod n
+4. e = H(m)  <span class="n">(SHA-2 or SHA-3)</span>
+5. s = k<sup>−1</sup>(e + dr) mod n
+   if s = 0, go to 1
+6. signature = (r, s)</div>
+    </div>
+  </div>
+  <h3>Verification (Alice)</h3>
+  <div class="eq">1. check r, s are integers in [1, n − 1]
+2. e = H(m)
+3. w = s<sup>−1</sup> mod n
+4. u<sub>1</sub> = ew,  u<sub>2</sub> = rw
+5. X = (x<sub>1</sub>, y<sub>1</sub>) = u<sub>1</sub>G + u<sub>2</sub>Q
+6. if X = O reject, else v = x<sub>1</sub> mod n
+7. accept if and only if v = r</div>
+  <p>Why it works: <span class="m wr">k = s<sup>−1</sup>(e + dr) = we + wdr = u<sub>1</sub> + u<sub>2</sub>d (mod n)</span>, so <span class="m wr">u<sub>1</sub>G + u<sub>2</sub>Q = u<sub>1</sub>G + u<sub>2</sub>dG = (u<sub>1</sub> + u<sub>2</sub>d)G = kG</span>. X is the same point as kG, so its x-coordinate mod n equals r.</p>
+
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · ECDSA on a toy curve</span><span class="pill">Figure 13.5</span></div>
+    <div class="lab-b">
+      <p class="cap" style="margin-top:0">Curve E<sub>17</sub>(2, 2): y<sup>2</sup> = x<sup>3</sup> + 2x + 2 over Z<sub>17</sub>, base point G = (5, 1), n = 19. This curve has 19 points including O (18 shown below), so every point except O generates the group. Chosen for this guide; far too small to be secure.</p>
+      <div class="controls">
+        <label>private d (1–18)<input type="number" id="ec-d" value="7" min="1" max="18"></label>
+        <label>random k (1–18)<input type="number" id="ec-k" value="10" min="1" max="18"></label>
+        <button type="button" id="ec-rk" class="ghost">Random k</button>
+      </div>
+      <div class="controls"><label class="grow">Message m<input type="text" id="ec-m" value="Meet at noon"></label><label class="grow">Message received, m′<input type="text" id="ec-mr" value="Meet at noon"></label></div>
+      <div class="grid2">
+        <div class="figure" role="img" aria-label="Plot of the 18 affine points of the toy curve, with G, the public key Q, the signing point kG and the verification point X highlighted."><svg viewBox="0 0 330 330" id="ec-svg"></svg>
+          <div class="legend"><span><i style="background:var(--accent)"></i>G</span><span><i style="background:var(--mark)"></i>Q = dG</span><span><i style="border:2px solid var(--bad)"></i>kG</span><span><i style="border:2px dashed var(--accent)"></i>X = u<sub>1</sub>G + u<sub>2</sub>Q</span></div></div>
+        <div id="ec-out" class="out" aria-live="polite"></div>
+      </div>
+      <p class="cap">e here is SHA-256 of the text reduced mod n. With n = 19 many messages share a hash, which is one reason real curves use a very large n.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 13.6 ============ -->
+<section class="unit" id="s136">
+  <h2><span class="sec">13.6</span>RSA-PSS Digital Signature Algorithm</h2>
+  <p class="why">FIPS 186 also includes RSA-based signatures. The RSA Probabilistic Signature Scheme (RSA-PSS) is the newest of them, and the one RSA Laboratories recommends as the most secure.</p>
+  <div class="def"><b>RSA keys</b> — private key {d, n}, public key {e, n}, where n is the product of two large primes and ed ≡ 1 (mod φ(n)) (Unit 6). Signing raises a value to d; verifying raises it to e.</div>
+  <div class="def"><b>Octet</b> — an 8-bit byte. RSA-PSS lengths are counted in octets.</div>
+  <div class="def"><b>Message representative / padding</b> — the block that is actually signed with RSA, formed by embedding the hash value with fixed constants (padding) and other fields.</div>
+  <p>The three main RSA signature schemes differ mainly in the padding format used to embed the hash into a message representative, and in how verification decides that the hash and the representative are consistent. For the schemes before PSS, no mathematical proof shows the scheme is as secure as the underlying RSA primitive. PSS adds a randomization process that lets its security be shown to be closely related to the security of RSA itself.</p>
+
+  <h3>Mask generation function (MGF)</h3>
+  <div class="def"><b>Mask generation function</b> — MGF(X, maskLen): a pseudorandom function with input bit string X of any length and output length maskLen octets. An MGF built on a secure hash (e.g. SHA-1) is a secure way to produce a hash of <i>variable</i> length from a hash with fixed-length output.</div>
+  <div class="pseudo"><span class="cm">MGF1, with hash function Hash of output hLen octets</span>
+<span class="kw">input</span>  X (octet string to be masked), maskLen
+T = empty string
+k = ⌈maskLen/hLen⌉ − 1
+<span class="kw">for</span> counter = 0 <span class="kw">to</span> k
+    C = counter as a 32-bit string
+    T = T ‖ Hash(X ‖ C)
+<span class="kw">output</span> mask = the leading maskLen octets of T</div>
+  <p>If maskLen = hLen the output is just Hash(X ‖ 0). Otherwise MGF1 keeps appending <span class="m">Hash(X ‖ 1) ‖ Hash(X ‖ 2) ‖ …</span> until T is long enough, then truncates.</p>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · MGF1</span><span class="pill">Section 13.6</span></div>
+    <div class="lab-b">
+      <div class="controls"><label class="grow">X (UTF-8 text)<input type="text" id="mg-x" value="seed"></label><label>maskLen (octets)<input type="number" id="mg-l" value="48" min="1" max="512"></label><label>Hash<select id="mg-h"><option value="SHA-256">SHA-256 (hLen 32)</option><option value="SHA-1">SHA-1 (hLen 20)</option></select></label></div>
+      <div id="mg-out" class="out" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<section class="unit" id="s136b">
+  <h2>Signing and Verification</h2>
+  <p class="why">Signing is two stages: encode the message into a fixed-length encoded message (EM), then apply the RSA private key. Verification undoes the RSA step and re-checks every field of EM.</p>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Name</th><th class="l">Meaning</th></tr>
+    <tr><td class="l mono">Hash</td><td class="l">hash function with output hLen octets (the book’s preferred choice: SHA-1, 20 octets)</td></tr>
+    <tr><td class="l mono">MGF</td><td class="l">mask generation function; the specification calls for MGF1</td></tr>
+    <tr><td class="l mono">sLen</td><td class="l">salt length in octets; typically sLen = hLen</td></tr>
+    <tr><td class="l mono">emBits</td><td class="l">one less than the bit length of the RSA modulus n</td></tr>
+    <tr><td class="l mono">emLen</td><td class="l">length of EM in octets = ⌈emBits/8⌉</td></tr>
+    <tr><td class="l mono">padding1</td><td class="l">00 00 00 00 00 00 00 00 (64 zero bits)</td></tr>
+    <tr><td class="l mono">padding2</td><td class="l">(emLen − sLen − hLen − 2) octets of 00, then one octet 01</td></tr>
+    <tr><td class="l mono">salt</td><td class="l">a pseudorandom number</td></tr>
+    <tr><td class="l mono">bc</td><td class="l">the hexadecimal value BC</td></tr>
+  </table></div>
+
+  <h3>Message encoding</h3>
+  <div class="pseudo">1. mHash = Hash(M)
+2. random salt;
+   M′ = padding1 ‖ mHash ‖ salt
+3. H = Hash(M′)
+4. DB = padding2 ‖ salt
+5. dbMask = MGF(H, emLen − hLen − 1)
+6. maskedDB = DB <span class="op">⊕</span> dbMask
+7. set the leftmost 8emLen − emBits bits
+   of maskedDB to 0
+8. EM = maskedDB ‖ H ‖ 0xbc</div>
+    <div class="figure" role="img" aria-label="Figure 13.6: M is hashed to mHash; M prime is padding1, mHash and salt; M prime is hashed to H; DB is padding2 and salt; H passes through MGF to give dbMask, which is XORed with DB to give maskedDB; EM is maskedDB, H and bc.">
+    <svg viewBox="0 0 620 300" width="620">
+      <rect class="bx" x="250" y="8" width="80" height="28" rx="4"/><text class="tx" x="290" y="27" text-anchor="middle">M</text>
+      <path class="ln" d="M290 36 V50" marker-end="url(#ah)"/>
+      <rect class="bxa" x="250" y="52" width="80" height="28" rx="4"/><text class="tx" x="290" y="71" text-anchor="middle">Hash</text>
+      <path class="ln" d="M290 80 V98" marker-end="url(#ah)"/>
+      <text class="tx" x="104" y="120" text-anchor="end">M′ =</text>
+      <rect class="bx" x="110" y="100" width="120" height="30"/><text class="tx" x="170" y="120" text-anchor="middle">padding1</text>
+      <rect class="bx" x="230" y="100" width="120" height="30"/><text class="tx" x="290" y="120" text-anchor="middle">mHash</text>
+      <rect class="bxm" x="350" y="100" width="100" height="30"/><text class="tx" x="400" y="120" text-anchor="middle">salt</text>
+      <path class="ln" d="M450 115 H478" marker-end="url(#ah)"/>
+      <rect class="bxa" x="480" y="101" width="70" height="28" rx="4"/><text class="tx" x="515" y="120" text-anchor="middle">Hash</text>
+      <path class="ln dash" d="M400 130 V168" marker-end="url(#ah)"/>
+      <text class="tx" x="104" y="190" text-anchor="end">DB =</text>
+      <rect class="bx" x="110" y="170" width="240" height="30"/><text class="tx" x="230" y="190" text-anchor="middle">padding2</text>
+      <rect class="bxm" x="350" y="170" width="100" height="30"/><text class="tx" x="400" y="190" text-anchor="middle">salt</text>
+      <path class="ln" d="M515 129 V168" marker-end="url(#ah)"/>
+      <rect class="bxa" x="480" y="171" width="70" height="28" rx="4"/><text class="tx" x="515" y="190" text-anchor="middle">MGF</text>
+      <path class="ln" d="M280 200 V220" marker-end="url(#ah)"/>
+      <path class="ln" d="M515 199 V232 H294" marker-end="url(#ah)"/><text class="tm" x="410" y="226" text-anchor="middle">dbMask</text>
+      <g aria-label="XOR"><circle class="bx" cx="280" cy="232" r="11"/><path class="ln" d="M280 224 V240 M272 232 H288"/></g>
+      <path class="ln" d="M280 243 V256" marker-end="url(#ah)"/>
+      <text class="tx" x="104" y="278" text-anchor="end">EM =</text>
+      <rect class="bx" x="110" y="258" width="290" height="30"/><text class="tx" x="255" y="278" text-anchor="middle">maskedDB</text>
+      <rect class="bxa" x="400" y="258" width="100" height="30"/><text class="tx" x="450" y="278" text-anchor="middle">H</text>
+      <rect class="bxb" x="500" y="258" width="50" height="30"/><text class="tx" x="525" y="278" text-anchor="middle">bc</text>
+      <path class="ln" d="M550 115 H590 V244 H450 V256" marker-end="url(#ah)"/>
+    </svg>
+    <div class="cap">Redrawn from Figure 13.6, RSA-PSS encoding.</div></div>
+  <ul class="props">
+    <li>All the RSA-based standard schemes append constants (here padding1 and padding2) while forming the digest. This makes it harder to find another message that maps to the same digest as a given message, or two messages with the same digest.</li>
+    <li>The <b>salt</b> changes with every use, so signing the same message twice with the same private key gives two different signatures, an added measure of security.</li>
+  </ul>
+  <h3>Forming the signature</h3>
+  <p>Treat EM as an unsigned nonnegative integer m and compute <span class="m">s = m<sup>d</sup> mod n</span>. Convert s to an octet string S of k octets, where k is the length of n in octets (a 2048-bit key gives k = 2048/8 = 256).</p>
+
+  <h3>Signature verification</h3>
+  <p><b>Decryption:</b> treat S as an integer s, compute <span class="m">m = s<sup>e</sup> mod n</span>, and convert m to EM of emLen = ⌈(modBits − 1)/8⌉ octets (modBits = bit length of n). <b>EM verification:</b></p>
+  <div class="pseudo"> 1. mHash = Hash(M)
+ 2. if emLen &lt; hLen + sLen + 2: <b>inconsistent</b>
+ 3. if the rightmost octet of EM ≠ BC: <b>inconsistent</b>
+ 4. maskedDB = leftmost emLen − hLen − 1 octets; H = next hLen octets
+ 5. if the leftmost 8emLen − emBits bits of maskedDB are not all 0: <b>inconsistent</b>
+ 6. dbMask = MGF(H, emLen − hLen − 1)
+ 7. DB = maskedDB <span class="op">⊕</span> dbMask
+ 8. set the leftmost 8emLen − emBits bits of DB to 0
+ 9. if the leftmost emLen − hLen − sLen − 1 octets of DB ≠ padding2: <b>inconsistent</b>
+10. salt = last sLen octets of DB
+11. M′ = padding1 ‖ mHash ‖ salt
+12. H′ = Hash(M′)
+13. <b>consistent</b> if H = H′, otherwise <b>inconsistent</b></div>
+  <p>In Figure 13.7, H (from the decrypted signature) is compared with H′ (computed from the message), and the other checked fields are compared with the known constants as an extra check. The verifier does not know the salt and does not compare it. The salt plays the same role as k in DSA and ECDSA: a signer-generated pseudorandom value that makes repeated signatures of one message differ, which the verifier does not need to know.</p>
+
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · RSA-PSS step by step</span><span class="pill">Figures 13.6–13.7</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>Hash<select id="ps-h"><option value="SHA-256">SHA-256 (hLen = sLen = 32)</option><option value="SHA-1">SHA-1 (hLen = sLen = 20, as in the book)</option></select></label>
+        <button type="button" id="ps-gen" class="ghost">New 1024-bit RSA key</button>
+        <button type="button" id="ps-sign">Sign (new salt)</button>
+      </div>
+      <div id="ps-key" class="out"></div>
+      <div class="controls" style="margin-top:12px"><label class="grow">Message M<input type="text" id="ps-m" value="Pay Alice 50"></label><label class="grow">Message received, M′<input type="text" id="ps-mr" value="Pay Alice 50"></label></div>
+      <div class="sub-t">Encoding and signing</div>
+      <div id="ps-enc" class="out"></div>
+      <div class="sub-t">Verification of M′</div>
+      <div id="ps-ver" class="out" aria-live="polite"></div>
+      <p class="cap">Key, salt and signature are made in your browser with the Web Crypto API; the encoding and verification steps above are computed by this page and then cross-checked with the browser’s own RSA-PSS verifier. A 1024-bit modulus keeps the numbers readable; it is too short for real use.</p>
+    </div>
+  </div>
+  <div class="note"><span class="t">Current practice</span>RSA-PSS (EMSA-PSS) and MGF1 are specified in RFC 8017 (PKCS #1 v2.2). Unit 7 notes that NIST is retiring SHA-1, so the lab defaults to SHA-256; SHA-1 is offered to match the book.</div>
+</section>
+
+<!-- ============ Key terms ============ -->
+<section class="unit" id="terms">
+  <h2><span class="sec">13.7</span>Key Terms</h2>
+  <p class="why">The chapter’s key-term list, plus the intermediate terms it depends on, one line each.</p>
+  <dl class="gloss">
+    <dt>Digital signature</dt><dd>Short block made from a message’s hash and the signer’s private key; anyone verifies it with the public key. Authenticates source and data integrity.</dd>
+    <dt>Signature generation / verification algorithm</dt><dd>Produces a signature from hash + private key / checks it with hash + public key, returning valid or not valid.</dd>
+    <dt>Nonrepudiation</dt><dd>The signer cannot later deny the signed message; the reason a MAC is not enough.</dd>
+    <dt>Key-only attack</dt><dd>Attacker knows only the public key.</dd>
+    <dt>Known message attack</dt><dd>Attacker has some messages and their signatures.</dd>
+    <dt>Chosen message attack</dt><dd>Attacker obtains signatures on messages of its choice: generic (chosen before seeing the public key), directed (after), or adaptive (using the signer as an oracle).</dd>
+    <dt>Existential / selective / universal forgery</dt><dd>Forging a signature on some message / on a chosen message / on any message via an equivalent signing algorithm.</dd>
+    <dt>Total break</dt><dd>Attacker recovers the private key.</dd>
+    <dt>Direct digital signature</dt><dd>Scheme involving only source and destination; the destination knows the source’s public key.</dd>
+    <dt>Timestamp</dt><dd>Date and time included in a signed message, to limit claims of key loss.</dd>
+    <dt>Primitive root</dt><dd><span class="gk">α</span> whose powers mod prime q give every value 1 … q − 1.</dd>
+    <dt>Discrete logarithm</dt><dd>The exponent i with b ≡ <span class="gk">α</span><sup>i</sup> (mod q); infeasible to compute for large q.</dd>
+    <dt>Elgamal digital signature</dt><dd>Signature (S<sub>1</sub>, S<sub>2</sub>) = (<span class="gk">α</span><sup>K</sup> mod q, K<sup>−1</sup>(m − X<sub>A</sub>S<sub>1</sub>) mod (q − 1)); valid if <span class="gk">α</span><sup>m</sup> ≡ Y<sub>A</sub><sup>S<sub>1</sub></sup>S<sub>1</sub><sup>S<sub>2</sub></sup>.</dd>
+    <dt>Schnorr digital signature</dt><dd>Signature (e, y) with e = H(M ‖ <span class="gk">α</span><sup>r</sup> mod p), y = (r + se) mod q; most work done before the message is known.</dd>
+    <dt>Global public key (PU<sub>G</sub>)</dt><dd>Parameters (p, q, g) shared by a group of users.</dd>
+    <dt>Per-message secret number k</dt><dd>Random value unique to each DSA/ECDSA signature.</dd>
+    <dt>Digital Signature Algorithm (DSA)</dt><dd>NIST FIPS 186 scheme: r = (g<sup>k</sup> mod p) mod q, s = k<sup>−1</sup>(H(M) + xr) mod q; signature only, no encryption or key exchange.</dd>
+    <dt>Domain parameters</dt><dd>The curve, base point G and its order n shared by all ECDSA users.</dd>
+    <dt>Base point G / order n</dt><dd>Point of origin on the curve; n is the smallest positive integer with nG = O.</dd>
+    <dt>Elliptic Curve Digital Signature Algorithm (ECDSA)</dt><dd>DSA analog on a prime curve: Q = dG, r = (kG)<sub>x</sub> mod n, s = k<sup>−1</sup>(e + dr) mod n.</dd>
+    <dt>RSA-PSS</dt><dd>RSA Probabilistic Signature Scheme: randomized (salted) encoding then s = m<sup>d</sup> mod n; security closely tied to RSA.</dd>
+    <dt>Mask generation function (MGF)</dt><dd>Variable-length hash-based pseudorandom function; MGF1 concatenates Hash(X ‖ counter).</dd>
+    <dt>Encoded message (EM)</dt><dd>maskedDB ‖ H ‖ 0xbc: the fixed-length message digest that RSA-PSS signs.</dd>
+    <dt>Salt</dt><dd>Pseudorandom value in RSA-PSS that makes each signature of the same message different.</dd>
+  </dl>
+</section>
+
+<!-- ============ Review ============ -->
+<section class="unit" id="review">
+  <h2><span class="sec">13.7</span>Review Questions</h2>
+  <p class="why">Review questions 13.1–13.6 from the book. Answer first, then open to check.</p>
+  <div class="rv-tools" role="group" aria-label="Review answers"><button type="button" data-rv="open">Expand all</button><button type="button" data-rv="close">Collapse all</button><span class="rv-count" aria-live="polite"></span></div>
+  <details><summary>13.1 List two disputes that can arise in the context of message authentication.</summary><p>(1) The receiver forges a different message, attaches a valid authentication code with the shared key, and claims the sender sent it. (2) The sender denies sending a message; since the receiver could have forged it, there is no proof the sender did send it.</p></details>
+  <details><summary>13.2 What are the properties a digital signature should have?</summary><p>It must verify the author and the date and time of the signature; authenticate the contents at the time of the signature; and be verifiable by third parties to resolve disputes.</p></details>
+  <details><summary>13.3 What requirements should a digital signature scheme satisfy?</summary><p>The signature depends on the message; it uses information only the sender knows (preventing forgery and denial); it is relatively easy to produce, and to recognize and verify; it is computationally infeasible to forge, whether by a new message for an existing signature or a fraudulent signature for a given message; and it is practical to keep a copy in storage.</p></details>
+  <details><summary>13.4 What is the difference between direct and arbitrated digital signature?</summary><p>A direct digital signature involves only the source and destination, with the destination knowing the source’s public key; it depends entirely on the security of the sender’s private key. The 7th edition defines only the direct scheme. By contrast, an arbitrated scheme adds a trusted third party (an arbiter) between the two, which checks each signed message, dates it, and vouches for it to the recipient, so disputes can rely on the arbiter rather than only on the sender’s key. The book’s answer to the weaknesses of direct signatures is certificates and certificate authorities (Chapter 14).</p></details>
+  <details><summary>13.5 In what order should the signature function and the confidentiality function be applied to a message, and why?</summary><p>Sign first, then apply the outer confidentiality function (encrypt message plus signature). If the signature were computed on the ciphertext, a third party resolving a dispute would also need the decryption key to read the original message. With the signature inside, the recipient can store the plaintext and its signature for later dispute resolution.</p></details>
+  <details><summary>13.6 What are some threats associated with a direct digital signature scheme?</summary><p>A sender can deny a message by claiming the private key was lost or stolen and the signature forged. And a private key may actually be stolen at time T, letting the opponent sign messages stamped with a time at or before T. Timestamps and prompt reporting of compromised keys weaken these threats; certificates and certificate authorities address them.</p></details>
+</section>
+
+<!-- ============ Sources ============ -->
+<section class="unit" id="res">
+  <h2><span class="sec">Ref</span>References / Sources</h2>
+  <ul>
+    <li>W. Stallings, <i>Cryptography and Network Security: Principles and Practice</i>, 7th ed., Global Edition, Pearson, 2017. Chapter 13, pp. 419–440. All content not marked otherwise.</li>
+    <li><b>In the book:</b> Chapter 2 (primitive roots, discrete logarithms, extended Euclid), Chapter 9 (RSA), Chapter 10 (Elgamal encryption, elliptic curves), Chapter 11 (SHA), Appendix B.11 (Sage examples of DSA domain parameters, key generation and signing); online Appendix K (proof of the DSA).</li>
+    <li><a href="https://www.govinfo.gov/content/pkg/FR-2023-02-03/html/2023-02273.htm" target="_blank" rel="noopener">NIST, announcement of FIPS 186-5, Digital Signature Standard (Federal Register, Feb. 3, 2023)</a> — DSA kept only for verifying existing signatures; RSA, ECDSA and EdDSA approved.</li>
+    <li><a href="https://csrc.nist.gov/pubs/fips/186-5/final" target="_blank" rel="noopener">NIST FIPS 186-5, Digital Signature Standard</a> — the current standard.</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc8017" target="_blank" rel="noopener">RFC 8017, PKCS #1 v2.2: RSA Cryptography Specifications</a> — EMSA-PSS encoding and MGF1 used in the RSA-PSS labs.</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc8032" target="_blank" rel="noopener">RFC 8032, Edwards-Curve Digital Signature Algorithm (EdDSA)</a>.</li>
+    <li><a href="https://www.nist.gov/news-events/news/2022/12/nist-retires-sha-1-cryptographic-algorithm" target="_blank" rel="noopener">NIST, “NIST Retires SHA-1 Cryptographic Algorithm” (2022)</a> — reason the RSA-PSS lab defaults to SHA-256.</li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/sign" target="_blank" rel="noopener">MDN, SubtleCrypto.sign() / RSA-PSS</a> — the browser API used to generate keys and cross-check the RSA-PSS lab.</li>
+  </ul>
+  <footer>Content follows W. Stallings, <i>Cryptography and Network Security: Principles and Practice</i>, 7th ed., Global Edition, Chapter 13. The Elgamal, Schnorr, DSA and ECDSA labs use toy-sized numbers so each step can be followed by hand; the RSA-PSS lab uses a real 1024-bit key. Everything runs in your browser; nothing is sent anywhere. Random values come from <code>crypto.getRandomValues</code> and are for study only.</footer>
+</section>
+</main>
+</div>
+
+<script>
+/* ===== Unit 8 labs: Elgamal, Schnorr, DSA, ECDSA (toy sizes, BigInt), MGF1 and RSA-PSS (Web Crypto) ===== */
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const on=(id,ev,f)=>{const e=$(id);if(e)e.addEventListener(ev,f)};
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const B=BigInt;
+const enc=s=>new TextEncoder().encode(s);
+const hex=b=>Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');
+const cat=(...a)=>{const n=a.reduce((s,x)=>s+x.length,0),o=new Uint8Array(n);let p=0;for(const x of a){o.set(x,p);p+=x.length}return o};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const kv=rows=>'<div class="kv">'+rows.map(([k,v])=>'<span class="k">'+k+'</span><span class="v">'+v+'</span>').join('')+'</div>';
+const res=(ok,t)=>'<span class="res '+(ok?'ok':'no')+'">'+t+'</span>';
+const err=t=>'<p class="err">'+t+'</p>';
+const md=(a,m)=>((a%m)+m)%m;
+function mp(b,e,m){b=md(b,m);let r=1n;while(e>0n){if(e&1n)r=r*b%m;b=b*b%m;e>>=1n}return r}
+function egcd(a,b){let r0=a,r1=b,s0=1n,s1=0n;while(r1){const q=r0/r1;[r0,r1]=[r1,r0-q*r1];[s0,s1]=[s1,s0-q*s1]}return [r0,s0]}
+function gcd(a,b){a=a<0n?-a:a;b=b<0n?-b:b;while(b){[a,b]=[b,a%b]}return a}
+function inv(a,m){const [g,s]=egcd(md(a,m),m);return g===1n?md(s,m):null}
+function isPrime(n){if(n<2n)return false;if(n<4n)return true;if(n%2n===0n)return false;for(let d=3n;d*d<=n;d+=2n)if(n%d===0n)return false;return true}
+function pfactors(n){const f=[];for(let d=2n;d*d<=n;d++){if(n%d===0n){f.push(d);while(n%d===0n)n/=d}}if(n>1n)f.push(n);return f}
+function isPrimRoot(a,q){if(gcd(a,q)!==1n)return false;return pfactors(q-1n).every(f=>mp(a,(q-1n)/f,q)!==1n)}
+function num(id,name){const v=$(id).value.trim();if(!/^-?\d+$/.test(v))throw new Error((name||id)+' must be a whole number');return B(v)}
+function rnd(lo,hi){/* uniform integer in [lo,hi] for small ranges */const span=Number(hi-lo+1n);const a=new Uint32Array(1);crypto.getRandomValues(a);return lo+B(a[0]%span)}
+async function digest(name,bytes){return new Uint8Array(await crypto.subtle.digest(name,bytes))}
+function b2i(b){let x=0n;for(const v of b)x=(x<<8n)|B(v);return x}
+function i2b(x,len){const o=new Uint8Array(len);for(let i=len-1;i>=0;i--){o[i]=Number(x&255n);x>>=8n}return o}
+async function hmod(text,m){const d=await digest('SHA-256',enc(text));return {d,v:b2i(d)%m}}
+const short=h=>h.length>24?h.slice(0,16)+'…'+h.slice(-8):h;
+const sub=s=>'<sub>'+s+'</sub>',sup=s=>'<sup>'+s+'</sup>';
+const AL='<span class="gk">α</span>';
+const noSubtle=()=>!(window.crypto&&crypto.subtle);
+const NOSUB=err('This lab needs the Web Crypto API (open the page over https or from a local file in a current browser).');
+
+/* ---------- Figure 13.1 animation: pause offscreen ---------- */
+(function(){const s=$('sf-svg');if(!s||!('IntersectionObserver' in window))return;
+  new IntersectionObserver(es=>es.forEach(e=>s.classList.toggle('play',e.isIntersecting))).observe(s)})();
+
+/* ---------- 13.2 Elgamal ---------- */
+function eg(){const o=$('eg-out');try{
+  const q=num('eg-q','q'),a=num('eg-a','α'),X=num('eg-x','X_A'),m=num('eg-m','m'),K=num('eg-k','K'),mr=num('eg-mr','m′');
+  if(q>1000000n)throw new Error('Keep q ≤ 1 000 000 for this lab');
+  if(!isPrime(q))throw new Error('q must be prime');
+  if(!isPrimRoot(a,q)){const roots=[];for(let i=2n;i<q&&roots.length<8;i++)if(isPrimRoot(i,q))roots.push(i);throw new Error('α = '+a+' is not a primitive root of '+q+'. Some primitive roots: '+roots.join(', '))}
+  if(!(X>1n&&X<q-1n))throw new Error('Need 1 < X_A < q − 1');
+  if(m<0n||m>q-1n||mr<0n||mr>q-1n)throw new Error('Hash values must be in 0 … q − 1');
+  if(!(K>=1n&&K<=q-1n))throw new Error('Need 1 ≤ K ≤ q − 1');
+  if(gcd(K,q-1n)!==1n)throw new Error('gcd(K, q − 1) = '+gcd(K,q-1n)+', so K has no inverse mod q − 1. Pick K relatively prime to '+(q-1n));
+  const Y=mp(a,X,q),S1=mp(a,K,q),Ki=inv(K,q-1n),raw=Ki*(m-X*S1),S2=md(raw,q-1n);
+  const V1=mp(a,mr,q),V2=mp(Y,S1,q)*mp(S1,S2,q)%q;
+  o.innerHTML=kv([
+    ['public key','{q, '+AL+', Y'+sub('A')+'} = {'+q+', '+a+', '+Y+'}   (Y'+sub('A')+' = '+a+sup(X)+' mod '+q+')'],
+    ['S'+sub('1'),'= '+a+sup(K)+' mod '+q+' = <b>'+S1+'</b>'],
+    ['K'+sup('−1')+' mod (q − 1)','= '+K+sup('−1')+' mod '+(q-1n)+' = '+Ki],
+    ['S'+sub('2'),'= '+Ki+'('+m+' − '+X+'·'+S1+') mod '+(q-1n)+' = '+String(raw).replace('-','−')+' mod '+(q-1n)+' = <b>'+S2+'</b>'],
+    ['signature','(S'+sub('1')+', S'+sub('2')+') = <b>('+S1+', '+S2+')</b>'],
+    ['V'+sub('1'),'= '+a+sup(mr)+' mod '+q+' = <b>'+V1+'</b>'],
+    ['V'+sub('2'),'= '+Y+sup(S1)+'·'+S1+sup(S2)+' mod '+q+' = <b>'+V2+'</b>'],
+    ['result',V1===V2?res(true,'V₁ = V₂: valid'):res(false,'V₁ ≠ V₂: not valid')]]);
+}catch(e){o.innerHTML=err(esc(e.message))}}
+['eg-q','eg-a','eg-x','eg-m','eg-k','eg-mr'].forEach(i=>on(i,'input',eg));
+on('eg-rk','click',()=>{try{const q=num('eg-q','q');let K;for(let t=0;t<200;t++){K=rnd(1n,q-1n);if(gcd(K,q-1n)===1n)break}$('eg-k').value=String(K);eg()}catch(e){$('eg-out').innerHTML=err(esc(e.message))}});
+
+/* shared check for (p, q, generator) */
+function pqg(p,q,g,gname){
+  if(p>100000000n)throw new Error('Keep p ≤ 100 000 000 for this lab');
+  if(!isPrime(p))throw new Error('p must be prime');
+  if(!isPrime(q))throw new Error('q must be prime');
+  if((p-1n)%q!==0n)throw new Error('q must divide p − 1 (p − 1 = '+(p-1n)+')');
+  if(g<=1n||g>=p||mp(g,q,p)!==1n)throw new Error(gname+sup('q')+' mod p must be 1 with '+gname+' > 1');
+}
+
+/* ---------- 13.3 Schnorr ---------- */
+let scN=0;
+async function sc(){const o=$('sc-out'),my=++scN;if(noSubtle()){o.innerHTML=NOSUB;return}try{
+  const p=num('sc-p','p'),q=num('sc-q','q'),a=num('sc-a','α'),s=num('sc-s','s'),r=num('sc-r','r');
+  pqg(p,q,a,AL);
+  if(!(s>0n&&s<q))throw new Error('Need 0 < s < q');
+  if(!(r>0n&&r<q))throw new Error('Need 0 < r < q');
+  const M=$('sc-m').value,Mr=$('sc-mr').value;
+  const v=inv(mp(a,s,p),p),x=mp(a,r,p);
+  const h=await hmod(M+String(x),q),e=h.v,y=md(r+s*e,q);
+  const x2=mp(a,y,p)*mp(v,e,p)%p,h2=await hmod(Mr+String(x2),q);
+  if(my!==scN)return;
+  o.innerHTML=kv([
+    ['public key v','= '+a+sup('−'+s)+' mod '+p+' = '+v],
+    ['x (precomputed)','= '+a+sup(r)+' mod '+p+' = <b>'+x+'</b>'],
+    ['e = H(M ‖ x)','SHA-256 = '+short(hex(h.d))+' → mod '+q+' = <b>'+e+'</b>'],
+    ['y','= ('+r+' + '+s+'·'+e+') mod '+q+' = <b>'+y+'</b>'],
+    ['signature','(e, y) = <b>('+e+', '+y+')</b>'],
+    ['x′','= '+a+sup(y)+'·v'+sup(e)+' mod '+p+' = <b>'+x2+'</b>'+(x2===x?' (= x)':'')],
+    ['H(M′ ‖ x′)','mod '+q+' = <b>'+h2.v+'</b>'],
+    ['result',h2.v===e?res(true,'e = H(M′ ‖ x′): valid'):res(false,'e ≠ H(M′ ‖ x′): not valid')]]);
+}catch(e){if(my===scN)o.innerHTML=err(esc(e.message))}}
+['sc-p','sc-q','sc-a','sc-s','sc-r','sc-m','sc-mr'].forEach(i=>on(i,'input',sc));
+on('sc-rr','click',()=>{try{$('sc-r').value=String(rnd(1n,num('sc-q','q')-1n));sc()}catch(e){$('sc-out').innerHTML=err(esc(e.message))}});
+
+/* ---------- 13.4 DSA ---------- */
+let dsN=0;
+async function ds(){const o=$('ds-out'),my=++dsN;if(noSubtle()){o.innerHTML=NOSUB;return}try{
+  const p=num('ds-p','p'),q=num('ds-q','q'),h=num('ds-h','h'),x=num('ds-x','x'),k=num('ds-k','k');
+  if(!(h>1n&&h<p-1n))throw new Error('Need 1 < h < p − 1');
+  const g=mp(h,(p-1n)/q,p);
+  if(g<=1n)throw new Error('g = h'+sup('(p−1)/q')+' mod p = 1; choose another h');
+  pqg(p,q,g,'g');
+  if(!(x>0n&&x<q))throw new Error('Need 0 < x < q');
+  if(!(k>0n&&k<q))throw new Error('Need 0 < k < q');
+  const y=mp(g,x,p),M=$('ds-m').value,Mr=$('ds-mr').value;
+  const H=await hmod(M,q),Hr=await hmod(Mr,q);if(my!==dsN)return;
+  const gk=mp(g,k,p),r=gk%q,ki=inv(k,q),s=md(ki*(H.v+x*r),q);
+  const rows=[['g','= '+h+sup('('+(p-1n)+')/'+q)+' mod '+p+' = '+g],['public key y','= '+g+sup(x)+' mod '+p+' = '+y],
+    ['H(M) mod q','SHA-256 = '+short(hex(H.d))+' → <b>'+H.v+'</b>'],
+    ['r','= ('+g+sup(k)+' mod '+p+') mod '+q+' = '+gk+' mod '+q+' = <b>'+r+'</b>'],
+    ['k'+sup('−1')+' mod q','= '+ki]];
+  if(r===0n||s===0n){rows.push(['s','= '+s]);o.innerHTML=kv(rows)+err((r===0n?'r':'s')+' = 0: generate a new k and sign again.');return}
+  const w=inv(s,q),u1=Hr.v*w%q,u2=r*w%q,gv=mp(g,u1,p)*mp(y,u2,p)%p,v=gv%q;
+  rows.push(['s','= '+ki+'('+H.v+' + '+x+'·'+r+') mod '+q+' = <b>'+s+'</b>'],['signature','(r, s) = <b>('+r+', '+s+')</b>'],
+    ['H(M′) mod q','<b>'+Hr.v+'</b>'],['w = (s′)'+sup('−1')+' mod q','= '+w],['u'+sub('1')+' = H(M′)w mod q','= '+u1],['u'+sub('2')+' = r′w mod q','= '+u2],
+    ['v','= ('+g+sup(u1)+'·'+y+sup(u2)+' mod '+p+') mod '+q+' = '+gv+' mod '+q+' = <b>'+v+'</b>'],
+    ['result',v===r?res(true,'v = r′: valid'):res(false,'v ≠ r′: not valid')]);
+  o.innerHTML=kv(rows);
+}catch(e){if(my===dsN)o.innerHTML=err(esc(e.message))}}
+['ds-p','ds-q','ds-h','ds-x','ds-k','ds-m','ds-mr'].forEach(i=>on(i,'input',ds));
+on('ds-rk','click',()=>{try{$('ds-k').value=String(rnd(1n,num('ds-q','q')-1n));ds()}catch(e){$('ds-out').innerHTML=err(esc(e.message))}});
+
+/* ---------- 13.5 ECDSA on E17(2,2), G=(5,1), n=19 ---------- */
+const EP=17n,EA=2n,EB=2n,EN=19n,EG=[5n,1n];
+function eadd(P,Q){if(!P)return Q;if(!Q)return P;
+  if(P[0]===Q[0]&&md(P[1]+Q[1],EP)===0n)return null;
+  const l=(P[0]===Q[0]&&P[1]===Q[1])?md((3n*P[0]*P[0]+EA)*inv(2n*P[1],EP),EP):md((Q[1]-P[1])*inv(md(Q[0]-P[0],EP),EP),EP);
+  const x=md(l*l-P[0]-Q[0],EP);return [x,md(l*(P[0]-x)-P[1],EP)]}
+function emul(k,P){let R=null,A=P;k=md(k,EN);while(k>0n){if(k&1n)R=eadd(R,A);A=eadd(A,A);k>>=1n}return R}
+const pstr=P=>P?'('+P[0]+', '+P[1]+')':'O';
+const EPTS=[];for(let x=0n;x<EP;x++)for(let y=0n;y<EP;y++)if(md(y*y-(x*x*x+EA*x+EB),EP)===0n)EPTS.push([x,y]);
+function eplot(G,Q,K,X){const sv=$('ec-svg');if(!sv)return;const L=36,S=16,px=x=>L+Number(x)*S,py=y=>300-Number(y)*S;let h='';
+  for(let i=0;i<=16;i++){h+='<line class="gridl" x1="'+px(i)+'" y1="'+py(0)+'" x2="'+px(i)+'" y2="'+py(16)+'"/><line class="gridl" x1="'+px(0)+'" y1="'+py(i)+'" x2="'+px(16)+'" y2="'+py(i)+'"/>';
+    if(i%4===0)h+='<text class="tm" x="'+px(i)+'" y="318" text-anchor="middle">'+i+'</text><text class="tm" x="'+(L-8)+'" y="'+(py(i)+4)+'" text-anchor="end">'+i+'</text>'}
+  h+='<text class="tm" x="'+px(16)+'" y="318" text-anchor="end" dx="16">x</text><text class="tm" x="'+(L-8)+'" y="'+(py(16)-10)+'" text-anchor="end">y</text>';
+  EPTS.forEach(P=>{h+='<circle class="pt" cx="'+px(P[0])+'" cy="'+py(P[1])+'" r="3.2"/>'});
+  const dot=(P,c,r,l)=>{if(!P)return'';return '<circle class="'+c+'" cx="'+px(P[0])+'" cy="'+py(P[1])+'" r="'+r+'"/>'+(l?'<text class="tx" x="'+(px(P[0])+9)+'" y="'+(py(P[1])-8)+'" font-size="11">'+l+'</text>':'')};
+  h+=dot(G,'ptG',5.5,'G')+dot(Q,'ptQ',5.5,'Q')+dot(K,'ptK',9,'kG')+dot(X,'ptX',12.5,'');
+  sv.innerHTML=h}
+let ecN=0;
+async function ec(){const o=$('ec-out'),my=++ecN;if(noSubtle()){o.innerHTML=NOSUB;return}try{
+  const d=num('ec-d','d'),k=num('ec-k','k');
+  if(d<1n||d>18n)throw new Error('d must be in [1, n − 1] = [1, 18]');
+  if(k<1n||k>18n)throw new Error('k must be in [1, 18]');
+  const Q=emul(d,EG),P=emul(k,EG),r=P[0]%EN;
+  const H=await hmod($('ec-m').value,EN),Hr=await hmod($('ec-mr').value,EN);if(my!==ecN)return;
+  const rows=[['Q = dG',pstr(Q)],['P = kG','<b>'+pstr(P)+'</b>'],['r = x mod n','= '+P[0]+' mod 19 = <b>'+r+'</b>']];
+  if(r===0n){o.innerHTML=kv(rows)+err('r = 0: choose another k.');eplot(EG,Q,P,null);return}
+  const t=inv(k,EN),s=md(t*(H.v+d*r),EN);
+  rows.push(['t = k'+sup('−1')+' mod n','= '+t],['e = H(m) mod n','<b>'+H.v+'</b>'],['s = k'+sup('−1')+'(e + dr) mod n','= '+t+'('+H.v+' + '+d+'·'+r+') mod 19 = <b>'+s+'</b>']);
+  if(s===0n){o.innerHTML=kv(rows)+err('s = 0: choose another k.');eplot(EG,Q,P,null);return}
+  rows.push(['signature','(r, s) = <b>('+r+', '+s+')</b>']);
+  const w=inv(s,EN),u1=Hr.v*w%EN,u2=r*w%EN,X=eadd(emul(u1,EG),emul(u2,Q));
+  rows.push(['e′ = H(m′) mod n',''+Hr.v],['w = s'+sup('−1')+' mod n','= '+w],['u'+sub('1')+' = e′w, u'+sub('2')+' = rw','= '+u1+', '+u2],
+    ['X = u'+sub('1')+'G + u'+sub('2')+'Q','<b>'+pstr(X)+'</b>'+(X&&X[0]===P[0]&&X[1]===P[1]?' (= kG)':'')]);
+  if(!X){rows.push(['result',res(false,'X = O: reject')])}else{const v=X[0]%EN;rows.push(['v = x'+sub('1')+' mod n','= <b>'+v+'</b>'],['result',v===r?res(true,'v = r: accept'):res(false,'v ≠ r: reject')])}
+  o.innerHTML=kv(rows);eplot(EG,Q,P,X);
+}catch(e){if(my===ecN)o.innerHTML=err(esc(e.message))}}
+['ec-d','ec-k','ec-m','ec-mr'].forEach(i=>on(i,'input',ec));
+on('ec-rk','click',()=>{$('ec-k').value=String(rnd(1n,18n));ec()});
+
+/* ---------- 13.6 MGF1 ---------- */
+async function mgf1(hash,X,len){const hLen=hash==='SHA-1'?20:32;let T=new Uint8Array(0);const blocks=[];
+  for(let c=0;c<Math.ceil(len/hLen);c++){const C=new Uint8Array([c>>>24&255,c>>>16&255,c>>>8&255,c&255]);const h=await digest(hash,cat(X,C));blocks.push(h);T=cat(T,h)}
+  return {mask:T.slice(0,len),blocks}}
+let mgN=0;
+async function mg(){const o=$('mg-out'),my=++mgN;if(noSubtle()){o.innerHTML=NOSUB;return}try{
+  const L=Math.max(1,Math.min(512,parseInt($('mg-l').value,10)||1)),hash=$('mg-h').value;
+  const {mask,blocks}=await mgf1(hash,enc($('mg-x').value),L);if(my!==mgN)return;
+  const hLen=hash==='SHA-1'?20:32;
+  o.innerHTML=kv(blocks.map((b,i)=>['Hash(X ‖ '+i+')','<span class="bitstr">'+hex(b)+'</span>']).concat([['k = ⌈'+L+'/'+hLen+'⌉ − 1',''+(blocks.length-1)],['mask ('+L+' octets)','<span class="bitstr"><b>'+hex(mask)+'</b></span>']]));
+}catch(e){if(my===mgN)o.innerHTML=err(esc(e.message))}}
+['mg-x','mg-l','mg-h'].forEach(i=>on(i,'input',mg));on('mg-h','change',mg);
+
+/* ---------- 13.6 RSA-PSS ---------- */
+const PS={key:null,sig:null};
+function b64u(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s),o=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)o[i]=bin.charCodeAt(i);return o}
+async function psGen(){const ko=$('ps-key');if(noSubtle()){ko.innerHTML=NOSUB;return}ko.innerHTML='<span class="cap">Generating key…</span>';
+  try{const kp=await crypto.subtle.generateKey({name:'RSA-PSS',modulusLength:1024,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'},true,['sign','verify']);
+    const j=await crypto.subtle.exportKey('jwk',kp.privateKey);const n=b2i(b64u(j.n)),e=b2i(b64u(j.e)),d=b2i(b64u(j.d));
+    const modBits=n.toString(2).length;PS.key={n,e,d,modBits,jwk:{kty:'RSA',n:j.n,e:j.e,ext:true}};PS.sig=null;
+    ko.innerHTML=kv([['modulus n','<span class="bitstr">'+n.toString(16)+'</span>'],['public e',''+e],['private d','<span class="bitstr">'+short(d.toString(16))+' (kept by signer)</span>'],['modBits, k',modBits+' bits, '+Math.ceil(modBits/8)+' octets']]);
+    await psSign()}catch(e){ko.innerHTML=err('Could not create the key: '+esc(e.message))}}
+const seg=(h,c)=>'<span class="'+c+'">'+h+'</span>';
+async function psSign(){if(!PS.key)return;const eo=$('ps-enc');try{
+  const hash=$('ps-h').value,hLen=hash==='SHA-1'?20:32,sLen=hLen,{n,d,modBits}=PS.key;
+  const emBits=modBits-1,emLen=Math.ceil(emBits/8),k=Math.ceil(modBits/8);
+  const M=enc($('ps-m').value),mHash=await digest(hash,M),salt=crypto.getRandomValues(new Uint8Array(sLen));
+  const p1=new Uint8Array(8),Mp=cat(p1,mHash,salt),H=await digest(hash,Mp);
+  const psLen=emLen-sLen-hLen-2,DB=cat(new Uint8Array(psLen),new Uint8Array([1]),salt);
+  const {mask}=await mgf1(hash,H,emLen-hLen-1),mdb=DB.map((x,i)=>x^mask[i]);const clear=8*emLen-emBits;mdb[0]&=(0xff>>clear);
+  const EM=cat(mdb,H,new Uint8Array([0xbc])),m=b2i(EM),s=mp(m,d,n),S=i2b(s,k);
+  PS.sig={S,hash,sLen};
+  eo.innerHTML=kv([['1. mHash = Hash(M)','<span class="bitstr">'+hex(mHash)+'</span>'],['2. salt ('+sLen+' octets)','<span class="emseg">'+seg(hex(salt),'s2')+'</span>'],
+    ['   M′','<span class="emseg">'+hex(p1)+' ‖ '+hex(mHash)+' ‖ '+seg(hex(salt),'s2')+'</span>'],['3. H = Hash(M′)','<span class="emseg">'+seg(hex(H),'s1')+'</span>'],
+    ['4. DB','<span class="emseg">00 × '+psLen+' ‖ 01 ‖ '+seg(hex(salt),'s2')+'</span>'],['5. dbMask = MGF(H, '+(emLen-hLen-1)+')','<span class="bitstr">'+hex(mask)+'</span>'],
+    ['6–7. maskedDB','<span class="bitstr">'+hex(mdb)+'</span><span class="cap"> (leftmost '+clear+' bit'+(clear===1?'':'s')+' set to 0)</span>'],
+    ['8. EM ('+emLen+' octets)','<span class="emseg">'+hex(mdb)+seg(hex(H),'s1')+seg('bc','s3')+'</span>'],
+    ['s = m'+sup('d')+' mod n','<span class="bitstr"><b>'+hex(S)+'</b></span><span class="cap"> ('+k+' octets)</span>']]);
+  await psVer()}catch(e){eo.innerHTML=err(esc(e.message))}}
+let psN=0;
+async function psVer(){const vo=$('ps-ver'),my=++psN;if(!PS.key||!PS.sig)return;try{
+  const {S,hash,sLen}=PS.sig,hLen=hash==='SHA-1'?20:32,{n,e,modBits,jwk}=PS.key,emBits=modBits-1,emLen=Math.ceil(emBits/8),clear=8*emLen-emBits;
+  const Mr=enc($('ps-mr').value),rows=[];let ok=true,why='';
+  const m=mp(b2i(S),e,n),EM=i2b(m,emLen);rows.push(['m = s'+sup('e')+' mod n → EM','<span class="bitstr">'+hex(EM)+'</span>']);
+  const mHash=await digest(hash,Mr);rows.push(['1. mHash = Hash(M′)','<span class="bitstr">'+hex(mHash)+'</span>']);
+  const chk=(c,t)=>{if(ok&&!c){ok=false;why=t}};
+  chk(emLen>=hLen+sLen+2,'2: emLen too small');chk(EM[emLen-1]===0xbc,'3: last octet is not BC');
+  const mdb=EM.slice(0,emLen-hLen-1),H=EM.slice(emLen-hLen-1,emLen-1);
+  rows.push(['3. rightmost octet',(EM[emLen-1]===0xbc?res(true,'BC'):res(false,EM[emLen-1].toString(16)))],['4. H','<span class="emseg">'+seg(hex(H),'s1')+'</span>']);
+  chk((mdb[0]>>(8-clear))===0,'5: top bits of maskedDB not zero');
+  const {mask}=await mgf1(hash,H,emLen-hLen-1),DB=mdb.map((x,i)=>x^mask[i]);DB[0]&=(0xff>>clear);
+  const psLen=emLen-hLen-sLen-2;let p2=true;for(let i=0;i<psLen;i++)if(DB[i]!==0)p2=false;if(DB[psLen]!==1)p2=false;
+  rows.push(['6–9. DB, padding2',p2?res(true,'00 × '+psLen+' ‖ 01 matches'):res(false,'does not match')]);chk(p2,'9: padding2 mismatch');
+  const salt=DB.slice(DB.length-sLen);rows.push(['10. recovered salt','<span class="emseg">'+seg(hex(salt),'s2')+'</span>']);
+  const H2=await digest(hash,cat(new Uint8Array(8),mHash,salt));const same=hex(H2)===hex(H);
+  rows.push(['11–12. H′ = Hash(M′)','<span class="emseg">'+seg(hex(H2),'s1')+'</span>']);chk(same,'13: H ≠ H′');
+  rows.push(['13. result',ok?res(true,'H = H′: consistent'):res(false,'inconsistent (step '+why+')')]);
+  let wc='';try{const pub=await crypto.subtle.importKey('jwk',jwk,{name:'RSA-PSS',hash},false,['verify']);
+    const b=await crypto.subtle.verify({name:'RSA-PSS',saltLength:sLen},pub,S,Mr);wc=b?res(true,'browser verifier: valid'):res(false,'browser verifier: not valid')}catch(x){wc='<span class="cap">browser verifier unavailable for '+hash+' here</span>'}
+  rows.push(['cross-check',wc]);
+  if(my===psN)vo.innerHTML=kv(rows);
+}catch(e){if(my===psN)vo.innerHTML=err(esc(e.message))}}
+on('ps-gen','click',psGen);on('ps-sign','click',psSign);on('ps-h','change',psSign);on('ps-m','input',psSign);on('ps-mr','input',psVer);
+
+/* initial render */
+eg();[sc,ds,ec,mg].forEach(f=>f().catch(e=>console.error(e)));
+if(!noSubtle())psGen();else{$('ps-key').innerHTML=NOSUB}
+
+/* ===== scroll-following contents ===== */
+const links=[...document.querySelectorAll('nav.toc a')];
+const secs=links.map(l=>document.querySelector(l.getAttribute('href'))).filter(Boolean);
+const list=document.querySelector('nav.toc ol');let current=null,ticking=false;
+function spy(){ticking=false;const line=window.innerHeight*0.3;let idx=0;
+  secs.forEach((s,i)=>{if(s.getBoundingClientRect().top<=line)idx=i});
+  if((window.innerHeight+window.scrollY)>=document.documentElement.scrollHeight-4)idx=secs.length-1;
+  const l=links[idx];
+  if(l!==current){if(current){current.classList.remove('active');current.removeAttribute('aria-current')}
+    l.classList.add('active');l.setAttribute('aria-current','true');current=l;
+    if(list.scrollWidth>list.clientWidth){list.scrollTo({left:l.parentElement.offsetLeft-list.clientWidth/2+l.parentElement.offsetWidth/2,behavior:reduce?'auto':'smooth'})}}
+  const max=document.documentElement.scrollHeight-window.innerHeight;
+  $('toc-progress').style.width=(max>0?Math.min(100,window.scrollY/max*100):0)+'%'}
+window.addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(spy)}},{passive:true});
+window.addEventListener('resize',spy);spy();
+})();
+</script>
+<button class="to-top" id="to-top" type="button" aria-label="Back to top">↑ Top</button>
+<script>
+(function(){
+  var btn=document.getElementById('to-top');if(!btn)return;
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches,tick=false;
+  function upd(){tick=false;btn.classList.toggle('show',window.scrollY>600)}
+  window.addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(upd)}},{passive:true});
+  btn.addEventListener('click',function(){window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});var h=document.querySelector('.topbar a.home');if(h)h.focus({preventScroll:true})});
+  upd();
+})();
+</script>
+<script>
+/* Phones: keep wide diagrams readable; they scroll inside their own box instead of shrinking */
+(function(){var mq=window.matchMedia&&matchMedia('(max-width:600px)');if(!mq)return;
+  function fit(){document.querySelectorAll('.figure svg[viewBox]').forEach(function(s){var w=s.viewBox.baseVal.width;
+    if(mq.matches&&w>=480){s.style.minWidth=Math.round(w*0.8)+'px';s.style.maxWidth='none'}else{s.style.minWidth='';s.style.maxWidth=''}})}
+  fit();document.addEventListener('click',function(){setTimeout(fit,60)});document.addEventListener('input',function(){setTimeout(fit,60)});
+  if(mq.addEventListener)mq.addEventListener('change',fit)})();
+</script>
+<script>
+/* Side navbar: keep the highlighted entry in view while the page scrolls (wide screens only) */
+(function(){var nav=document.querySelector('nav.toc');if(!nav||!window.MutationObserver)return;
+  var wide=window.matchMedia('(min-width:901px)');
+  new MutationObserver(function(ms){if(!wide.matches||nav.scrollHeight<=nav.clientHeight)return;
+    for(var i=0;i<ms.length;i++){var a=ms[i].target;if(!/(^|\s)(active|on)(\s|$)/.test(a.className))continue;
+      var n=nav.getBoundingClientRect(),r=a.getBoundingClientRect(),pad=24;
+      if(r.top<n.top+pad)nav.scrollTop-= (n.top+pad-r.top);else if(r.bottom>n.bottom-pad)nav.scrollTop+= (r.bottom-(n.bottom-pad));break}
+  }).observe(nav,{subtree:true,attributes:true,attributeFilter:['class']});
+})();
+/* Review Questions: Expand all / Collapse all */
+(function(){var sec=document.getElementById('review');if(!sec)return;var bar=sec.querySelector('.rv-tools');if(!bar)return;
+  var ds=[].slice.call(sec.querySelectorAll('details'));if(!ds.length){bar.remove();return}
+  var op=bar.querySelector('[data-rv="open"]'),cl=bar.querySelector('[data-rv="close"]'),ct=bar.querySelector('.rv-count');
+  function upd(){var n=ds.filter(function(d){return d.open}).length;op.disabled=n===ds.length;cl.disabled=n===0;ct.textContent=n+' of '+ds.length+' open'}
+  op.addEventListener('click',function(){ds.forEach(function(d){d.open=true});upd()});
+  cl.addEventListener('click',function(){ds.forEach(function(d){d.open=false});upd()});
+  ds.forEach(function(d){d.addEventListener('toggle',upd)});upd();
+})();
+</script>
+<script src="notation.js" data-unit="8" defer></script>
+</body>
+</html>
