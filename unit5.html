@@ -254,6 +254,20 @@ sub{line-height:0;font-size:.75em}
 section.unit p,section.unit li,.def,.note,.warn,.why,.lede,details p{text-align:justify;hyphens:auto;-webkit-hyphens:auto}
 section.unit .out,section.unit .cap,section.unit td,section.unit th,.lab-h,.kv{text-align:left;hyphens:manual;-webkit-hyphens:manual}
 section.unit .grid2 *,section.unit .cmp *,section.unit .src{text-align:left;hyphens:manual;-webkit-hyphens:manual}}
+
+/* ---- Scrollable side navbar (wide screens) + Review expand/collapse (shared across unit pages) ---- */
+@media (min-width:901px){
+  nav.toc{max-height:calc(100vh - var(--topbar-h,0px) - 40px - env(safe-area-inset-top,0px));overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--line) transparent;padding-right:6px;margin-right:-6px}
+  nav.toc::-webkit-scrollbar{width:6px}
+  nav.toc::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+  nav.toc ol{max-height:none;overflow:visible}
+}
+.rv-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 4px}
+.rv-tools button{font-family:var(--mono,var(--f-mono));font-size:.78rem;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper,var(--surface));color:var(--ink);cursor:pointer;transition:border-color .15s,color .15s}
+.rv-tools button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.rv-tools button:disabled{opacity:.45;cursor:default}
+.rv-tools button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rv-tools .rv-count{font-family:var(--mono,var(--f-mono));font-size:.74rem;color:var(--muted);margin-left:4px}
 </style>
 </head>
 <body>
@@ -1180,6 +1194,7 @@ e.g. W = 2⁻³⁰, H = 7.3  →  C = ⌈1 + 30/7.3⌉ = 6</div>
 <section class="unit" id="review">
   <h2><span class="sec">7.9 · 8.7</span>Review Questions</h2>
   <p class="why">Review questions 7.1–7.5 and 8.1–8.4 from the book. Answer first, then open to check.</p>
+  <div class="rv-tools" role="group" aria-label="Review answers"><button type="button" data-rv="open">Expand all</button><button type="button" data-rv="close">Collapse all</button><span class="rv-count" aria-live="polite"></span></div>
   <h3>Chapter 7</h3>
   <details><summary>7.1 What is triple encryption?</summary><p>Encrypting with a block cipher three times in sequence using two or three keys. For DES the standard form is EDE: C = E(K3, D(K2, E(K1, P))), with K3 = K1 in the two-key version.</p></details>
   <details><summary>7.2 What is a meet-in-the-middle attack?</summary><p>A known-plaintext attack on double encryption C = E(K2, E(K1, P)). Encrypt P under every K1 and store the results; decrypt C under every K2 and look for a match X = E(K1, P) = D(K2, C); confirm candidate key pairs on a second (P, C) pair. Against double DES it costs about 2⁵⁶ instead of 2¹¹².</p></details>
@@ -1638,6 +1653,26 @@ const U5=(function(){
   window.addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(upd)}},{passive:true});
   btn.addEventListener('click',function(){window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});var h=document.querySelector('.topbar a.home');if(h)h.focus({preventScroll:true})});
   upd();
+})();
+</script>
+<script>
+/* Side navbar: keep the highlighted entry in view while the page scrolls (wide screens only) */
+(function(){var nav=document.querySelector('nav.toc');if(!nav||!window.MutationObserver)return;
+  var wide=window.matchMedia('(min-width:901px)');
+  new MutationObserver(function(ms){if(!wide.matches||nav.scrollHeight<=nav.clientHeight)return;
+    for(var i=0;i<ms.length;i++){var a=ms[i].target;if(!/(^|\s)(active|on)(\s|$)/.test(a.className))continue;
+      var n=nav.getBoundingClientRect(),r=a.getBoundingClientRect(),pad=24;
+      if(r.top<n.top+pad)nav.scrollTop-= (n.top+pad-r.top);else if(r.bottom>n.bottom-pad)nav.scrollTop+= (r.bottom-(n.bottom-pad));break}
+  }).observe(nav,{subtree:true,attributes:true,attributeFilter:['class']});
+})();
+/* Review Questions: Expand all / Collapse all */
+(function(){var sec=document.getElementById('review');if(!sec)return;var bar=sec.querySelector('.rv-tools');if(!bar)return;
+  var ds=[].slice.call(sec.querySelectorAll('details'));if(!ds.length){bar.remove();return}
+  var op=bar.querySelector('[data-rv="open"]'),cl=bar.querySelector('[data-rv="close"]'),ct=bar.querySelector('.rv-count');
+  function upd(){var n=ds.filter(function(d){return d.open}).length;op.disabled=n===ds.length;cl.disabled=n===0;ct.textContent=n+' of '+ds.length+' open'}
+  op.addEventListener('click',function(){ds.forEach(function(d){d.open=true});upd()});
+  cl.addEventListener('click',function(){ds.forEach(function(d){d.open=false});upd()});
+  ds.forEach(function(d){d.addEventListener('toggle',upd)});upd();
 })();
 </script>
 <script src="notation.js" data-unit="5" defer></script>

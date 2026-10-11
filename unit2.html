@@ -183,6 +183,20 @@ section.unit{scroll-margin-top:calc(20px + var(--topbar-h))}
 section.unit p,section.unit li,.def,.note,.warn,.why,.lede,details p,.ex,.cmp p{text-align:justify;hyphens:auto;-webkit-hyphens:auto}
 section.unit .out,section.unit .cap,section.unit td,section.unit th,.lab-h,.kv,.ex .eq,.def .m{text-align:left;hyphens:manual;-webkit-hyphens:manual}
 section.unit .grid2 *,section.unit .cmp *,section.unit .stwrap *,section.unit .src{text-align:left;hyphens:manual;-webkit-hyphens:manual}}
+
+/* ---- Scrollable side navbar (wide screens) + Review expand/collapse (shared across unit pages) ---- */
+@media (min-width:901px){
+  nav.toc{max-height:calc(100vh - var(--topbar-h,0px) - 40px - env(safe-area-inset-top,0px));overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--line) transparent;padding-right:6px;margin-right:-6px}
+  nav.toc::-webkit-scrollbar{width:6px}
+  nav.toc::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+  nav.toc ol{max-height:none;overflow:visible}
+}
+.rv-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 4px}
+.rv-tools button{font-family:var(--mono,var(--f-mono));font-size:.78rem;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper,var(--surface));color:var(--ink);cursor:pointer;transition:border-color .15s,color .15s}
+.rv-tools button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.rv-tools button:disabled{opacity:.45;cursor:default}
+.rv-tools button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rv-tools .rv-count{font-family:var(--mono,var(--f-mono));font-size:.74rem;color:var(--muted);margin-left:4px}
 </style>
 
 </head>
@@ -645,6 +659,7 @@ Logarithm  0  1  2  5  4  3</div></div>
 <section class="unit" id="review">
   <h2><span class="sec">2.9</span>Review Questions</h2>
   <p class="why">Questions 2.1–2.8 from the book. Answer first, then open to check.</p>
+  <div class="rv-tools" role="group" aria-label="Review answers"><button type="button" data-rv="open">Expand all</button><button type="button" data-rv="close">Collapse all</button><span class="rv-count" aria-live="polite"></span></div>
   <details><summary>2.1 What does it mean to say that b is a divisor of a?</summary><p>b is nonzero and a = mb for some integer m; dividing a by b leaves no remainder.</p></details>
   <details><summary>2.2 What is the meaning of the expression “a divides b”?</summary><p>a | b: a is nonzero and b = ma for some integer m.</p></details>
   <details><summary>2.3 What is the difference between modular arithmetic and ordinary arithmetic?</summary><p>Modular arithmetic works within Z<sub>n</sub> = {0, …, n − 1}, reducing results mod n. Addition, subtraction and multiplication rules carry over, but cancellation in multiplication (Eq. 2.5) holds only when the factor is relatively prime to n, and a multiplicative inverse exists only for integers relatively prime to n.</p></details>
@@ -868,6 +883,26 @@ Check: (${A} + ${B}) mod ${M} = ${(A+B)%M} ${back(s)===(A+B)%M?'✓':'✗'}`}
   window.addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(upd)}},{passive:true});
   btn.addEventListener('click',function(){window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});var h=document.querySelector('.topbar a.home');if(h)h.focus({preventScroll:true})});
   upd();
+})();
+</script>
+<script>
+/* Side navbar: keep the highlighted entry in view while the page scrolls (wide screens only) */
+(function(){var nav=document.querySelector('nav.toc');if(!nav||!window.MutationObserver)return;
+  var wide=window.matchMedia('(min-width:901px)');
+  new MutationObserver(function(ms){if(!wide.matches||nav.scrollHeight<=nav.clientHeight)return;
+    for(var i=0;i<ms.length;i++){var a=ms[i].target;if(!/(^|\s)(active|on)(\s|$)/.test(a.className))continue;
+      var n=nav.getBoundingClientRect(),r=a.getBoundingClientRect(),pad=24;
+      if(r.top<n.top+pad)nav.scrollTop-= (n.top+pad-r.top);else if(r.bottom>n.bottom-pad)nav.scrollTop+= (r.bottom-(n.bottom-pad));break}
+  }).observe(nav,{subtree:true,attributes:true,attributeFilter:['class']});
+})();
+/* Review Questions: Expand all / Collapse all */
+(function(){var sec=document.getElementById('review');if(!sec)return;var bar=sec.querySelector('.rv-tools');if(!bar)return;
+  var ds=[].slice.call(sec.querySelectorAll('details'));if(!ds.length){bar.remove();return}
+  var op=bar.querySelector('[data-rv="open"]'),cl=bar.querySelector('[data-rv="close"]'),ct=bar.querySelector('.rv-count');
+  function upd(){var n=ds.filter(function(d){return d.open}).length;op.disabled=n===ds.length;cl.disabled=n===0;ct.textContent=n+' of '+ds.length+' open'}
+  op.addEventListener('click',function(){ds.forEach(function(d){d.open=true});upd()});
+  cl.addEventListener('click',function(){ds.forEach(function(d){d.open=false});upd()});
+  ds.forEach(function(d){d.addEventListener('toggle',upd)});upd();
 })();
 </script>
 <script src="notation.js" data-unit="2" defer></script>

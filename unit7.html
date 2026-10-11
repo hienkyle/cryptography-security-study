@@ -273,6 +273,20 @@ td.newv{background:var(--mark-soft);color:var(--mark);font-weight:700}
 .seg{flex-wrap:wrap}
 .out .cap{font-family:var(--body)}
 @media (max-width:600px){.figure svg[width]{max-width:none}}
+
+/* ---- Scrollable side navbar (wide screens) + Review expand/collapse (shared across unit pages) ---- */
+@media (min-width:901px){
+  nav.toc{max-height:calc(100vh - var(--topbar-h,0px) - 40px - env(safe-area-inset-top,0px));overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--line) transparent;padding-right:6px;margin-right:-6px}
+  nav.toc::-webkit-scrollbar{width:6px}
+  nav.toc::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+  nav.toc ol{max-height:none;overflow:visible}
+}
+.rv-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 4px}
+.rv-tools button{font-family:var(--mono,var(--f-mono));font-size:.78rem;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper,var(--surface));color:var(--ink);cursor:pointer;transition:border-color .15s,color .15s}
+.rv-tools button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.rv-tools button:disabled{opacity:.45;cursor:default}
+.rv-tools button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rv-tools .rv-count{font-family:var(--mono,var(--f-mono));font-size:.74rem;color:var(--muted);margin-left:4px}
 </style>
 </head>
 <body>
@@ -1200,6 +1214,7 @@ m = ⌈n / outlen⌉;   data = V;   W = null string
 <section class="unit" id="review">
   <h2><span class="sec">11.7 · 12.10</span>Review Questions</h2>
   <p class="why">Review questions 11.1–11.9 and 12.1–12.9 from the book. Answer first, then open to check.</p>
+  <div class="rv-tools" role="group" aria-label="Review answers"><button type="button" data-rv="open">Expand all</button><button type="button" data-rv="close">Collapse all</button><span class="rv-count" aria-live="polite"></span></div>
   <h3>Chapter 11</h3>
   <details><summary>11.1 What characteristics are needed in a secure hash function?</summary><p>Variable input size, fixed output size, efficiency, preimage resistance (one-way), second preimage resistance (weak collision resistance), collision resistance (strong collision resistance), and pseudorandom output (Table 11.1).</p></details>
   <details><summary>11.2 What is the difference between weak and strong collision resistance?</summary><p>Weak: for a <i>given</i> x it is infeasible to find y ≠ x with H(y) = H(x). Strong: it is infeasible to find <i>any</i> pair x ≠ y with H(x) = H(y). The attacker chooses both messages in the strong case, so the birthday attack applies (2<sup>m/2</sup> instead of 2<sup>m</sup>).</p></details>
@@ -1766,6 +1781,26 @@ window.addEventListener('resize',spy);spy();
     if(mq.matches&&w>=480){s.style.minWidth=Math.round(w*0.8)+'px';s.style.maxWidth='none'}else{s.style.minWidth='';s.style.maxWidth=''}})}
   fit();document.addEventListener('click',function(){setTimeout(fit,60)});document.addEventListener('input',function(){setTimeout(fit,60)});
   if(mq.addEventListener)mq.addEventListener('change',fit)})();
+</script>
+<script>
+/* Side navbar: keep the highlighted entry in view while the page scrolls (wide screens only) */
+(function(){var nav=document.querySelector('nav.toc');if(!nav||!window.MutationObserver)return;
+  var wide=window.matchMedia('(min-width:901px)');
+  new MutationObserver(function(ms){if(!wide.matches||nav.scrollHeight<=nav.clientHeight)return;
+    for(var i=0;i<ms.length;i++){var a=ms[i].target;if(!/(^|\s)(active|on)(\s|$)/.test(a.className))continue;
+      var n=nav.getBoundingClientRect(),r=a.getBoundingClientRect(),pad=24;
+      if(r.top<n.top+pad)nav.scrollTop-= (n.top+pad-r.top);else if(r.bottom>n.bottom-pad)nav.scrollTop+= (r.bottom-(n.bottom-pad));break}
+  }).observe(nav,{subtree:true,attributes:true,attributeFilter:['class']});
+})();
+/* Review Questions: Expand all / Collapse all */
+(function(){var sec=document.getElementById('review');if(!sec)return;var bar=sec.querySelector('.rv-tools');if(!bar)return;
+  var ds=[].slice.call(sec.querySelectorAll('details'));if(!ds.length){bar.remove();return}
+  var op=bar.querySelector('[data-rv="open"]'),cl=bar.querySelector('[data-rv="close"]'),ct=bar.querySelector('.rv-count');
+  function upd(){var n=ds.filter(function(d){return d.open}).length;op.disabled=n===ds.length;cl.disabled=n===0;ct.textContent=n+' of '+ds.length+' open'}
+  op.addEventListener('click',function(){ds.forEach(function(d){d.open=true});upd()});
+  cl.addEventListener('click',function(){ds.forEach(function(d){d.open=false});upd()});
+  ds.forEach(function(d){d.addEventListener('toggle',upd)});upd();
+})();
 </script>
 <script src="notation.js" data-unit="7" defer></script>
 </body>
