@@ -1,0 +1,1531 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unit 9 · Key Management &amp; Authentication</title>
+<meta name="description" content="Study guide for Stallings, Cryptography and Network Security, Chapters 14–15: key distribution centers and key hierarchies, control vectors, public-key distribution of secret keys, public-key authorities and certificates, X.509, PKIX, user authentication principles, replay attacks, Needham–Schroeder and its fixes, Kerberos versions 4 and 5, public-key authentication protocols, federated identity management and PIV smart cards.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,700;1,400&family=Cousine:wght@400;700&family=Noto+Sans+Mono:wght@400;600&family=Noto+Sans+Math&display=swap">
+<style>
+/* Layout: graph-paper study notebook (shared with Units 1–6) — sticky contents rail on desktop, single column on phones; each section = one book section */
+:root{
+  --bg:#f3f4f8; --paper:#ffffff; --ink:#191b2b; --muted:#585d78; --line:#d9dce8;
+  --grid:rgba(25,27,43,.045);
+  --accent:#3f46c4; --accent-soft:#e5e7fb; --mark:#b8580f; --mark-soft:#fcebdc;
+  --bad:#b4372f; --bad-soft:#f9e1de;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Noto Sans Math", "Segoe UI", system-ui, sans-serif;
+  --mono:"Cousine", "Noto Sans Mono", "Noto Sans Math", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10121c; --paper:#171a28; --ink:#e6e8f2; --muted:#9ca1bb; --line:#2c3048;
+  --grid:rgba(230,232,242,.04);
+  --accent:#9ea6ff; --accent-soft:#232955; --mark:#f6a25a; --mark-soft:#3b2615;
+  --bad:#f08c84; --bad-soft:#3c1d1a; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#10121c; --paper:#171a28; --ink:#e6e8f2; --muted:#9ca1bb; --line:#2c3048;
+  --grid:rgba(230,232,242,.04);
+  --accent:#9ea6ff; --accent-soft:#232955; --mark:#f6a25a; --mark-soft:#3b2615;
+  --bad:#f08c84; --bad-soft:#3c1d1a; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16.5px;line-height:1.6;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;padding-inline:16px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;padding-block:32px 80px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr);gap:16px}}
+
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;font-size:.88rem}
+nav.toc .lbl{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+nav.toc a{display:flex;gap:10px;padding:5px 8px;border-radius:6px;color:var(--ink);text-decoration:none}
+nav.toc a span{font-family:var(--mono);color:var(--accent);min-width:2.6em;font-size:.8rem;padding-top:2px}
+nav.toc a{position:relative;transition:background .15s,color .15s}
+nav.toc a:hover,nav.toc a:focus-visible{background:var(--accent-soft);outline:none}
+nav.toc a.active{background:var(--accent);color:var(--paper);font-weight:700}
+nav.toc a.active span{color:var(--paper)}
+nav.toc .bar{height:3px;background:var(--line);border-radius:2px;margin:12px 0 0;overflow:hidden}
+nav.toc .bar i{display:block;height:100%;width:0;background:var(--accent)}
+@media (max-width:900px){
+  nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border:1px solid var(--line);border-radius:0 0 10px 10px;padding:8px 10px;margin-inline:-4px}
+  nav.toc .lbl{display:none}
+  nav.toc ol{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth}
+  nav.toc ol::-webkit-scrollbar{display:none}
+  nav.toc li{flex:0 0 auto}
+  nav.toc a{white-space:nowrap;padding:5px 10px}
+  nav.toc .bar{margin-top:8px}
+  section.unit{scroll-margin-top:72px}}
+
+main{min-width:0}
+header.hero{padding-block:8px 28px;border-bottom:2px solid var(--ink);margin-bottom:28px}
+.eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,6vw,4rem);line-height:1;margin:.25em 0 .3em;letter-spacing:-.02em;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{max-width:65ch;color:var(--muted);margin:0}
+.formula-strip{font-family:var(--mono);font-size:.85rem;color:var(--muted);margin-top:18px;display:flex;flex-wrap:wrap;gap:8px 18px}
+.formula-strip b{color:var(--ink);font-weight:600}
+
+section.unit{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:28px clamp(18px,4vw,40px);margin-bottom:28px;scroll-margin-top:20px}
+h2{font-family:var(--display);font-weight:700;font-size:1.75rem;line-height:1.15;margin:0 0 4px;text-wrap:balance;display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
+h2 .sec{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:600}
+h3{font-family:var(--display);font-weight:700;font-size:1.2rem;margin:28px 0 8px}
+.why{color:var(--muted);font-size:.95rem;margin:0 0 18px;max-width:70ch}
+p,li{max-width:70ch}
+code,.m{font-family:var(--mono);font-size:.9em}
+.m{white-space:nowrap}
+.m.wr{white-space:normal;overflow-wrap:anywhere}
+.def,.ex,.warn{min-width:0;overflow-wrap:break-word}
+.gk{font-family:var(--mono);font-style:normal}
+
+.def{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+.def b:first-child{font-family:var(--display);font-weight:700}
+.eq{font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;overflow-x:auto;white-space:pre;line-height:1.7;font-size:.92rem}
+.eq .n{color:var(--muted)}
+.eqrows{display:grid;gap:8px;margin:12px 0}
+.eqrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px 14px;align-items:center;font-family:var(--mono);font-size:.92rem;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.eqrow .ex1{min-width:0;line-height:1.6}
+.eqrow .n{color:var(--muted)}
+.eqrow .tag{font-size:.75rem;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--accent-soft);color:var(--accent)}
+.tag.no{background:var(--bad-soft);color:var(--bad)}
+@media (max-width:560px){.eqrow{grid-template-columns:minmax(0,1fr) auto}.eqrow .ex1{grid-column:1 / -1}}
+.ex{border:1px dashed var(--mark);background:var(--mark-soft);border-radius:8px;padding:10px 16px;margin:12px 0}
+.ex .t{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mark);font-weight:600}
+.ex .eq{background:transparent;border:0;padding:4px 0;margin:2px 0}
+.warn{border-left:3px solid var(--bad);background:var(--bad-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+ul.props{padding-left:1.2em}
+ul.props li{margin:4px 0}
+
+/* tables */
+.tbl{overflow-x:auto;margin:12px 0}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.9rem}
+th,td{border:1px solid var(--line);padding:5px 9px;text-align:center}
+th{background:var(--bg);font-family:var(--mono);font-weight:600;font-size:.8rem}
+td.l,th.l{text-align:left}
+td.hi{background:var(--accent-soft);font-weight:700}
+td.one{background:var(--mark-soft);font-weight:700}
+td.dim{color:var(--muted)}
+
+/* interactive lab */
+.lab{border:1px solid var(--line);border-radius:12px;margin:18px 0;overflow:hidden}
+.lab-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--line)}
+.lab-h .t{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.lab-b{padding:14px}
+.controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:end;margin-bottom:12px}
+.controls label{display:grid;gap:3px;font-size:.78rem;font-family:var(--mono);color:var(--muted)}
+input[type=number]{width:9.5em;font:inherit;font-family:var(--mono);font-size:.95rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+button{font-family:var(--mono);font-size:.82rem;padding:7px 12px;border:1px solid var(--accent);background:var(--accent);color:var(--paper);border-radius:6px;cursor:pointer}
+button.ghost{background:transparent;color:var(--accent)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.out{font-family:var(--mono);font-size:.9rem}
+.out .res{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:600}
+.res.ok{background:var(--accent-soft);color:var(--accent)}
+.res.no{background:var(--bad-soft);color:var(--bad)}
+.err{color:var(--bad);font-family:var(--mono);font-size:.85rem}
+svg text{font-family:var(--mono)}
+.figure{margin:16px 0;overflow-x:auto}
+.figure svg{display:block;max-width:100%;height:auto}
+.cap{font-size:.82rem;color:var(--muted);margin-top:6px}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.grid2>*{min-width:0}
+
+/* totient grid */
+.cells{display:flex;flex-wrap:wrap;gap:4px}
+.cells span{font-family:var(--mono);font-size:.78rem;width:2.6em;text-align:center;padding:4px 0;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.cells span.on{background:var(--accent);border-color:var(--accent);color:var(--paper);font-weight:600}
+
+/* mapping row */
+.maprow{display:grid;grid-template-columns:7.5em repeat(8,minmax(2.2em,1fr));gap:4px;font-family:var(--mono);font-size:.85rem;min-width:420px}
+.maprow div{padding:5px 0;text-align:center;border-radius:4px}
+.maprow .h{text-align:left;color:var(--muted);font-size:.75rem;padding-top:7px}
+.maprow .c{background:var(--bg)}
+.maprow .dup{background:var(--bad-soft);color:var(--bad);font-weight:600}
+.maprow .uni{background:var(--accent-soft);color:var(--accent);font-weight:600}
+
+/* glossary & review */
+dl.gloss{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr);gap:0;margin:0}
+dl.gloss dt,dl.gloss dd{padding:9px 0;border-bottom:1px solid var(--line);margin:0}
+dl.gloss dt{font-family:var(--display);font-weight:700;padding-right:16px}
+@media (max-width:560px){dl.gloss{grid-template-columns:minmax(0,1fr)} dl.gloss dt{border-bottom:0;padding-bottom:0}}
+details{border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:8px 0;background:var(--paper)}
+summary{cursor:pointer;font-weight:700}
+details p{margin:.6em 0 0}
+.src{font-size:.85rem;color:var(--muted)}
+.src a,a{color:var(--accent)}
+footer{font-size:.82rem;color:var(--muted);margin-top:24px}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---- Sticky "All units" bar + back-to-top (shared across unit pages) ---- */
+:root{--topbar-h:52px}
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.topbar-in{max-width:1180px;margin:0 auto;height:var(--topbar-h);padding-inline:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.topbar a.home{flex:0 0 auto;font-family:var(--f-mono,var(--mono));font-size:.84rem;font-weight:600;color:var(--ink);text-decoration:none;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface,var(--paper))}
+.topbar a.home:hover{border-color:var(--accent);color:var(--accent)}
+.topbar a.home:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.topbar .where{min-width:0;font-family:var(--f-mono,var(--mono));font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.to-top{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono,var(--mono));font-size:.82rem;font-weight:600;padding:10px 14px;border:1px solid var(--accent);border-radius:999px;background:var(--accent);color:var(--surface,var(--paper));cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.18);opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .2s,transform .2s,visibility 0s linear .2s}
+.to-top.show{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .2s}
+.to-top:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.to-top{transition:none}}
+
+.topbar{margin-inline:-16px}
+.topbar-in{padding-inline:16px}
+nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h) + 20px)}
+section.unit{scroll-margin-top:calc(20px + var(--topbar-h))}
+@media (max-width:900px){nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h))}section.unit{scroll-margin-top:calc(72px + var(--topbar-h))}}
+
+input[type=text],textarea,select{font:inherit;font-family:var(--mono);font-size:.92rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);max-width:100%}
+input[type=text]{width:18em}
+input.wide{width:min(34em,100%)}
+textarea{width:100%;min-height:4.6em;resize:vertical}
+input[type=range]{accent-color:var(--accent)}
+.controls label.grow{flex:1 1 280px}
+.controls label.grow input,.controls label.grow textarea{width:100%}
+.mono{font-family:var(--mono)}
+.big{font-family:var(--mono);font-size:1.05rem;letter-spacing:.06em;overflow-wrap:anywhere}
+.hlrow td{background:var(--accent-soft);font-weight:700;color:var(--accent)}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:12px 0}
+.cmp>div{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--paper);min-width:0}
+.cmp h4{margin:0 0 6px;font-family:var(--display);font-size:1.02rem}
+.cmp p{margin:0;font-size:.95rem}
+.diffbit{color:var(--bad);font-weight:700}
+@media (max-width:560px){input[type=text]{width:100%}}
+.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;font-family:var(--mono);font-size:.84rem;align-items:baseline}
+.kv .k{color:var(--muted)}
+.kv .v{overflow-wrap:anywhere}
+.pill{display:inline-block;font-family:var(--mono);font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.pill.no{background:var(--bad-soft);color:var(--bad)}
+.pill.mk{background:var(--mark-soft);color:var(--mark)}
+.note{border-left:3px solid var(--mark);background:var(--mark-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0;font-size:.95rem}
+.note .t{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mark);font-weight:600;display:block;margin-bottom:2px}
+.modes td,.modes th{text-align:left;vertical-align:top}
+.modes td.c{text-align:center}
+.bitstr{font-family:var(--mono);font-size:.8rem;overflow-wrap:anywhere;line-height:1.5}
+.bitstr b{color:var(--accent)}
+.bitstr i{font-style:normal;color:var(--muted);text-decoration:line-through}
+select{font:inherit;font-family:var(--mono);font-size:.88rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+@media (max-width:560px){.blkrow{grid-template-columns:minmax(0,1fr)}.blkrow .h{padding-top:0}canvas.px{width:150px;height:150px}.kv{grid-template-columns:minmax(0,1fr)}.kv .k{margin-top:4px}}
+.op{font-family:var(--mono);font-size:.92em}
+.seg{display:inline-flex;border:1px solid var(--accent);border-radius:6px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent;color:var(--accent)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--paper)}
+.eq sub,.kv sub{font-size:.75em}
+.pseudo{font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;overflow-x:auto;white-space:pre;line-height:1.55;font-size:.86rem}
+.pseudo .kw{color:var(--accent);font-weight:600}
+.pseudo .cm{color:var(--muted)}
+sub{line-height:0;font-size:.75em}
+/* justified prose (wider screens only: narrow columns get large word gaps) */
+@media (min-width:600px){
+section.unit p,section.unit li,.def,.note,.warn,.why,.lede,details p{text-align:justify;hyphens:auto;-webkit-hyphens:auto}
+section.unit .out,section.unit .cap,section.unit td,section.unit th,.lab-h,.kv{text-align:left;hyphens:manual;-webkit-hyphens:manual}
+section.unit .grid2 *,section.unit .cmp *,section.unit .src{text-align:left;hyphens:manual;-webkit-hyphens:manual}}
+
+/* ---- shared sub-entry nav (from Unit 6) ---- */
+nav.toc li.sub a{padding-left:calc(18px + 2.08rem);font-size:.84rem;color:var(--muted)}
+nav.toc li.sub a.active{color:var(--paper)}
+@media (max-width:900px){nav.toc li.sub a{padding-left:10px}}
+.lab-h .seg button{font-size:.76rem;padding:6px 10px}
+.controls output{color:var(--ink);font-weight:600}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);margin:6px 0}
+input[type=range]{width:150px}
+.kv .v .res{font-size:.78rem;padding:1px 8px}
+@media (max-width:560px){.m{white-space:normal;overflow-wrap:anywhere}input[type=range]{width:100%}}
+
+/* ---- Unit 7 additions (shared figure classes) ---- */
+.hidden-defs{position:absolute;width:0;height:0;overflow:hidden}
+svg .bx{fill:var(--paper);stroke:var(--ink);stroke-width:1.2}
+svg .bxa{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+svg .bxm{fill:var(--mark-soft);stroke:var(--mark);stroke-width:1.2}
+svg .bxb{fill:var(--bad-soft);stroke:var(--bad);stroke-width:1.2}
+svg .op{fill-opacity:.55}
+svg .ln{stroke:var(--ink);stroke-width:1.3;fill:none}
+svg .ln.dash{stroke-dasharray:5 4;stroke:var(--muted)}
+svg .ah{fill:var(--ink)}
+svg .tx{fill:var(--ink);font-size:12px}
+svg .tm{fill:var(--muted);font-size:11px}
+svg .hot{fill:var(--mark-soft);stroke:var(--mark);stroke-width:2.6}
+svg .lane{cursor:pointer}
+svg .lane:focus-visible rect,svg .lane:hover rect{stroke-width:2.4}
+svg .lane:focus{outline:none}
+svg .heat{fill:color-mix(in srgb,var(--accent) calc(var(--h,0) * 100%),var(--paper));stroke:var(--line);stroke-width:1}
+svg .heat.selc{stroke:var(--mark);stroke-width:2.6}
+td.newv{background:var(--mark-soft);color:var(--mark);font-weight:700}
+.yv{font-size:.82rem;line-height:1.7;margin:.3em 0 .8em}
+.yv b{color:var(--accent);font-weight:600}
+.kv .v b{overflow-wrap:anywhere}
+.mitm-pkt.p1{transform:translate(150px,28px)}
+.mitm-pkt.p2{transform:translate(420px,28px)}
+.mitm-ok{fill:var(--bad)}
+@keyframes mitm1{0%{transform:translate(105px,28px);opacity:1}40%{transform:translate(225px,28px);opacity:1}50%,100%{transform:translate(225px,28px);opacity:0}}
+@keyframes mitm2{0%,45%{transform:translate(370px,28px);opacity:0}50%{transform:translate(370px,28px);opacity:1}90%,100%{transform:translate(470px,28px);opacity:1}}
+@media (prefers-reduced-motion:no-preference){.mitm-pkt.p1{animation:mitm1 6s linear infinite}.mitm-pkt.p2{animation:mitm2 6s linear infinite}}
+#rd-svg .rd-mv{opacity:0}
+#rd-svg.play .rd-mv{animation:rdmv 1.6s ease-in-out forwards}
+#rd-svg.play .rdv{animation:rdfade 2.2s ease forwards}
+@keyframes rdmv{0%{opacity:1;transform:none}75%{opacity:1;transform:translate(var(--dx),118px)}100%{opacity:0;transform:translate(var(--dx),118px)}}
+@keyframes rdfade{0%,70%{opacity:0}100%{opacity:1}}
+#sp-svg .sp-f,#sp-svg .sp-p,#sp-svg .sp-z,#sp-svg .sp-x,#it-svg rect{transition:fill .2s,stroke-width .2s}
+#kg-svg,#k3-svg{max-width:320px}
+.seg{flex-wrap:wrap}
+.out .cap{font-family:var(--body)}
+@media (max-width:600px){.figure svg[width]{max-width:none}}
+
+/* ---- Scrollable side navbar (wide screens) + Review expand/collapse (shared across unit pages) ---- */
+@media (min-width:901px){
+  nav.toc{max-height:calc(100vh - var(--topbar-h,0px) - 40px - env(safe-area-inset-top,0px));overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--line) transparent;padding-right:6px;margin-right:-6px}
+  nav.toc::-webkit-scrollbar{width:6px}
+  nav.toc::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+  nav.toc ol{max-height:none;overflow:visible}
+}
+.rv-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 4px}
+.rv-tools button{font-family:var(--mono,var(--f-mono));font-size:.78rem;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper,var(--surface));color:var(--ink);cursor:pointer;transition:border-color .15s,color .15s}
+.rv-tools button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.rv-tools button:disabled{opacity:.45;cursor:default}
+.rv-tools button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rv-tools .rv-count{font-family:var(--mono,var(--f-mono));font-size:.74rem;color:var(--muted);margin-left:4px}
+
+/* ---- Unit 9 additions: protocol steppers, certificate fields, path tree ---- */
+svg .ahm{fill:var(--mark)}
+svg .ahb{fill:var(--bad)}
+svg .ahd{fill:var(--muted)}
+svg .lh{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+svg .lt{fill:var(--ink);font-size:12px;font-weight:600}
+svg .ll{stroke:var(--line);stroke-width:1.4;stroke-dasharray:4 4}
+svg .ms{stroke:var(--ink);stroke-width:1.4;fill:none}
+svg .ms.cur{stroke:var(--mark);stroke-width:2.4}
+svg .ms.atk{stroke:var(--bad)}
+svg .ms.todo,svg .ml.todo{opacity:.18}
+svg .ml{fill:var(--ink);font-size:11px;paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
+svg .ml.cur{fill:var(--mark);font-weight:700}
+svg .ml.atk{fill:var(--bad)}
+svg .gb{fill:var(--bg);stroke:var(--line);stroke-width:1}
+svg .gl{fill:var(--muted);font-size:10px;letter-spacing:.04em;paint-order:stroke;stroke:var(--bg);stroke-width:3px}
+svg .pk{fill:var(--mark)}
+.proto .figure{margin:4px 0 8px}
+.pctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pctl .cnt{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+.pnote{border-top:1px solid var(--line);padding-top:10px;margin-top:10px;min-height:3.6em}
+.pnote .ml1{font-family:var(--mono);font-size:.86rem;overflow-wrap:anywhere;color:var(--mark);font-weight:600}
+.pnote .ml1.atk{color:var(--bad)}
+.pnote p{margin:.35em 0 0}
+button:disabled{opacity:.45;cursor:default}
+
+.certgrid{display:grid;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:12px 0;background:var(--paper)}
+.cf{display:grid;grid-template-columns:3.4em minmax(9em,14em) minmax(0,1fr);gap:4px 12px;align-items:baseline;padding:8px 12px;border-bottom:1px solid var(--line);font-size:.92rem}
+.cf:last-child{border-bottom:0}
+.cf.sig{background:var(--mark-soft)}
+.cf b{font-family:var(--display)}
+.cf .pill{justify-self:start}
+@media (max-width:560px){.cf{grid-template-columns:3.4em minmax(0,1fr)}.cf>span:last-child{grid-column:2}}
+
+svg .nd{fill:var(--paper);stroke:var(--ink);stroke-width:1.2}
+svg .nd.u{fill:var(--mark-soft);stroke:var(--mark)}
+svg .nd.on{fill:var(--accent);stroke:var(--accent)}
+svg .nt{fill:var(--ink);font-size:13px;font-weight:700}
+svg .nt.on{fill:var(--paper)}
+svg .ed{stroke:var(--line);stroke-width:2;fill:none}
+svg .ed.x{stroke-dasharray:5 4}
+svg .ed.on{stroke:var(--accent);stroke-width:3.6}
+svg .gridl{stroke:var(--line);stroke-width:1}
+svg .c1{stroke:var(--bad);stroke-width:2.2;fill:none}
+svg .c2{stroke:var(--accent);stroke-width:2.2;fill:none}
+svg .d1{fill:var(--bad)}
+svg .d2{fill:var(--accent)}
+svg .win{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+svg .okm{fill:var(--accent)}
+svg .nom{fill:var(--bad)}
+.out .kv .v .res{white-space:normal}
+.eqg{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 32px;align-items:baseline;font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:.92rem;line-height:1.6;overflow-x:auto}
+.eqg>span{white-space:nowrap}
+.eqg .n{color:var(--muted)}
+.eqg sub{font-size:.75em}
+@media (max-width:560px){.eqg{grid-template-columns:minmax(0,1fr);gap:0}.eqg .n{margin-bottom:8px}.eqg .n:empty{display:none}}
+.pvar{margin-bottom:10px}
+.pvar .seg{flex-wrap:wrap}
+.tbl .pill{white-space:nowrap}
+</style>
+</head>
+<body>
+<svg class="hidden-defs" aria-hidden="true" focusable="false"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker><marker id="ahm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahm" d="M0 0 L10 5 L0 10 z"/></marker><marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahb" d="M0 0 L10 5 L0 10 z"/></marker><marker id="ahd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahd" d="M0 0 L10 5 L0 10 z"/></marker></defs></svg>
+<header class="topbar"><div class="topbar-in"><a class="home" href="./">← All units</a><span class="where">Unit 9 · Key Management &amp; Authentication</span></div></header>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <div class="lbl">Contents</div>
+  <ol>
+    <li><a href="#s141"><span>14.1</span>Symmetric key distribution</a></li>
+    <li class="sub"><a href="#s141c">Controlling key usage</a></li>
+    <li><a href="#s142"><span>14.2</span>Secret keys via public keys</a></li>
+    <li><a href="#s143"><span>14.3</span>Distributing public keys</a></li>
+    <li><a href="#s144"><span>14.4</span>X.509 certificates</a></li>
+    <li class="sub"><a href="#s144b">Chains, revocation, v3</a></li>
+    <li><a href="#s145"><span>14.5</span>Public-key infrastructure</a></li>
+    <li><a href="#s151"><span>15.1</span>Authentication principles</a></li>
+    <li><a href="#s152"><span>15.2</span>Symmetric-key authentication</a></li>
+    <li><a href="#s153"><span>15.3</span>Kerberos</a></li>
+    <li class="sub"><a href="#s153b">Version 4 dialogue</a></li>
+    <li class="sub"><a href="#s153c">Realms and version 5</a></li>
+    <li><a href="#s154"><span>15.4</span>Public-key authentication</a></li>
+    <li><a href="#s155"><span>15.5</span>Federated identity</a></li>
+    <li><a href="#s156"><span>15.6</span>Personal identity verification</a></li>
+    <li><a href="#terms">Key terms</a></li>
+    <li><a href="#review">Review</a></li>
+    <li><a href="#res"><span>Ref</span>Sources</a></li>
+  </ol>
+  <div class="bar" aria-hidden="true"><i id="toc-progress"></i></div>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Unit 9 · Stallings, Chapters 14–15</div>
+  <h1>Key Management &amp; <em>Authentication</em></h1>
+  <p class="lede">Every cipher so far assumed the parties already hold the right keys. Chapter 14 covers how they get them: key distribution centers and key hierarchies for secret keys, public-key methods for sending secret keys, and certificates, X.509 and PKI for trusting public keys. Chapter 15 uses the same tools to prove who a user is across a network: nonces and timestamps against replay, Kerberos tickets, public-key protocols, federated identity and PIV smart cards.</p>
+  <div class="formula-strip">
+    <span><b>keys for N parties ≈ N(N − 1)/2</b></span>
+    <span><b>C<sub>A</sub> = E(PR<sub>auth</sub>, [T ‖ ID<sub>A</sub> ‖ PU<sub>a</sub>])</b></span>
+    <span><b>|Clock − T| &lt; Δt<sub>1</sub> + Δt<sub>2</sub></b></span>
+    <span><b>Ticket<sub>v</sub> = E(K<sub>v</sub>, [K<sub>c,v</sub> ‖ ID<sub>C</sub> ‖ AD<sub>C</sub> ‖ ID<sub>V</sub> ‖ TS<sub>4</sub> ‖ Lifetime<sub>4</sub>])</b></span>
+  </div>
+</header>
+
+<!-- ============ 14.1 ============ -->
+<section class="unit" id="s141">
+  <h2><span class="sec">14.1</span>Symmetric Key Distribution Using Symmetric Encryption</h2>
+  <p class="why">Both parties must share a key that no one else sees, and keys should change often to limit what one stolen key exposes. So the strength of a cryptographic system rests on how keys are delivered.</p>
+  <div class="def"><b>Key distribution technique</b> — the means of delivering a key to two parties who wish to exchange data, without allowing others to see the key.</div>
+  <p>For parties A and B there are four ways:</p>
+  <ol class="props">
+    <li>A selects a key and physically delivers it to B.</li>
+    <li>A third party selects the key and physically delivers it to A and B.</li>
+    <li>If A and B recently shared a key, one sends the new key encrypted with the old key.</li>
+    <li>If A and B each have an encrypted connection to a third party C, C delivers the key over those links.</li>
+  </ol>
+  <div class="def"><b>Link encryption</b> — each communication link is protected by an encryption device at each of its ends; a device only ever talks to its partner on the other end. <b>End-to-end encryption</b> — encryption is applied between the two end systems (hosts, processes or applications), across the whole network path.</div>
+  <ul class="props">
+    <li>Options 1 and 2 (manual delivery) are reasonable for link encryption but awkward for end-to-end encryption, where a host may talk to many hosts over time.</li>
+    <li>Option 3: if an attacker ever gets one key, every later key is revealed; and the first keys still have to be delivered somehow.</li>
+    <li>Option 4, in the form of a <b>key distribution center</b>, is the widely adopted choice for end-to-end encryption.</li>
+  </ul>
+
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · How many keys?</span><span class="pill">Figure 14.1</span></div>
+    <div class="lab-b">
+      <div class="controls"><label>Endpoints N<input type="number" id="kc-n" min="2" max="1000000" value="1000"></label>
+        <span class="seg" role="group" aria-label="Endpoint presets"><button type="button" data-kc="1000" aria-pressed="true">1000 nodes</button><button type="button" data-kc="10000" aria-pressed="false">10 000 applications</button></span></div>
+      <div id="kc-out" class="out"></div>
+      <div class="figure"><svg id="kc-svg" viewBox="0 0 640 230" width="640" role="img" aria-label="Log-log plot of keys needed versus number of endpoints"></svg></div>
+      <p class="cap">Pairwise keys grow as N(N − 1)/2, a straight line of slope 2 on a log-log scale. With a KDC only N master keys are needed. Node-level encryption over 1000 nodes needs about half a million keys; 10 000 applications need about 50 million.</p>
+    </div>
+  </div>
+
+  <h3>The key hierarchy</h3>
+  <div class="def"><b>Key distribution center (KDC)</b> — a trusted party that distributes keys to pairs of users (hosts, processes, applications) as needed. Each user shares a unique key with the KDC for this purpose.</div>
+  <div class="def"><b>Session key</b> — a temporary key that encrypts traffic between end systems, typically for the duration of one logical connection (for example a transport connection), then discarded. It is obtained from the KDC over the same network, so it travels encrypted.</div>
+  <div class="def"><b>Master key</b> — the long-term key each end system or user shares with the KDC, used to encrypt session keys in transit. N entities need only N master keys, so they can be distributed non-cryptographically (e.g. physical delivery).</div>
+  <div class="grid2" style="align-items:center">
+  <div class="figure" role="img" aria-label="Three-level stack: data protected cryptographically by session keys, session keys protected cryptographically by master keys, master keys protected non-cryptographically.">
+  <svg viewBox="0 0 360 190" width="360">
+    <rect class="bx" x="20" y="10" width="120" height="40" rx="5"/><text class="tx" x="80" y="35" text-anchor="middle">Data</text>
+    <rect class="bxa" x="20" y="75" width="120" height="40" rx="5"/><text class="tx" x="80" y="100" text-anchor="middle">Session keys</text>
+    <rect class="bxm" x="20" y="140" width="120" height="40" rx="5"/><text class="tx" x="80" y="165" text-anchor="middle">Master keys</text>
+    <path class="ln" d="M80 73 V52" marker-end="url(#ah)"/><path class="ln" d="M80 138 V117" marker-end="url(#ah)"/>
+    <text class="tm" x="160" y="66">cryptographic protection</text>
+    <text class="tm" x="160" y="131">cryptographic protection</text>
+    <text class="tm" x="160" y="166">non-cryptographic protection</text>
+  </svg>
+  <div class="cap">Redrawn from Figure 14.2, The use of a key hierarchy.</div></div>
+  <div class="def"><b>Nonce</b> — a value used once to identify one transaction: a timestamp, counter or random number. It must differ with each request and, to stop masquerade, be hard for an opponent to guess, so a random number is a good choice.</div>
+  </div>
+
+  <h3>A key distribution scenario</h3>
+  <p>A shares master key K<sub>a</sub> with the KDC, and B shares K<sub>b</sub>. A wants a one-time session key K<sub>s</sub> for a connection to B. Step through Figure 14.3:</p>
+  <div class="lab proto" data-protos="kdc"></div>
+  <p>Key distribution itself is steps 1–3. Steps 3–5 perform authentication: steps 4–5 assure B that step 3 was not a replay.</p>
+
+  <h3>Hierarchical key control</h3>
+  <p>A large network can use a hierarchy of KDCs: a local KDC for each small domain (a LAN, a building), and a global KDC through which local KDCs talk when entities in different domains need a shared key (any of the three may pick the key). This minimizes master-key distribution, since most master keys are shared only with a local KDC, and limits a faulty or subverted KDC’s damage to its own area. It extends to three or more layers.</p>
+
+  <h3>Session key lifetime</h3>
+  <p>Frequent changes give an opponent less ciphertext per key, but each distribution delays the exchange and loads the network.</p>
+  <div class="def"><b>Protocol data unit (PDU)</b> — the block of data a protocol layer sends as one unit (a packet or segment), usually numbered with a sequence number.</div>
+  <ul class="props">
+    <li><b>Connection-oriented protocols</b>: one session key per connection; on a very long connection, change it periodically, e.g. each time the PDU sequence number cycles.</li>
+    <li><b>Connectionless (transaction-oriented) protocols</b>: a new key per exchange is most secure but destroys their low overhead; better to use a key for a fixed period or a fixed number of transactions.</li>
+  </ul>
+
+  <h3>A transparent key control scheme</h3>
+  <div class="def"><b>Session security module (SSM)</b> — functionality at one protocol layer that performs end-to-end encryption and obtains session keys on behalf of its host or terminal, so the end users never see key handling. Assumes a connection-oriented protocol such as TCP.</div>
+  <div class="lab proto" data-protos="ssm"></div>
+
+  <h3>Decentralized key control</h3>
+  <p>Without a KDC there is no central party to trust or protect, but each end system must talk securely with every partner: up to n(n − 1)/2 master keys in total, at most n − 1 per node. Practical only in a local context. Messages under the master key are short, so cryptanalysis is difficult; session keys are still used only for a limited time.</p>
+  <div class="lab proto" data-protos="dec"></div>
+</section>
+
+<!-- ============ 14.1 (cont.) Controlling key usage ============ -->
+<section class="unit" id="s141c">
+  <h2>Controlling Key Usage</h2>
+  <p class="why">Separating keys by purpose stops one kind of key being misused as another, for instance a master key being treated as a session key.</p>
+  <p>Session keys can be split by use: a <b>data-encrypting key</b> (general network traffic), a <b>PIN-encrypting key</b> (personal identification numbers in electronic funds transfer and point-of-sale) and a <b>file-encrypting key</b> (files in publicly accessible places).</p>
+  <div class="warn">Risk: master keys are kept inside the cryptographic hardware, while session keys encrypted under them (and data encrypted under those) are available to applications. If a master key is imported into a device as a data-encrypting key, an unauthorized application may be able to recover plaintext session keys encrypted with that master key.</div>
+
+  <h3>Key tags</h3>
+  <p>For DES, the 8 non-key (parity) bits of each 64-bit key become a <b>tag</b>: one bit says session or master key, one says whether encryption is allowed, one whether decryption is allowed; the rest are spare. The tag is encrypted along with the key when it is distributed. Drawbacks: only 8 bits, and because the tag is not in the clear it can be checked only at the point of decryption.</p>
+
+  <h3>Control vectors</h3>
+  <div class="def"><b>Control vector (CV)</b> — a variable-length set of fields attached to each session key that specifies the uses and restrictions for that key. It is cryptographically coupled to the key when the KDC generates it, and travels in the clear.</div>
+  <div class="eqg"><span>H = h(CV)</span><span class="n">hash; output length = key length</span>
+<span>Key input = K<sub>m</sub> <span class="op">⊕</span> H</span><span class="n"></span>
+<span>Ciphertext = E([K<sub>m</sub> <span class="op">⊕</span> H], K<sub>s</sub>)</span><span class="n">sent with the CV in clear</span>
+<span>K<sub>s</sub> = D([K<sub>m</sub> <span class="op">⊕</span> H], E([K<sub>m</sub> <span class="op">⊕</span> H], K<sub>s</sub>))</span><span class="n">recovery needs K<sub>m</sub> and the CV</span></div>
+  <div class="def"><b>Hash function</b> (Unit 7) — maps values from a larger range into a smaller range with a reasonably uniform spread; here it shrinks the CV to key length.</div>
+  <p>The session key can be recovered only with both the master key and the exact control vector, so the CV and the key stay linked. Advantages over the 8-bit tag: no length limit (arbitrarily complex controls), and the CV is in the clear at every stage, so key use can be checked in many places.</p>
+
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Control vector coupling</span><span class="pill">Figure 14.6</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label class="grow">Control vector at the KDC<input type="text" id="cv-a" value="type=data-encrypting; encrypt=yes; decrypt=yes"></label>
+        <label class="grow">Control vector the user presents<input type="text" id="cv-b" value="type=data-encrypting; encrypt=yes; decrypt=yes"></label>
+        <button type="button" id="cv-tamper" class="ghost">Change CV to PIN-encrypting</button>
+        <button type="button" id="cv-new" class="ghost">New K<sub>m</sub>, K<sub>s</sub></button>
+      </div>
+      <div id="cv-out" class="out"></div>
+      <p class="cap">Stand-ins for the book’s generic functions: h = SHA-256 truncated to 128 bits; E/D = AES-128 Key Wrap (RFC 3394, Unit 7 §12.8). Key wrap has a built-in integrity check, so a changed CV makes recovery fail outright instead of yielding a wrong key.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 14.2 ============ -->
+<section class="unit" id="s142">
+  <h2><span class="sec">14.2</span>Symmetric Key Distribution Using Asymmetric Encryption</h2>
+  <p class="why">Public-key encryption is too slow for bulk data, so one of its most important jobs is encrypting small secret keys for distribution.</p>
+  <h3>Simple secret key distribution</h3>
+  <p>A creates a fresh key pair {PU<sub>a</sub>, PR<sub>a</sub>}, sends PU<sub>a</sub> ‖ ID<sub>A</sub>; B returns E(PU<sub>a</sub>, K<sub>s</sub>); A recovers K<sub>s</sub> = D(PR<sub>a</sub>, E(PU<sub>a</sub>, K<sub>s</sub>)); A discards both keys of the pair and B discards PU<sub>a</sub>. No keys exist before or after, so compromise risk is minimal and eavesdroppers learn nothing.</p>
+  <div class="def"><b>Man-in-the-middle attack</b> — an adversary who controls the channel intercepts messages and relays or substitutes them, so each side believes it is talking to the other.</div>
+  <div class="lab proto" data-protos="merkle,mitm" data-name="Secret key distribution with public keys"></div>
+  <p>After the attack D only eavesdrops, decrypting everything with K<sub>s</sub>. The simple protocol is safe only when the sole threat is eavesdropping.</p>
+
+  <h3>Secret key distribution with confidentiality and authentication</h3>
+  <p>Assumes A and B already hold each other’s public keys (14.3). Protects against passive and active attacks:</p>
+  <div class="lab proto" data-protos="pkconf"></div>
+
+  <h3>A hybrid scheme</h3>
+  <p>A KDC still shares a master key with each user and sends session keys encrypted under it, but the master keys themselves are distributed with public-key encryption: a three-level hierarchy (public key → master key → session key).</p>
+  <ul class="props">
+    <li><b>Performance</b>: session keys change often in transaction-oriented applications; public-key work is used only occasionally, to update a master key.</li>
+    <li><b>Backward compatibility</b>: easily overlaid on an existing KDC scheme with minimal disruption.</li>
+  </ul>
+</section>
+
+<!-- ============ 14.3 ============ -->
+<section class="unit" id="s143">
+  <h2><span class="sec">14.3</span>Distribution of Public Keys</h2>
+  <p class="why">A public key need not be secret, but it must be genuine. Each scheme below trades convenience against how hard it is to plant a forged key.</p>
+  <div class="cmp">
+    <div><h4>Public announcement</h4><p>Anyone broadcasts their key (e.g. appended to forum posts). <b>Weakness:</b> anyone can forge an announcement “from A” and read A’s mail until the forgery is discovered.</p></div>
+    <div><h4>Publicly available directory</h4><p>A trusted authority keeps {name, public key} entries. <b>Weakness:</b> steal the authority’s private key, or tamper with its records, and you can hand out counterfeit keys.</p></div>
+    <div><h4>Public-key authority</h4><p>Tighter control: the authority answers each request, signed. <b>Weakness:</b> a bottleneck, and its directory can still be tampered with.</p></div>
+    <div><h4>Public-key certificates</h4><p>A signed {key, owner ID} block that participants exchange directly, as reliable as asking the authority.</p></div>
+  </div>
+  <p>The directory scheme: (1) the authority keeps an entry per participant; (2) participants register in person or by secure authenticated communication; (3) a key can be replaced at any time (heavy use, or a compromised private key); (4) electronic access requires secure, authenticated communication from the authority.</p>
+
+  <h3>Public-key authority</h3>
+  <p>Each participant reliably knows the authority’s public key PU<sub>auth</sub>; only the authority knows PR<sub>auth</sub>.</p>
+  <div class="lab proto" data-protos="pka"></div>
+  <p>Seven messages, but the first five are needed only rarely: A and B <b>cache</b> each other’s keys and periodically request fresh copies.</p>
+
+  <h3>Public-key certificates</h3>
+  <div class="def"><b>Certificate authority (CA)</b> — a trusted third party (e.g. a government agency or financial institution) that signs certificates. <b>Public-key certificate</b> — a public key and an identifier of its owner, with the whole block signed by the CA.</div>
+  <p>Requirements: (1) anyone can read a certificate to learn the owner’s name and key; (2) anyone can verify it came from the CA and is not counterfeit; (3) only the CA can create and update certificates; (4) anyone can verify its time validity.</p>
+  <div class="eqg"><span>C<sub>A</sub> = E(PR<sub>auth</sub>, [T ‖ ID<sub>A</sub> ‖ PU<sub>a</sub>])</span><span class="n">issued to A</span>
+<span>D(PU<sub>auth</sub>, C<sub>A</sub>) = (T ‖ ID<sub>A</sub> ‖ PU<sub>a</sub>)</span><span class="n">anyone verifies</span></div>
+  <p>Only PU<sub>auth</sub> opens the certificate, proving the CA made it. The timestamp T acts like an expiration date: if A’s private key is stolen and A gets a new certificate, the adversary could replay the old certificate to B; an old enough certificate is treated as expired.</p>
+  <div class="lab proto" data-protos="certx"></div>
+</section>
+
+<!-- ============ 14.4 ============ -->
+<section class="unit" id="s144">
+  <h2><span class="sec">14.4</span>X.509 Certificates</h2>
+  <p class="why">X.509 is the universally accepted certificate format, used by IPsec, TLS and S/MIME (Units 11–12).</p>
+  <div class="def"><b>X.500 directory</b> — a server or distributed set of servers holding a database of user information, including a mapping from user name to network address. ITU-T X.509, part of the X.500 series, defines how this directory provides authentication services, mainly as a repository of public-key certificates.</div>
+  <p>X.509 relies on public-key cryptography and digital signatures but does not dictate a signature algorithm or hash function. The CA hashes the unsigned certificate and signs the hash with its private key (with RSA this is “encrypting the hash”; with DSA or ECDSA the hash is input to signature generation instead).</p>
+  <div class="figure" role="img" aria-label="Create: Bob's ID, Bob's public key and CA information are hashed and the hash is signed with the CA's private key, giving the signed certificate. Verify: the recipient hashes the unsigned part, decrypts the signature with the CA's public key, and compares the two hash values.">
+  <svg viewBox="0 0 640 250" width="640">
+    <rect class="bx" x="10" y="20" width="150" height="80" rx="5"/>
+    <text class="tx" x="85" y="44" text-anchor="middle">Bob’s ID info</text><text class="tx" x="85" y="64" text-anchor="middle">Bob’s public key</text><text class="tx" x="85" y="84" text-anchor="middle">CA info</text>
+    <text class="tm" x="85" y="118" text-anchor="middle">unsigned certificate</text>
+    <path class="ln" d="M160 60 H198" marker-end="url(#ah)"/>
+    <rect class="bxa" x="200" y="42" width="40" height="36" rx="4"/><text class="tx" x="220" y="65" text-anchor="middle">H</text>
+    <path class="ln" d="M240 60 H268" marker-end="url(#ah)"/>
+    <rect class="bxm" x="270" y="42" width="40" height="36" rx="4"/><text class="tx" x="290" y="65" text-anchor="middle">E</text>
+    <text class="tm" x="290" y="96" text-anchor="middle">CA’s PR</text>
+    <path class="ln" d="M310 60 H362" marker-end="url(#ah)"/>
+    <rect class="bx" x="364" y="20" width="150" height="80" rx="5"/><rect class="bxm" x="364" y="78" width="150" height="22"/>
+    <text class="tx" x="439" y="52" text-anchor="middle">signed certificate</text><text class="tx" x="439" y="94" text-anchor="middle" font-size="11">signature</text>
+    <path class="ln" d="M380 100 V128" marker-end="url(#ah)"/>
+    <rect class="bxm" x="360" y="130" width="40" height="34" rx="4"/><text class="tx" x="380" y="152" text-anchor="middle">D</text>
+    <text class="tm" x="352" y="151" text-anchor="end">CA’s PU</text>
+    <path class="ln" d="M514 50 H580 V128" marker-end="url(#ah)"/>
+    <rect class="bxa" x="560" y="130" width="40" height="34" rx="4"/><text class="tx" x="580" y="152" text-anchor="middle">H</text>
+    <path class="ln" d="M380 164 V207 H428" marker-end="url(#ah)"/>
+    <text class="tm" x="372" y="186" text-anchor="end">recovered hash</text>
+    <path class="ln" d="M580 164 V207 H532" marker-end="url(#ah)"/>
+    <text class="tm" x="572" y="186" text-anchor="end">hash of fields</text>
+    <rect class="bx" x="430" y="190" width="100" height="34" rx="4"/><text class="tx" x="480" y="212" text-anchor="middle">compare</text>
+    <text class="tm" x="480" y="242" text-anchor="middle">equal ⇒ Bob’s key verified</text>
+  </svg>
+  <div class="cap">After Figure 14.14, X.509 public-key certificate use: create (top), verify (bottom).</div></div>
+
+  <h3>Certificate fields (Figure 14.15a)</h3>
+  <div class="certgrid" role="list">
+    <div class="cf" role="listitem"><span class="pill">v1</span><b>Version</b><span>Default 1; 2 if a unique identifier is present; 3 if any extension is present. The specification is at version 7, but the fields have not changed since version 3.</span></div>
+    <div class="cf" role="listitem"><span class="pill">v1</span><b>Serial number</b><span>Integer unique within the issuing CA.</span></div>
+    <div class="cf" role="listitem"><span class="pill">v1</span><b>Signature algorithm identifier</b><span>Algorithm (and parameters) used to sign; repeated in the signature field, so of little use.</span></div>
+    <div class="cf" role="listitem"><span class="pill">v1</span><b>Issuer name</b><span>X.500 name of the CA that created and signed the certificate.</span></div>
+    <div class="cf" role="listitem"><span class="pill">v1</span><b>Period of validity</b><span>Not before / not after: first and last valid dates.</span></div>
+    <div class="cf" role="listitem"><span class="pill">v1</span><b>Subject name</b><span>The user whose public key is certified (who holds the matching private key).</span></div>
+    <div class="cf" role="listitem"><span class="pill">v1</span><b>Subject’s public-key info</b><span>The key, its algorithm identifier and parameters.</span></div>
+    <div class="cf" role="listitem"><span class="pill mk">v2</span><b>Issuer unique identifier</b><span>Optional bit string, in case the CA’s X.500 name is reused. Rarely used.</span></div>
+    <div class="cf" role="listitem"><span class="pill mk">v2</span><b>Subject unique identifier</b><span>Optional bit string, in case the subject’s name is reused. Rarely used.</span></div>
+    <div class="cf" role="listitem"><span class="pill no">v3</span><b>Extensions</b><span>One or more extension fields (below).</span></div>
+    <div class="cf sig" role="listitem"><span class="pill">all</span><b>Signature</b><span>Covers all other fields: the CA’s digital signature plus the signature algorithm identifier.</span></div>
+  </div>
+  <p>X.509 notation for a certificate:</p>
+  <div class="eq">CA&lt;&lt;A&gt;&gt; = CA {V, SN, AI, CA, UCA, A, UA, Ap, T<sub>A</sub>}</div>
+  <div class="kv"><span class="k">Y&lt;&lt;X&gt;&gt;</span><span class="v">certificate of user X issued by CA Y</span><span class="k">Y {I}</span><span class="v">I signed by Y: I with an encrypted hash code appended</span><span class="k">V, SN, AI</span><span class="v">version, serial number, signing algorithm identifier</span><span class="k">CA, UCA</span><span class="v">CA name, optional CA unique identifier</span><span class="k">A, UA, Ap</span><span class="v">user name, optional user unique identifier, user A’s public key</span><span class="k">T<sub>A</sub></span><span class="v">period of validity</span></div>
+  <p>Anyone with the CA’s public key can verify the certified key, and no one but the CA can modify a certificate undetected. So certificates are <b>unforgeable</b> and can sit in a directory with no special protection, or be sent directly between users.</p>
+</section>
+
+<!-- ============ 14.4 (cont.) ============ -->
+<section class="unit" id="s144b">
+  <h2>Certificate Chains, Revocation and Version 3</h2>
+  <p class="why">With many users there are many CAs, each giving its public key securely to some fraction of users. Chains let a user trust a key certified by a CA it has never met.</p>
+  <p>If A trusts X<sub>1</sub> and B’s certificate comes from X<sub>2</sub>, and the two CAs have exchanged keys: A gets X<sub>1</sub>&lt;&lt;X<sub>2</sub>&gt;&gt; (verifiable with X<sub>1</sub>’s key, yielding X<sub>2</sub>’s key), then X<sub>2</sub>&lt;&lt;B&gt;&gt;. In general <span class="m">X<sub>1</sub>&lt;&lt;X<sub>2</sub>&gt;&gt; X<sub>2</sub>&lt;&lt;X<sub>3</sub>&gt;&gt; … X<sub>N</sub>&lt;&lt;B&gt;&gt;</span>, where each adjacent pair of CAs has certified the other. X.509 suggests arranging CAs in a hierarchy so paths are easy to find.</p>
+  <div class="def"><b>Forward certificates</b> — certificates of CA X generated by other CAs. <b>Reverse certificates</b> — certificates generated by X for other CAs. A CA’s directory entry holds both.</div>
+
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Certification path</span><span class="pill">Figure 14.16</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>From user<select id="cp-from"><option>A</option><option>B</option><option>C</option></select></label>
+        <label>To user<select id="cp-to"><option>B</option><option>A</option><option>C</option></select></label>
+        <label style="grid-auto-flow:column;align-items:center;gap:6px"><input type="checkbox" id="cp-cross">Route through the X↔Z cross-certificates</label>
+      </div>
+      <div class="figure"><svg id="cp-svg" viewBox="0 0 520 300" width="520" role="img" aria-label="CA hierarchy U, V, W, Y, X, Z with users A and C under X and B under Z; the chosen certification path is highlighted."></svg></div>
+      <div id="cp-out" class="out"></div>
+      <p class="cap">In Figure 14.16, X and Z have certified each other, so X&lt;&lt;Z&gt;&gt; and Z&lt;&lt;X&gt;&gt; are in the directory either way. The book’s path from A to B still climbs through V; tick the box to see the shorter path the cross-certificates allow.</p>
+    </div>
+  </div>
+
+  <h3>Revoking certificates</h3>
+  <p>A certificate normally lapses at the end of its validity period and is replaced just before. It may be revoked early because (1) the user’s private key is assumed compromised, (2) the user is no longer certified by this CA (name change, certificate superseded, not issued per policy), or (3) the CA’s certificate is assumed compromised.</p>
+  <div class="def"><b>Certificate revocation list (CRL)</b> — a list, signed by the CA and posted in the directory, of all revoked but unexpired certificates it issued (to users and to other CAs). It contains the issuer name, this update date, next update date, and one entry per revoked certificate: serial number and revocation date (serial numbers are unique within a CA, so they suffice). Figure 14.15b.</div>
+  <p>A user receiving a certificate must check that it is not revoked; to avoid directory searches each time, users usually keep a local cache of certificates and CRLs.</p>
+
+  <h3>X.509 version 3</h3>
+  <p>Version 2 could not carry identities beyond short X.500 names (e.g. email addresses, URLs), security policy information, limits on what a faulty or malicious CA’s certificates can be used for, or which of an owner’s keys over time this is. Version 3 adds optional extensions instead of more fixed fields.</p>
+  <div class="def"><b>Extension</b> — an extension identifier, a <b>criticality indicator</b> and a value. If the indicator is TRUE and an implementation does not recognize the extension, it must treat the certificate as invalid.</div>
+  <div class="def"><b>Certificate policy</b> — a named set of rules that says which community and/or class of application with common security requirements a certificate applies to.</div>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Category</th><th class="l">Extensions</th></tr>
+    <tr><td class="l"><b>Key and policy information</b></td><td class="l"><b>Authority key identifier</b> (which CA key verifies this signature; handles CA key updates) · <b>Subject key identifier</b> (which subject key is certified) · <b>Key usage</b> (digital signature, nonrepudiation, key encryption, data encryption, key agreement, CA signature verification on certificates or CRLs) · <b>Private-key usage period</b> (often shorter than the public key’s validity for signing keys) · <b>Certificate policies</b> · <b>Policy mappings</b> (CA-to-CA certificates only: issuer policy ≡ subject CA’s policy)</td></tr>
+    <tr><td class="l"><b>Subject and issuer attributes</b></td><td class="l"><b>Subject alternative name</b> (forms used by email, EDI, IPsec) · <b>Issuer alternative name</b> · <b>Subject directory attributes</b> (any X.500 attribute values)</td></tr>
+    <tr><td class="l"><b>Certification path constraints</b></td><td class="l"><b>Basic constraints</b> (may the subject act as a CA; optional path length limit) · <b>Name constraints</b> (name space for all later subject names in the path) · <b>Policy constraints</b> (require explicit policy, or inhibit policy mapping, for the rest of the path)</td></tr>
+  </table></div>
+</section>
+
+<!-- ============ 14.5 ============ -->
+<section class="unit" id="s145">
+  <h2><span class="sec">14.5</span>Public-Key Infrastructure</h2>
+  <p class="why">Certificates need people, systems and procedures around them. PKIX is the IETF model for running them on the Internet.</p>
+  <div class="def"><b>Public-key infrastructure (PKI)</b> (RFC 4949) — the hardware, software, people, policies and procedures needed to create, manage, store, distribute and revoke digital certificates based on asymmetric cryptography. Goal: secure, convenient, efficient acquisition of public keys. <b>PKIX</b> is the IETF Public Key Infrastructure X.509 working group’s model.</div>
+  <div class="grid2" style="align-items:start">
+  <ul class="props">
+    <li><b>End entity</b>: end user, device (server, router) or anything identifiable in a certificate’s subject field.</li>
+    <li><b>Certification authority (CA)</b>: issues certificates and usually CRLs.</li>
+    <li><b>Registration authority (RA)</b>: optional; takes over administrative functions from the CA, often end-entity registration.</li>
+    <li><b>CRL issuer</b>: optional; publishes CRLs for a CA.</li>
+    <li><b>Repository</b>: any method of storing certificates and CRLs for retrieval.</li>
+  </ul>
+  <div class="figure" role="img" aria-label="PKIX model: end entity retrieves certificates and CRLs from the repository; RA and CA perform management functions with the end entity; CA and CRL issuer publish to the repository; two CAs cross-certify.">
+  <svg viewBox="0 0 360 310" width="360">
+    <rect class="bx" x="10" y="20" width="100" height="40" rx="5"/><text class="tx" x="60" y="44" text-anchor="middle">End entity</text>
+    <rect class="bxm" x="260" y="10" width="90" height="290" rx="6"/><text class="tx" x="305" y="159" text-anchor="middle">Repository</text>
+    <rect class="bxa" x="10" y="110" width="100" height="36" rx="5"/><text class="tx" x="60" y="132" text-anchor="middle">RA</text>
+    <rect class="bxa" x="140" y="110" width="90" height="36" rx="5"/><text class="tx" x="185" y="132" text-anchor="middle">CA</text>
+    <rect class="bxa" x="140" y="200" width="90" height="36" rx="5"/><text class="tx" x="185" y="222" text-anchor="middle">CA</text>
+    <rect class="bxa" x="10" y="262" width="110" height="36" rx="5"/><text class="tx" x="65" y="284" text-anchor="middle">CRL issuer</text>
+    <path class="ln" d="M110 40 H258" marker-end="url(#ah)" marker-start="url(#ah)"/><text class="tm" x="184" y="33" text-anchor="middle">cert/CRL retrieval</text>
+    <path class="ln" d="M60 60 V108" marker-end="url(#ah)" marker-start="url(#ah)"/>
+    <path class="ln" d="M92 60 L168 108" marker-end="url(#ah)" marker-start="url(#ah)"/>
+    <path class="ln" d="M110 128 H138"/>
+    <path class="ln" d="M230 128 H258" marker-end="url(#ah)"/>
+    <path class="ln" d="M185 146 V198" marker-end="url(#ah)" marker-start="url(#ah)"/><text class="tm" x="178" y="176" text-anchor="end">cross certification</text>
+    <path class="ln" d="M120 280 H258" marker-end="url(#ah)"/><text class="tm" x="190" y="273" text-anchor="middle">CRL publication</text>
+  </svg>
+  <div class="cap">Simplified from Figure 14.17, PKIX architectural model.</div></div>
+  </div>
+  <h3>PKIX management functions</h3>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Function</th><th class="l">What happens</th></tr>
+    <tr><td class="l">Registration</td><td class="l">User first makes itself known to a CA (directly or via an RA); usually mutual authentication, and the end entity gets shared secret keys for later authentication.</td></tr>
+    <tr><td class="l">Initialization</td><td class="l">Install key material in the client, e.g. the trusted CA’s public key used to validate certificate paths.</td></tr>
+    <tr><td class="l">Certification</td><td class="l">CA issues a certificate for the user’s key, returns it and/or posts it in a repository.</td></tr>
+    <tr><td class="l">Key pair recovery</td><td class="l">Restore an encryption/decryption key pair from an authorized backup (typically the issuing CA) after a forgotten password/PIN, corrupted disk or damaged token; otherwise encrypted data is lost.</td></tr>
+    <tr><td class="l">Key pair update</td><td class="l">Replace key pairs regularly and issue new certificates: at certificate expiry and after revocation.</td></tr>
+    <tr><td class="l">Revocation request</td><td class="l">An authorized person tells the CA a certificate must be revoked (key compromise, change in affiliation, name change).</td></tr>
+    <tr><td class="l">Cross certification</td><td class="l">Two CAs exchange information to create a <b>cross-certificate</b>: a certificate issued by one CA to another, containing a CA signature key used for issuing certificates.</td></tr>
+  </table></div>
+  <h3>Management protocols</h3>
+  <ul class="props">
+    <li><b>Certificate management protocols (CMP)</b>, RFC 2510: each management function has explicit protocol exchanges; flexible for many technical, operational and business models.</li>
+    <li><b>Certificate management messages over CMS (CMC)</b>, RFC 2797, where CMS is the cryptographic message syntax (RFC 2630): built on earlier work to reuse existing implementations; all functions supported, but not all as specific exchanges.</li>
+  </ul>
+  <div class="note"><span class="t">Current practice</span>The RFCs the book cites have been replaced: CMP is now RFC 9810 (2025; it obsoletes RFC 4210, which replaced RFC 2510), CMC is RFC 5272 (updated by RFC 6402), and the Internet X.509 certificate and CRL profile is RFC 5280.</div>
+</section>
+
+<!-- ============ 15.1 ============ -->
+<section class="unit" id="s151">
+  <h2><span class="sec">15.1</span>Remote User-Authentication Principles</h2>
+  <p class="why">User authentication is the primary line of defense: access control and accountability both depend on knowing who the user is.</p>
+  <div class="def"><b>User authentication</b> (RFC 4949) — verifying an identity claimed by or for a system entity, in two steps. <b>Identification step</b>: presenting an identifier (e.g. user ID ABTOKLAS; not secret). <b>Verification step</b>: presenting or generating authentication information (e.g. a password; secret) that corroborates the binding between entity and identifier.</div>
+  <p>User authentication differs from <b>message authentication</b> (Unit 7), which verifies that a received message is unaltered and from its claimed source.</p>
+
+  <h3>The NIST model (SP 800-63-2)</h3>
+  <div class="def"><b>Electronic user authentication</b> — establishing confidence in user identities presented electronically to an information system.</div>
+  <div class="grid2" style="align-items:center">
+  <ul class="props">
+    <li><b>Applicant</b> applies to a <b>registration authority (RA)</b>, a trusted entity that establishes and vouches for the applicant’s identity to a <b>credential service provider (CSP)</b>; the applicant becomes a <b>subscriber</b>.</li>
+    <li><b>Token</b>: something the subscriber possesses (an encryption key or an encrypted password).</li>
+    <li><b>Credential</b>: a data structure that authoritatively binds an identity and attributes to a token; verifiable in an authentication transaction.</li>
+    <li><b>Claimant</b>: the party to be authenticated. <b>Verifier</b>: the party checking that the claimant controls the token. The verifier sends an <b>assertion</b> about the subscriber to the <b>relying party (RP)</b>, which makes access control decisions.</li>
+  </ul>
+  <div class="figure" role="img" aria-label="NIST e-authentication model: applicant registers with RA, RA confirms to CSP, CSP issues token and credential to subscriber; later the claimant runs an authentication protocol with the verifier, which validates the credential with the CSP and sends an assertion to the relying party.">
+  <svg viewBox="0 0 380 276" width="380">
+    <rect class="bxa" x="10" y="10" width="110" height="38" rx="5"/><text class="tx" x="65" y="33" text-anchor="middle">RA</text>
+    <rect class="bxa" x="260" y="10" width="110" height="38" rx="5"/><text class="tx" x="315" y="33" text-anchor="middle">CSP</text>
+    <rect class="bx" x="10" y="122" width="110" height="46" rx="5"/><text class="tx" x="65" y="141" text-anchor="middle">Subscriber /</text><text class="tx" x="65" y="157" text-anchor="middle">claimant</text>
+    <rect class="bxm" x="260" y="126" width="110" height="38" rx="5"/><text class="tx" x="315" y="149" text-anchor="middle">Verifier</text>
+    <rect class="bxm" x="260" y="232" width="110" height="38" rx="5"/><text class="tx" x="315" y="255" text-anchor="middle">Relying party</text>
+    <path class="ln" d="M120 29 H258" marker-end="url(#ah)"/><text class="tm" x="190" y="22" text-anchor="middle">confirmation</text>
+    <path class="ln" d="M65 122 V50" marker-end="url(#ah)"/><text class="tm" x="72" y="90">registration</text>
+    <path class="ln" d="M268 48 L122 122" marker-end="url(#ah)"/><text class="tm" x="200" y="92">token,</text><text class="tm" x="200" y="105">credential</text>
+    <path class="ln" d="M120 145 H258" marker-end="url(#ah)" marker-start="url(#ah)"/><text class="tm" x="190" y="160" text-anchor="middle">authentication</text><text class="tm" x="190" y="173" text-anchor="middle">protocol</text>
+    <path class="ln dash" d="M300 126 V50" marker-end="url(#ah)"/><text class="tm" x="307" y="92">validation</text>
+    <path class="ln" d="M315 164 V230" marker-end="url(#ah)"/><text class="tm" x="322" y="201">assertion</text>
+  </svg>
+  <div class="cap">Simplified from Figure 15.1. Dashed: the verifier validates the token and credential with the CSP.</div></div>
+  </div>
+
+  <h3>Means of authentication</h3>
+  <div class="cmp">
+    <div><h4>Something the individual knows</h4><p>Password, PIN, answers to prearranged questions. Can be guessed, stolen or forgotten.</p></div>
+    <div><h4>Something the individual possesses</h4><p>Cryptographic keys, keycards, smart cards, physical keys: a <b>token</b>. Can be forged, stolen or lost.</p></div>
+    <div><h4>Something the individual is</h4><p><b>Static biometrics</b>: fingerprint, retina, face.</p></div>
+    <div><h4>Something the individual does</h4><p><b>Dynamic biometrics</b>: voice pattern, handwriting, typing rhythm.</p></div>
+  </div>
+  <p>Biometrics bring false positives and negatives, user acceptance, cost and convenience problems; all methods carry administrative overhead. Over a network, the most important methods are cryptographic keys and something the user knows.</p>
+
+  <h3>Mutual authentication</h3>
+  <div class="def"><b>Mutual authentication protocol</b> — lets the communicating parties satisfy themselves about each other’s identity and exchange session keys. Two central issues: <b>confidentiality</b> (identification and session-key data must travel encrypted, which needs existing secret or public keys) and <b>timeliness</b> (against replays).</div>
+  <div class="def"><b>Replay attack</b> — an opponent re-sends a previously captured valid message. At worst it compromises a session key or impersonates a party; at least it disrupts operations with genuine-looking messages.</div>
+  <p>Kinds of replay ([GONG93]):</p>
+  <ol class="props">
+    <li>Copy a message and replay it later.</li>
+    <li>Replay a timestamped message inside its valid time window; if original and replay both arrive, it can be logged.</li>
+    <li>Same as 2, but suppress the original, so the repetition cannot be detected.</li>
+    <li>Backward replay without modification: replay to the sender, possible with symmetric encryption when the sender cannot tell sent from received messages by content.</li>
+  </ol>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Countermeasure</th><th class="l">How</th><th class="l">Drawback</th></tr>
+    <tr><td class="l">Sequence numbers</td><td class="l">Accept only messages in proper order.</td><td class="l">Each party must track the last number for every claimant; generally not used.</td></tr>
+    <tr><td class="l"><b>Timestamps</b></td><td class="l">Accept only if the timestamp is close enough to local time.</td><td class="l">Needs synchronized clocks: a fault-tolerant, secure sync protocol; a temporary loss of sync opens an attack; variable network delays force a window. Poor for connection-oriented use.</td></tr>
+    <tr><td class="l"><b>Challenge/response</b></td><td class="l">A sends a nonce; B’s reply must contain it.</td><td class="l">A handshake before every message: unsuitable for connectionless use, where a secure time server plus clock sync may be best.</td></tr>
+  </table></div>
+
+  <h3>One-way authentication</h3>
+  <p>Email is the main case: sender and receiver need not be online together. The header must stay in the clear for the store-and-forward protocol (e.g. SMTP or X.400), the body should be encrypted so the mail system does not hold the key, and the recipient wants assurance of the sender.</p>
+  <div class="note"><span class="t">Current practice</span>SP 800-63-2 has been superseded by SP 800-63-3 (2017) and now SP 800-63-4 (final, 2025), which keeps the same roles (CSP, subscriber, claimant, verifier, relying party).</div>
+</section>
+
+<!-- ============ 15.2 ============ -->
+<section class="unit" id="s152">
+  <h2><span class="sec">15.2</span>Remote User-Authentication Using Symmetric Encryption</h2>
+  <p class="why">KDC protocols both distribute session keys and authenticate. Each fix below closes a replay hole, and some open a new one, which shows how hard these protocols are to get right.</p>
+  <p>Notation: “A → B: X” means A sends X to B; f() is a generic function that modifies a nonce (e.g. adds 1).</p>
+  <h3>Needham–Schroeder</h3>
+  <p>The Figure 14.3 protocol. Step 4 shows B knows K<sub>s</sub>; step 5 shows A knows K<sub>s</sub> and that the message is fresh.</p>
+  <div class="lab proto" data-protos="ns,nsx" data-name="Needham–Schroeder"></div>
+  <p>Weakness: an opponent X who has compromised an old session key replays step 3. Unless B remembers every old session key with A, B cannot tell, and X answers the handshake and sends bogus messages as A.</p>
+
+  <h3>Denning: add timestamps</h3>
+  <div class="lab proto" data-protos="denning"></div>
+  <p>T assures A and B that K<sub>s</sub> was just generated. Each checks</p>
+  <div class="eq">|Clock − T| &lt; Δt<sub>1</sub> + Δt<sub>2</sub>
+<span class="n">Δt<sub>1</sub> = normal discrepancy between KDC clock and local clock
+Δt<sub>2</sub> = expected network delay</span></div>
+  <p>T is encrypted under the secure master keys, so even with an old session key a replayed step 3 is rejected as untimely. But this relies on clocks synchronized across the network.</p>
+  <div class="def"><b>Suppress-replay attack</b> — when a sender’s clock is ahead of the recipient’s, an opponent intercepts (and suppresses) a message and replays it later, when its timestamp becomes current at the recipient.</div>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Timestamp window and suppress-replay</span><span class="pill">§15.2</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label><span>Δt<sub>1</sub> + Δt<sub>2</sub> (min)</span><input type="range" id="sr-w" min="1" max="10" value="3"><output id="sr-wv">3</output></label>
+        <label>Sender clock ahead by (min)<input type="range" id="sr-o" min="0" max="20" value="8"><output id="sr-ov">8</output></label>
+        <label>Opponent replays at (recipient time, min)<input type="range" id="sr-r" min="0" max="30" value="8"><output id="sr-rv">8</output></label>
+      </div>
+      <div class="figure"><svg id="sr-svg" viewBox="0 0 640 150" width="640" role="img" aria-label="Recipient's time axis with the acceptance window around timestamp T, the original arrival and the replay arrival marked."></svg></div>
+      <div id="sr-out" class="out"></div>
+      <p class="cap">Colours show the outcome security wants: blue is correct (an honest message accepted, a replay blocked), red is a failure. The sender stamps T from its own clock at recipient time 0; the original arrives about 0.5 min later. If the sender’s clock is ahead by more than the window, the honest original is rejected while a held replay can be accepted.</p>
+    </div>
+  </div>
+  <p>Counters: make parties regularly check clocks against the KDC’s; or use nonce handshakes, which cannot be suppress-replayed because the recipient’s future nonces are unpredictable.</p>
+
+  <h3>Neuman–Stubblebine (nonces + a ticket)</h3>
+  <div class="lab proto" data-protos="neuman,neuman2" data-name="Neuman–Stubblebine"></div>
+  <p>T<sub>b</sub> is relative to B’s clock and only B checks it, so no clock synchronization is needed. The block E(K<sub>b</sub>, [ID<sub>A</sub> ‖ K<sub>s</sub> ‖ T<sub>b</sub>]) is a <b>ticket</b> A can reuse until T<sub>b</sub> to start new sessions with B without contacting the KDC (second variant).</p>
+
+  <h3>One-way authentication</h3>
+  <p>Decentralized distribution (Figure 14.5) is impractical for email because the sender must wait for a reply. Drop steps 4 and 5 of the KDC protocol so B need not be online:</p>
+  <div class="lab proto" data-protos="mail"></div>
+  <p>Only B can read M, and B gets some assurance the sender is A. No protection against replay; timestamps help little given email delays.</p>
+</section>
+
+<!-- ============ 15.3 ============ -->
+<section class="unit" id="s153">
+  <h2><span class="sec">15.3</span>Kerberos</h2>
+  <p class="why">Kerberos is a widely used authentication service for an open distributed network: users at workstations who need services on many servers.</p>
+  <p>A workstation cannot be trusted to identify its users. Three threats:</p>
+  <ol class="props">
+    <li>A user at a workstation pretends to be another user.</li>
+    <li>A user alters a workstation’s network address so requests appear to come from another workstation.</li>
+    <li>A user eavesdrops and uses a replay attack to gain entry or disrupt operations.</li>
+  </ol>
+  <p>Three possible approaches: (1) trust each client to identify its users and each server to enforce policy by user ID; (2) clients authenticate themselves to servers, but are trusted about who their user is; (3) users prove their identity for every service, and servers prove theirs to clients. Kerberos supports (3), using one or more Kerberos servers that provide authentication; it is a trusted third party based on the Needham–Schroeder protocol.</p>
+  <div class="cmp">
+    <div><h4>Secure</h4><p>An eavesdropper cannot get what is needed to impersonate a user; Kerberos is never the weak link.</p></div>
+    <div><h4>Reliable</h4><p>Services depend on it, so it uses a distributed server architecture with backups.</p></div>
+    <div><h4>Transparent</h4><p>Beyond entering a password, the user is unaware of authentication.</p></div>
+    <div><h4>Scalable</h4><p>Supports large numbers of clients and servers: a modular, distributed design.</p></div>
+  </div>
+
+  <h3>A simple authentication dialogue</h3>
+  <div class="def"><b>Authentication server (AS)</b> — knows every user’s password (central database) and shares a unique secret key with each server. <b>Ticket</b> — a block encrypted with a key the client does not hold, so the client can carry it but not alter or forge it.</div>
+  <div class="lab proto" data-protos="ksimple"></div>
+  <ul class="props">
+    <li>ID<sub>V</sub> in the ticket lets V check it decrypted the ticket properly; ID<sub>C</sub> says on whose behalf it was issued.</li>
+    <li>AD<sub>C</sub> (network address) stops an opponent who captures the ticket from using it from another workstation.</li>
+    <li>Problems: a password for every ticket (and a new ticket per service), and the password crosses the network in plaintext in message (1).</li>
+  </ul>
+
+  <h3>A more secure dialogue: the ticket-granting server</h3>
+  <div class="def"><b>Ticket-granting server (TGS)</b> — issues service tickets to users already authenticated by the AS. The <b>ticket-granting ticket</b> (Ticket<sub>tgs</sub>) is reusable for one logon session; each <b>service-granting ticket</b> (Ticket<sub>v</sub>) is reusable for one service.</div>
+  <div class="lab proto" data-protos="ktgs"></div>
+  <ul class="props">
+    <li>The AS’s reply is encrypted with K<sub>c</sub>, a key derived from the user’s password: only the right user can open it, and the password is never sent.</li>
+    <li>Tickets carry a timestamp and lifetime (e.g. eight hours) so a ticket captured after logoff cannot be reused forever. Ticket<sub>tgs</sub> is encrypted with K<sub>tgs</sub> (AS and TGS only); Ticket<sub>v</sub> with K<sub>v</sub> (TGS and V only).</li>
+    <li>Result: one password query per user session, and the password is protected.</li>
+  </ul>
+</section>
+
+<!-- ============ 15.3 (cont.) ============ -->
+<section class="unit" id="s153b">
+  <h2>The Kerberos Version 4 Dialogue</h2>
+  <p class="why">Two problems remain. A captured ticket can be used by an opponent before it expires (a short lifetime means repeated password prompts, a long one means more chance to replay). And servers never authenticate themselves to users.</p>
+  <p>Fix: the AS gives both the client and the TGS a secret, a <b>session key</b> K<sub>c,tgs</sub>; the client proves it is the ticket’s owner by using that key in an authenticator.</p>
+  <div class="def"><b>Authenticator</b> — ID and address of C’s user plus a timestamp, encrypted with the session key. Unlike the reusable ticket, it is used once and has a very short lifetime. The ticket only distributes the key securely (in effect: whoever uses K<sub>c,tgs</sub> is C); the authenticator proves identity (in effect: C is using K<sub>c,tgs</sub> at time TS<sub>3</sub>).</div>
+  <div class="lab proto" data-protos="k4"></div>
+  <div class="figure" role="img" aria-label="Kerberos overview: once per user logon session the client gets a ticket-granting ticket from the AS; once per type of service a service-granting ticket from the TGS; once per service session it presents the ticket to the server.">
+  <svg viewBox="0 0 640 120" width="640">
+    <rect class="bxa" x="10" y="16" width="190" height="88" rx="6"/><text class="tx" x="105" y="40" text-anchor="middle" font-weight="700">AS</text><text class="tx" x="105" y="58" text-anchor="middle">ticket-granting ticket</text><text class="tm" x="105" y="78" text-anchor="middle">once per logon session</text><text class="tm" x="105" y="94" text-anchor="middle">messages (1)–(2)</text>
+    <rect class="bxm" x="225" y="16" width="190" height="88" rx="6"/><text class="tx" x="320" y="40" text-anchor="middle" font-weight="700">TGS</text><text class="tx" x="320" y="58" text-anchor="middle">service-granting ticket</text><text class="tm" x="320" y="78" text-anchor="middle">once per type of service</text><text class="tm" x="320" y="94" text-anchor="middle">messages (3)–(4)</text>
+    <rect class="bx" x="440" y="16" width="190" height="88" rx="6"/><text class="tx" x="535" y="40" text-anchor="middle" font-weight="700">Server V</text><text class="tx" x="535" y="58" text-anchor="middle">service</text><text class="tm" x="535" y="78" text-anchor="middle">once per service session</text><text class="tm" x="535" y="94" text-anchor="middle">messages (5)–(6)</text>
+    <path class="ln" d="M200 60 H223" marker-end="url(#ah)"/><path class="ln" d="M415 60 H438" marker-end="url(#ah)"/>
+  </svg>
+  <div class="cap">After Figure 15.2, Overview of Kerberos.</div></div>
+  <p>Message (6), TS<sub>5</sub> + 1 under K<sub>c,v</sub>, gives mutual authentication: only V could have made it, and it is not a replay of an old reply. Afterwards C and V share K<sub>c,v</sub> for encrypting the session or exchanging a new random session key.</p>
+</section>
+
+<!-- ============ 15.3 (cont.) ============ -->
+<section class="unit" id="s153c">
+  <h2>Kerberos Realms and Version 5</h2>
+  <p class="why">One Kerberos server serves one administrative domain. Realms and interrealm keys let users reach servers in other organizations.</p>
+  <p>A full-service Kerberos environment needs: (1) the Kerberos server holds the user ID and hashed password of every user (all users registered); (2) it shares a secret key with every server (all servers registered).</p>
+  <div class="def"><b>Kerberos realm</b> — a set of managed nodes sharing the same Kerberos database, which lives on a physically secure master system (read-only copies may exist elsewhere; changes need the Kerberos master password). <b>Kerberos principal</b> — a service or user known to Kerberos, named by service or user name, instance name and realm name.</div>
+  <p>Interrealm authentication adds: (3) the Kerberos servers of the two realms share a secret key and are registered with each other, and trust each other to authenticate their users.</p>
+  <div class="lab proto" data-protos="realm"></div>
+  <p>Problem: N realms need N(N − 1)/2 secure key exchanges to all interoperate.</p>
+
+  <h3>Version 4 → version 5 (RFC 4120)</h3>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Version 4 limitation</th><th class="l">Version 5 answer</th></tr>
+    <tr><th class="l" colspan="2">Environmental shortcomings</th></tr>
+    <tr><td class="l">Encryption system dependence: requires DES</td><td class="l">Ciphertext tagged with an encryption-type identifier; keys tagged with type and length</td></tr>
+    <tr><td class="l">Internet protocol dependence: IP addresses only</td><td class="l">Addresses tagged with type and length</td></tr>
+    <tr><td class="l">Message byte ordering chosen by sender and tagged</td><td class="l">ASN.1 and Basic Encoding Rules: unambiguous ordering</td></tr>
+    <tr><td class="l">Ticket lifetime: 8 bits × 5 min, max 2<sup>8</sup> × 5 = 1280 min (about 21 h)</td><td class="l">Explicit start and end times: arbitrary lifetimes</td></tr>
+    <tr><td class="l">No authentication forwarding (e.g. a print server fetching a client’s file)</td><td class="l">Credentials can be forwarded</td></tr>
+    <tr><td class="l">Interrealm: order of N<sup>2</sup> relationships</td><td class="l">Fewer relationships (forwarding through a realm hierarchy)</td></tr>
+    <tr><th class="l" colspan="2">Technical deficiencies</th></tr>
+    <tr><td class="l">Double encryption of tickets in messages (2) and (4): wasteful</td><td class="l">Ticket sent alongside, not inside, the encrypted block</td></tr>
+    <tr><td class="l"><b>PCBC</b> (propagating cipher block chaining), a nonstandard DES mode meant to add integrity, is vulnerable to swapping ciphertext blocks</td><td class="l">Explicit checksum or hash attached before standard CBC encryption</td></tr>
+    <tr><td class="l">Session key reused across sessions: old-session replays</td><td class="l">Negotiated <b>subsession key</b>, used for one connection only</td></tr>
+    <tr><td class="l">Password attacks: test-decrypt the AS reply with guessed passwords</td><td class="l"><b>Preauthentication</b> makes them harder but does not prevent them</td></tr>
+  </table></div>
+
+  <h3>The version 5 dialogue</h3>
+  <div class="lab proto" data-protos="k5"></div>
+  <ul class="props">
+    <li>New in message (1): <b>Realm</b> of the user; <b>Options</b> (flags to set in the ticket); <b>Times</b> (from: start, till: expiry, rtime: renew-till); <b>Nonce</b> (repeated in (2) to prove freshness).</li>
+    <li>The authenticator in (5) may carry a <b>Subkey</b> (client’s key for this application session; if omitted, K<sub>c,v</sub> is used) and a <b>Sequence number</b> (starting number for the server’s messages, to detect replays). The client may request mutual authentication.</li>
+    <li>Message (6) returns TS<sub>2</sub> unchanged: no +1 is needed because the format means no opponent can build (6) without the keys.</li>
+  </ul>
+  <h3>Ticket flags (Table 15.4)</h3>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Flag</th><th class="l">Meaning</th></tr>
+    <tr><td class="l mono">INITIAL</td><td class="l">Issued by the AS, not from a ticket-granting ticket. Lets a server (e.g. password changing) know the password was just tested.</td></tr>
+    <tr><td class="l mono">PRE-AUTHENT</td><td class="l">The KDC authenticated the client before issuing. MIT example: a block with a random confounder, version number and timestamp, encrypted in the password-based key; rejected unless within the allowed time skew.</td></tr>
+    <tr><td class="l mono">HW-AUTHENT</td><td class="l">Initial authentication used hardware held only by the client (e.g. a smart card generating changing passwords).</td></tr>
+    <tr><td class="l mono">RENEWABLE</td><td class="l">Two expiry times (this ticket, and the latest allowed); the TGS can reissue up to the limit, and can refuse for a ticket reported stolen.</td></tr>
+    <tr><td class="l mono">MAY-POSTDATE</td><td class="l">A postdated ticket may be issued from this ticket-granting ticket.</td></tr>
+    <tr><td class="l mono">POSTDATED / INVALID</td><td class="l">For long batch jobs: get several tickets at once; all but the first start INVALID and are validated by the KDC when needed. The server checks authtime for the original authentication.</td></tr>
+    <tr><td class="l mono">PROXIABLE / PROXY</td><td class="l">The TGS may issue a service ticket with a different network address, flagged PROXY, so a server can act for the client.</td></tr>
+    <tr><td class="l mono">FORWARDABLE / FORWARDED</td><td class="l">The TGS may issue a ticket-granting ticket with a different address, usable at a remote TGS: walk up a realm hierarchy and back down without every realm sharing keys with every other.</td></tr>
+  </table></div>
+  <div class="note"><span class="t">Current practice</span>Kerberos version 5 remains RFC 4120. Single DES is deprecated for Kerberos (RFC 6649), as are Triple DES and RC4 (RFC 8429); current deployments use AES encryption types.</div>
+</section>
+
+<!-- ============ 15.4 ============ -->
+<section class="unit" id="s154">
+  <h2><span class="sec">15.4</span>Remote User-Authentication Using Asymmetric Encryption</h2>
+  <p class="why">Figure 14.9 assumed each party already has the other’s current public key. These protocols fetch certificates from a central server instead.</p>
+  <h3>Mutual authentication</h3>
+  <p>Denning’s timestamp protocol: the central <b>authentication server (AS)</b> only provides public-key certificates; A chooses and encrypts the session key, so the AS never sees it. Timestamps protect against replays of compromised keys, but clocks must be synchronized.</p>
+  <div class="lab proto" data-protos="dpk"></div>
+  <p>Woo and Lam use nonces instead. The authors then found a flaw and revised it: ID<sub>A</sub> is added to the block signed by the KDC in steps 5 and 6.</p>
+  <div class="lab proto" data-protos="woo2,woo1" data-name="Woo–Lam"></div>
+  <p>Why: N<sub>a</sub> is unique only among A’s own nonces, not among everyone’s, so it is the pair {ID<sub>A</sub>, N<sub>a</sub>} that identifies A’s request. Binding ID<sub>A</sub> and ID<sub>B</sub> to K<sub>s</sub> ties the key to both parties.</p>
+
+  <h3>One-way authentication</h3>
+  <div class="eqrows">
+    <div class="eqrow"><span class="ex1">A → B: E(PU<sub>b</sub>, K<sub>s</sub>) ‖ E(K<sub>s</sub>, M)</span><span class="n">one-time key</span><span class="tag ok">confidentiality</span></div>
+    <div class="eqrow"><span class="ex1">A → B: M ‖ E(PR<sub>a</sub>, H(M))</span><span class="n">signature</span><span class="tag ok">authentication</span></div>
+    <div class="eqrow"><span class="ex1">A → B: E(PU<sub>b</sub>, [M ‖ E(PR<sub>a</sub>, H(M))])</span><span class="n">signature hidden</span><span class="tag ok">stops signature swap</span></div>
+    <div class="eqrow"><span class="ex1">A → B: M ‖ E(PR<sub>a</sub>, H(M)) ‖ E(PR<sub>as</sub>, [T ‖ ID<sub>A</sub> ‖ PU<sub>a</sub>])</span><span class="n">+ certificate</span><span class="tag ok">B gets A’s key</span></div>
+  </div>
+  <ul class="props">
+    <li>The one-time key is more efficient than encrypting the whole message with B’s public key.</li>
+    <li>The plain signature stops A denying the message, but Max can take Bob’s message from the mail queue, strip Bob’s signature, attach his own and take credit; encrypting message and signature with the recipient’s public key stops this.</li>
+    <li>The signature schemes need B to know A’s current public key; the certificate (signed by the AS) supplies it. For confidentiality, encrypt everything with B’s public key, or with a one-time key sent under B’s public key (Unit 12).</li>
+  </ul>
+</section>
+
+<!-- ============ 15.5 ============ -->
+<section class="unit" id="s155">
+  <h2><span class="sec">15.5</span>Federated Identity Management</h2>
+  <p class="why">One identity scheme shared across many enterprises and applications, for thousands or millions of users: sign on once, use services across organizations.</p>
+  <div class="def"><b>Identity management</b> — a centralized, automated approach to enterprise-wide access: define an identity per user (human or process), attach attributes, and enforce a means to verify identity. Central concept: <b>single sign-on (SSO)</b>, access to all network resources after a single authentication.</div>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Service</th><th class="l">Provides</th></tr>
+    <tr><td class="l">Point of contact</td><td class="l">Authenticates that a user matches the user name; manages user/server sessions.</td></tr>
+    <tr><td class="l">SSO protocol services</td><td class="l">Vendor-neutral security token service for single sign-on to federated services.</td></tr>
+    <tr><td class="l">Trust services</td><td class="l">Trust relationships between partners: the security tokens, the cryptographic information protecting them, optional identity-mapping rules.</td></tr>
+    <tr><td class="l">Key services</td><td class="l">Management of keys and certificates.</td></tr>
+    <tr><td class="l">Identity services</td><td class="l">Interface to local stores (user registries, databases).</td></tr>
+    <tr><td class="l">Authorization</td><td class="l">Grants access to services or resources based on authentication.</td></tr>
+    <tr><td class="l">Provisioning</td><td class="l">Creates accounts in target systems, enrolls users, sets access rights.</td></tr>
+    <tr><td class="l">Management</td><td class="l">Runtime configuration and deployment.</td></tr>
+  </table></div>
+  <p>Kerberos contains several of these elements.</p>
+  <div class="grid2" style="align-items:center">
+  <ul class="props">
+    <li><b>Principal</b>: an identity holder, usually a human user (also devices, agent processes, servers).</li>
+    <li><b>Identity provider</b>: authenticates principals and associates authentication information, attributes and identifiers with them.</li>
+    <li><b>Attribute service</b>: creates and maintains attributes (e.g. a shipping address given once instead of at every merchant). Users create some; <b>administrators</b> assign others (roles, permissions, employee data).</li>
+    <li><b>Data consumer</b>: uses identity and attribute data for authorization and audit, e.g. a file server needing a client’s credentials.</li>
+  </ul>
+  <div class="figure" role="img" aria-label="Generic identity management architecture: principal, identity provider, attribute service, administrator and data consumer.">
+  <svg viewBox="0 0 360 214" width="360">
+    <rect class="bxa" x="110" y="86" width="140" height="40" rx="6"/><text class="tx" x="180" y="110" text-anchor="middle">Identity provider</text>
+    <rect class="bx" x="10" y="10" width="120" height="36" rx="6"/><text class="tx" x="70" y="32" text-anchor="middle">Principal</text>
+    <rect class="bx" x="230" y="10" width="120" height="36" rx="6"/><text class="tx" x="290" y="32" text-anchor="middle">Administrator</text>
+    <rect class="bxm" x="10" y="168" width="140" height="36" rx="6"/><text class="tx" x="80" y="190" text-anchor="middle">Attribute service</text>
+    <rect class="bxm" x="210" y="168" width="140" height="36" rx="6"/><text class="tx" x="280" y="190" text-anchor="middle">Data consumer</text>
+    <path class="ln" d="M85 46 L145 84" marker-end="url(#ah)"/><path class="ln" d="M275 46 L215 84" marker-end="url(#ah)"/>
+    <path class="ln" d="M150 126 L105 166" marker-end="url(#ah)" marker-start="url(#ah)"/><path class="ln" d="M210 126 L255 166" marker-end="url(#ah)"/>
+  </svg>
+  <div class="cap">After Figure 15.5, Generic identity management architecture.</div></div>
+  </div>
+
+  <h3>Identity federation</h3>
+  <div class="def"><b>Identity federation</b> — identity management extended to multiple security domains (business units, partners, third-party services). No central control is possible, so organizations form a federation on agreed standards and mutual trust. <b>Federated identity management</b> — the agreements, standards and technologies that make identities, attributes and entitlements portable across enterprises.</div>
+  <p>Beyond SSO it gives a standard way to represent <b>attributes</b> (account numbers, roles, location, file ownership; a user may have several identifiers, one per role) and <b>identity mapping</b>: translating a user’s identity and attributes from one domain into what another domain needs, which may be less.</p>
+  <div class="lab proto" data-protos="fed"></div>
+  <h3>Standards</h3>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Standard</th><th class="l">Role</th></tr>
+    <tr><td class="l">Extensible Markup Language (XML)</td><td class="l">Tags that mark text elements’ appearance, function or meaning; strict data types; encoding rules for transferring and updating data objects.</td></tr>
+    <tr><td class="l">Simple Object Access Protocol (SOAP)</td><td class="l">Minimal conventions for invoking code using XML over HTTP: XML requests and responses, remote procedure calls.</td></tr>
+    <tr><td class="l">WS-Security</td><td class="l">SOAP extensions for message integrity and confidentiality; assigns security tokens to each message for authentication.</td></tr>
+    <tr><td class="l">Security Assertion Markup Language (SAML)</td><td class="l">XML language for exchanging security information between partners, as <b>assertions</b>: statements about a subject issued by an authoritative entity.</td></tr>
+  </table></div>
+  <h3>Three scenarios (Figure 15.7)</h3>
+  <div class="cmp">
+    <div><h4>(a) Account linking</h4><p>Workplace.com employee signs on, clicks health benefits, and is redirected to Health.com, which receives her identifier securely. Health.com keeps an identity per employee. Browser based.</p></div>
+    <div><h4>(b) Roles</h4><p>An engineer authenticated at Workplace.com reaches PartsSupplier.com’s technical documentation without signing on; a purchaser can place orders. PartsSupplier.com holds no per-employee identities, only roles (role-based access control).</p></div>
+    <div><h4>(c) Chained Web services</h4><p>Document based: the procurement application puts the purchase in a SOAP envelope body and the user’s credentials plus Workplace.com’s identity in the header; PinSupplies.com authenticates it and sends E-Ship.com a SOAP message with its own security token.</p></div>
+  </div>
+</section>
+
+<!-- ============ 15.6 ============ -->
+<section class="unit" id="s156">
+  <h2><span class="sec">15.6</span>Personal Identity Verification</h2>
+  <p class="why">Smart-card authentication is spreading; FIPS 201-2 defines a government-wide PIV system that also serves as a guideline for any organization.</p>
+  <div class="def"><b>Smart card</b> — looks like a credit card but contains a whole microprocessor (processor, memory, I/O ports), sometimes a cryptographic co-processor; contacts or an embedded antenna. <b>ROM</b>: data fixed for the card’s life (card number, cardholder name). <b>EEPROM</b>: application data and programs that can change (e.g. talk time remaining). <b>RAM</b>: temporary data during execution.</div>
+  <h3>PIV system model (Figure 15.8)</h3>
+  <ul class="props">
+    <li><b>PIV front end</b>: the physical interface for physical or logical access; up to three-factor authentication. Uses the <b>PIV card</b> (dual contact/contactless), holding a photograph, X.509 certificates, keys, biometric data and the <b>CHUID</b>; some data needs a PIN to read. Biometric reader: fingerprint or iris.</li>
+    <li><b>PIV card issuance and management</b>: identity proofing and registration, card and key issuance, repositories and services (PKI directory, certificate status servers).</li>
+    <li><b>Relying subsystem</b>: decides a cardholder’s access to a physical or logical resource; FIPS 201-2 standardizes its interaction with the PIV system.</li>
+  </ul>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Assurance level</th><th class="l">Requires</th></tr>
+    <tr><td class="l"><span class="pill mk">some confidence</span></td><td class="l">Card reader and PIN</td></tr>
+    <tr><td class="l"><span class="pill">high confidence</span></td><td class="l">+ fingerprint matched against the one encoded at issuance</td></tr>
+    <tr><td class="l"><span class="pill no">very high confidence</span></td><td class="l">+ done at a control point attended by an official observer</td></tr>
+  </table></div>
+  <div class="def"><b>Cardholder unique identifier (CHUID)</b> — includes the FASC-N (Federal Agency Smart Credential Number) and GUID, uniquely identifying card and cardholder. It has a required expiration date and an optional digital signature (proving a trusted source and no alteration). Verifying it alone authenticates the card data, not the cardholder; the PIN and biometrics verify the person.</div>
+  <h3>PIV documentation</h3>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Document</th><th class="l">Covers</th></tr>
+    <tr><td class="l">FIPS 201-2</td><td class="l">Card characteristics, storage media, credential data elements</td></tr>
+    <tr><td class="l">SP 800-73-3</td><td class="l">Interfaces and card architecture; use of authentication mechanisms</td></tr>
+    <tr><td class="l">SP 800-76-2</td><td class="l">Biometric data acquisition and format</td></tr>
+    <tr><td class="l">SP 800-78-3</td><td class="l">Acceptable algorithms and key sizes</td></tr>
+    <tr><td class="l">SP 800-104</td><td class="l">Card color-coding for employee affiliation</td></tr>
+    <tr><td class="l">SP 800-116</td><td class="l">Risk-based choice of PIV mechanisms for physical access control systems (PACS)</td></tr>
+    <tr><td class="l">SP 800-79-1</td><td class="l">Accreditation of PIV card issuers</td></tr>
+    <tr><td class="l">SP 800-96</td><td class="l">Card-to-reader interoperability</td></tr>
+  </table></div>
+  <h3>PIV credentials and keys</h3>
+  <div class="grid2">
+    <div><p><b>Mandatory</b></p><ul class="props"><li>PIN (activates the card for privileged operation)</li><li>CHUID</li><li>PIV Authentication Key (asymmetric pair + certificate, user authentication)</li><li>Two fingerprint templates</li><li>Electronic facial image</li><li>Asymmetric Card Authentication Key (pair + certificate)</li></ul></div>
+    <div><p><b>Optional</b></p><ul class="props"><li>Digital Signature Key (signing documents and data such as the CHUID)</li><li>Key Management Key (key establishment and transport)</li><li>Symmetric Card Authentication Key (physical access)</li><li>PIV Card Application Administration Key (symmetric, card management system)</li><li>One or two iris images</li></ul></div>
+  </div>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">PIV key type</th><th class="l">Algorithms (key bits)</th><th class="l">Application</th></tr>
+    <tr><td class="l">PIV Authentication Key</td><td class="l">RSA 2048 · ECDSA 256</td><td class="l">Card and cardholder authentication, interoperable environment</td></tr>
+    <tr><td class="l">Card Authentication Key</td><td class="l">3TDEA 168 · AES 128/192/256<br>RSA 2048 · ECDSA 256</td><td class="l">Card authentication for physical access<br>Card authentication, interoperable environment</td></tr>
+    <tr><td class="l">Digital Signature Key</td><td class="l">RSA 2048 or 3072 · ECDSA 256 or 384</td><td class="l">Document signing and nonce signing</td></tr>
+    <tr><td class="l">Key Management Key</td><td class="l">RSA 2048 · ECDH 256 or 384</td><td class="l">Key establishment and transport</td></tr>
+  </table></div>
+  <p class="cap">Table 15.5, PIV algorithms and key sizes.</p>
+  <h3>Authentication mechanisms</h3>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Mechanism</th><th class="l">How</th><th>PIN</th><th class="l">Assurance</th></tr>
+    <tr><td class="l mono">CHUID</td><td class="l">Signed CHUID read from the card; fast contactless</td><td class="c">no</td><td class="l"><span class="pill mk">low</span></td></tr>
+    <tr><td class="l mono">CAK</td><td class="l">Card Authentication Key in challenge-response; card only, no holder participation</td><td class="c">no</td><td class="l"><span class="pill mk">low</span></td></tr>
+    <tr><td class="l mono">BIO</td><td class="l">Fingerprint matched to signed biometric, no attendant</td><td class="c">yes</td><td class="l"><span class="pill">high</span></td></tr>
+    <tr><td class="l mono">BIO-A</td><td class="l">Same, with a human attendant in view (+ full trust validation of the template)</td><td class="c">yes</td><td class="l"><span class="pill no">very high</span></td></tr>
+    <tr><td class="l mono">PKI</td><td class="l">Prove control of the PIV Authentication private key in challenge-response, checked with its certificate</td><td class="c">yes</td><td class="l"><span class="pill no">very high</span></td></tr>
+  </table></div>
+  <p>Except for the symmetric Card Authentication Key, each credential’s source and integrity are checked by verifying a trusted entity’s digital signature on it. The <b>PIV card edge</b> is SP 800-73’s name for the card command interface (reader or wireless).</p>
+  <div class="lab proto" data-protos="piv"></div>
+  <p>Three authentications in one: card possession plus PIN authenticate the cardholder (HolderV), the certificate validates the card’s credentials (CredV), and the challenge-response authenticates the card (CardV).</p>
+  <div class="note"><span class="t">Current practice</span>FIPS 201-3 (January 2022) supersedes FIPS 201-2; the card model, credentials and authentication mechanisms above carry over.</div>
+</section>
+
+<!-- ============ Key terms ============ -->
+<section class="unit" id="terms">
+  <h2><span class="sec">14.6 · 15.7</span>Key Terms</h2>
+  <p class="why">The key-term lists of both chapters, plus the intermediate terms they depend on, one line each.</p>
+  <dl class="gloss">
+    <dt>Key distribution</dt><dd>Delivering a key to two parties without letting others see it.</dd>
+    <dt>Key management</dt><dd>The cryptographic, protocol and management work of generating, distributing, protecting and retiring keys.</dd>
+    <dt>End-to-end encryption</dt><dd>Encryption between the two end systems across the whole path (vs link encryption, per link).</dd>
+    <dt>Key distribution center (KDC)</dt><dd>Trusted party sharing a master key with each user and handing out session keys.</dd>
+    <dt>Master key</dt><dd>Long-term key shared by a user and the KDC; encrypts session keys; N needed for N users.</dd>
+    <dt>Session key</dt><dd>Temporary key for one logical connection, then discarded.</dd>
+    <dt>Nonce</dt><dd>Value used once (timestamp, counter, random number) to tie a reply to a request and detect replays.</dd>
+    <dt>Session security module (SSM)</dt><dd>Layer that obtains session keys and encrypts end to end on a host’s behalf.</dd>
+    <dt>Control vector</dt><dd>Fields specifying a session key’s permitted uses; coupled by E([K<sub>m</sub> <span class="op">⊕</span> h(CV)], K<sub>s</sub>).</dd>
+    <dt>Man-in-the-middle attack</dt><dd>Adversary relays or substitutes messages between two parties, e.g. swapping in its own public key.</dd>
+    <dt>Public-key directory</dt><dd>Trusted, dynamic {name, public key} list maintained by an authority.</dd>
+    <dt>Public-key authority</dt><dd>Directory that answers each key request with a reply signed by PR<sub>auth</sub>.</dd>
+    <dt>Public-key certificate</dt><dd>Public key + owner ID (+ validity), signed by a certificate authority.</dd>
+    <dt>Certificate authority (CA)</dt><dd>Trusted third party that issues certificates and usually CRLs.</dd>
+    <dt>X.509 certificate</dt><dd>The standard certificate format (ITU-T X.509, part of the X.500 directory series).</dd>
+    <dt>Certificate chain / certification path</dt><dd>X<sub>1</sub>&lt;&lt;X<sub>2</sub>&gt;&gt; … X<sub>N</sub>&lt;&lt;B&gt;&gt;: CA certificates leading from a trusted CA to B’s certificate.</dd>
+    <dt>Forward / reverse certificate</dt><dd>Certificates of CA X made by others / made by X for other CAs.</dd>
+    <dt>Certificate revocation list (CRL)</dt><dd>CA-signed list of serial numbers and dates of revoked, unexpired certificates.</dd>
+    <dt>Critical extension</dt><dd>X.509 v3 extension that, if unrecognized, makes the certificate invalid.</dd>
+    <dt>Public-key infrastructure (PKI)</dt><dd>Hardware, software, people, policies and procedures to create, manage, store, distribute and revoke certificates.</dd>
+    <dt>Registration authority (RA)</dt><dd>PKIX: optional component handling administration such as registration. NIST model: vouches for an applicant’s identity to a CSP.</dd>
+    <dt>Cross-certificate</dt><dd>Certificate issued by one CA to another, containing a CA signature key.</dd>
+    <dt>Authentication (user)</dt><dd>Verifying a claimed identity: identification step + verification step.</dd>
+    <dt>Credential service provider (CSP)</dt><dd>Issues electronic credentials and tokens to subscribers.</dd>
+    <dt>Subscriber</dt><dd>A registered user holding a token and credential.</dd>
+    <dt>Credential</dt><dd>Data structure binding an identity and attributes to a token.</dd>
+    <dt>Claimant / verifier</dt><dd>The party being authenticated / the party checking it controls the token.</dd>
+    <dt>Relying party (RP)</dt><dd>Uses the verifier’s assertion to make access decisions.</dd>
+    <dt>Mutual authentication</dt><dd>Both parties confirm each other’s identity, usually while exchanging a session key.</dd>
+    <dt>One-way authentication</dt><dd>Only the recipient is assured of the sender, with no live exchange (e.g. email).</dd>
+    <dt>Replay attack</dt><dd>Re-sending a captured valid message.</dd>
+    <dt>Timestamp</dt><dd>Time value in a message; accepted only if close enough to local time.</dd>
+    <dt>Suppress-replay attack</dt><dd>Holding a message from a sender with a fast clock and replaying it when its timestamp becomes current.</dd>
+    <dt>Kerberos</dt><dd>Trusted third-party authentication service for distributed client/server networks, using tickets.</dd>
+    <dt>Authentication server (AS)</dt><dd>Kerberos part that verifies the user (password) and issues the ticket-granting ticket.</dd>
+    <dt>Ticket-granting server (TGS)</dt><dd>Kerberos part that issues service-granting tickets to authenticated users.</dd>
+    <dt>Ticket</dt><dd>Block encrypted for a server (holding the session key, client ID, address, time, lifetime) that the client carries but cannot read or forge.</dd>
+    <dt>Authenticator</dt><dd>One-time, short-lived block (ID, address, timestamp) under the session key, proving the ticket holder is its owner.</dd>
+    <dt>Kerberos realm</dt><dd>Nodes sharing one Kerberos database.</dd>
+    <dt>Kerberos principal</dt><dd>User or service known to Kerberos: name, instance, realm.</dd>
+    <dt>Identity management</dt><dd>Centralized, automated definition and verification of user identities and attributes; built around SSO.</dd>
+    <dt>Single sign-on (SSO)</dt><dd>Access to all network resources after one authentication.</dd>
+    <dt>Federated identity management</dt><dd>Agreements, standards and technologies making identities portable across enterprises.</dd>
+    <dt>SAML</dt><dd>XML language for exchanging assertions about subjects between partners.</dd>
+    <dt>Personal identity verification (PIV)</dt><dd>FIPS 201 smart-card system for federal facility and system access.</dd>
+    <dt>CHUID</dt><dd>Cardholder unique identifier (FASC-N, GUID, expiry, optional signature).</dd>
+  </dl>
+</section>
+
+<!-- ============ Review ============ -->
+<section class="unit" id="review">
+  <h2><span class="sec">14.6 · 15.7</span>Review Questions</h2>
+  <p class="why">Review questions 14.1–14.12 and 15.1–15.10 from the book. Answer first, then open to check.</p>
+  <div class="rv-tools" role="group" aria-label="Review answers"><button type="button" data-rv="open">Expand all</button><button type="button" data-rv="close">Collapse all</button><span class="rv-count" aria-live="polite"></span></div>
+  <h3>Chapter 14</h3>
+  <details><summary>14.1 Explain why man-in-the-middle attacks are ineffective on the secret key distribution protocol discussed in Figure 14.3.</summary><p>Everything secret travels under master keys an opponent does not hold: the reply to A is encrypted with K<sub>a</sub> and includes A’s original request and nonce N<sub>1</sub> (so A detects alteration or replay), and B’s part is encrypted with K<sub>b</sub>. An opponent in the middle cannot read K<sub>s</sub>, cannot substitute a key of its own (it cannot encrypt under K<sub>a</sub> or K<sub>b</sub>), and steps 4–5 with nonce N<sub>2</sub> under K<sub>s</sub> show B that step 3 is not a replay. Unlike Figure 14.8, there is no unauthenticated key the opponent can swap.</p></details>
+  <details><summary>14.2 What is the major issue in end to end key distribution? How does the key hierarchy concept address that issue?</summary><p>Scale: a key is needed for every pair of communicating endpoints, N(N − 1)/2 for N hosts, and far more at application level, all to be distributed dynamically. With a hierarchy, session keys come from a KDC encrypted under master keys, so only N master keys (one per entity) must be distributed by non-cryptographic means such as physical delivery.</p></details>
+  <details><summary>14.3 What is a nonce?</summary><p>A value used once to identify a transaction uniquely, such as a timestamp, counter or random number. It must differ with each request and should be hard to guess; a random number is a good choice.</p></details>
+  <details><summary>14.4 What is a key distribution center?</summary><p>A trusted system that shares a unique master key with each user and distributes session keys to pairs of users (hosts, processes, applications) as needed, encrypted under their master keys.</p></details>
+  <details><summary>14.5 What are two different uses of public-key cryptography related to key distribution?</summary><p>(1) Distributing secret (symmetric) keys: encrypting a session or master key with a public key (14.2). (2) Distributing public keys themselves securely, through authorities and certificates (14.3).</p></details>
+  <details><summary>14.6 List four general categories of schemes for the distribution of public keys.</summary><p>Public announcement, publicly available directory, public-key authority, and public-key certificates.</p></details>
+  <details><summary>14.7 Discuss the potential security issues that arise due to public key directory based system.</summary><p>If an adversary obtains or computes the directory authority’s private key, it can authoritatively hand out counterfeit public keys and then impersonate any participant and eavesdrop on messages to any participant. The adversary could also tamper with the records the authority keeps. Registration and electronic access also need secure, authenticated communication.</p></details>
+  <details><summary>14.8 What is a public-key certificate?</summary><p>A public key and an identifier of the key owner (plus validity information), with the whole block signed by a trusted third party, the certificate authority.</p></details>
+  <details><summary>14.9 What are the requirements for the use of a public-key certificate scheme?</summary><p>Any participant can read a certificate to learn the owner’s name and public key; any participant can verify that it came from the CA and is not counterfeit; only the CA can create and update certificates; any participant can verify the certificate’s time validity.</p></details>
+  <details><summary>14.10 What is the purpose of the X.509 standard?</summary><p>It defines a framework for authentication services by the X.500 directory: a standard certificate format (and CRL format) for public-key certificates signed by trusted CAs, plus authentication protocols based on them. The format is used by S/MIME, IPsec and SSL/TLS.</p></details>
+  <details><summary>14.11 What is a chain of certificates?</summary><p>A sequence X<sub>1</sub>&lt;&lt;X<sub>2</sub>&gt;&gt; X<sub>2</sub>&lt;&lt;X<sub>3</sub>&gt;&gt; … X<sub>N</sub>&lt;&lt;B&gt;&gt; in which each CA certifies the next. Starting from a CA whose key you trust, each certificate yields a verified key for the next CA, ending with a trusted copy of B’s public key.</p></details>
+  <details><summary>14.12 How is an X.509 certificate revoked?</summary><p>The CA adds the certificate’s serial number and revocation date to its certificate revocation list, which it signs and posts in the directory along with its name, the list’s date and the next update date. Users check certificates they receive against the CRL (often a locally cached copy). Reasons: suspected compromise of the user’s private key, the user no longer certified by the CA, or the CA’s own certificate compromised.</p></details>
+  <h3>Chapter 15</h3>
+  <details><summary>15.1 What are the steps involved in an authentication process?</summary><p>The identification step, presenting an identifier to the security system; and the verification step, presenting or generating authentication information that corroborates the binding between the entity and the identifier.</p></details>
+  <details><summary>15.2 List three general approaches to dealing with replay attacks.</summary><p>Sequence numbers (accept only messages in proper order), timestamps (accept only if close enough to current time), and challenge/response (require the reply to contain a nonce just sent).</p></details>
+  <details><summary>15.3 What is a suppress-replay attack?</summary><p>When a sender’s clock is ahead of the recipient’s, an opponent intercepts a timestamped message and replays it later, when the timestamp becomes current at the recipient’s site; suppressing the original means the repetition goes undetected.</p></details>
+  <details><summary>15.4 What problem was Kerberos designed to address?</summary><p>In an open distributed environment where users at workstations access services on servers across the network, servers must restrict access to authorized users and authenticate service requests, but a workstation cannot be trusted to identify its users correctly.</p></details>
+  <details><summary>15.5 What are three threats associated with user authentication over a network or Internet?</summary><p>A user may gain access to a workstation and pretend to be another user; a user may alter a workstation’s network address to impersonate another workstation; and a user may eavesdrop and use a replay attack to gain entrance to a server or disrupt operations.</p></details>
+  <details><summary>15.6 List three approaches to secure user authentication in a distributed environment.</summary><p>Rely on each client workstation to assure its users’ identity and on each server to enforce policy by user ID; require client systems to authenticate themselves to servers while trusting them about their users; require the user to prove identity for each service invoked, and servers to prove their identity to clients.</p></details>
+  <details><summary>15.7 What four requirements were defined for Kerberos?</summary><p>Secure, reliable, transparent and scalable.</p></details>
+  <details><summary>15.8 What entities constitute a full-service Kerberos environment?</summary><p>A Kerberos server, a number of clients and a number of application servers, where the Kerberos server holds the user IDs and hashed passwords of all users and shares a secret key with each server.</p></details>
+  <details><summary>15.9 In the context of Kerberos, what is a realm?</summary><p>A set of managed nodes that share the same Kerberos database, typically one administrative domain; the database lives on a physically secure Kerberos master system.</p></details>
+  <details><summary>15.10 What are the mandatory elements to authenticate a PIV card holder?</summary><p>The mandatory PIV data elements: the PIN, the CHUID, the PIV Authentication Key (key pair and certificate), two fingerprint templates, the electronic facial image, and the asymmetric Card Authentication Key.</p></details>
+</section>
+
+<!-- ============ Sources ============ -->
+<section class="unit" id="res">
+  <h2><span class="sec">Ref</span>References / Sources</h2>
+  <ul>
+    <li>W. Stallings, <i>Cryptography and Network Security: Principles and Practice</i>, 7th ed., Global Edition, Pearson, 2017. Chapters 14–15, pp. 441–518. All content not marked otherwise.</li>
+    <li><b>In the book:</b> Chapter 10 (Diffie–Hellman man-in-the-middle), Chapter 12 (message authentication, key wrapping), Chapter 13 (digital signatures), Chapters 17, 19, 20 (TLS, S/MIME, IPsec use of X.509); online Appendix T (Kerberos encryption techniques, PCBC).</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc5280" target="_blank" rel="noopener">RFC 5280, Internet X.509 PKI Certificate and CRL Profile</a>.</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc9810" target="_blank" rel="noopener">RFC 9810, Internet X.509 PKI — Certificate Management Protocol (CMP)</a> (2025).</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc5272" target="_blank" rel="noopener">RFC 5272, Certificate Management over CMS (CMC)</a>.</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc3394" target="_blank" rel="noopener">RFC 3394, AES Key Wrap Algorithm</a> — encryption function in the control vector lab.</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc4120" target="_blank" rel="noopener">RFC 4120, The Kerberos Network Authentication Service (V5)</a>; <a href="https://www.rfc-editor.org/rfc/rfc6649" target="_blank" rel="noopener">RFC 6649</a> and <a href="https://www.rfc-editor.org/rfc/rfc8429" target="_blank" rel="noopener">RFC 8429</a> (deprecation of DES, 3DES and RC4 in Kerberos).</li>
+    <li><a href="https://csrc.nist.gov/pubs/sp/800/63/4/final" target="_blank" rel="noopener">NIST SP 800-63-4, Digital Identity Guidelines</a>.</li>
+    <li><a href="https://csrc.nist.gov/pubs/fips/201-3/final" target="_blank" rel="noopener">NIST FIPS 201-3, Personal Identity Verification (PIV) of Federal Employees and Contractors</a>.</li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/wrapKey" target="_blank" rel="noopener">MDN, SubtleCrypto.wrapKey() / AES-KW</a> — browser API used by the control vector lab.</li>
+  </ul>
+  <footer>Content follows W. Stallings, <i>Cryptography and Network Security: Principles and Practice</i>, 7th ed., Global Edition, Chapters 14–15. Protocol steppers show each message exactly as the book writes it. The control vector lab uses real AES and SHA-256 through your browser’s Web Crypto API; nothing is sent anywhere, and the random keys are for study only.</footer>
+</section>
+</main>
+</div>
+
+<script>
+/* ===== Unit 9: protocol steppers, key-count, control vector, certification path, timestamp labs ===== */
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const on=(id,ev,f)=>{const e=$(id);if(e)e.addEventListener(ev,f)};
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const kv=rows=>'<div class="kv">'+rows.map(([k,v])=>'<span class="k">'+k+'</span><span class="v">'+v+'</span>').join('')+'</div>';
+const res=(ok,t)=>'<span class="res '+(ok?'ok':'no')+'">'+t+'</span>';
+const err=t=>'<p class="err">'+t+'</p>';
+const hex=b=>Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');
+const SVGNS='http://www.w3.org/2000/svg';
+
+/* ---------- subscript mini-syntax: X_ab or X_{a,b} ---------- */
+function segs(s){const out=[];let i=0,buf='';
+  while(i<s.length){const c=s[i];
+    if(c==='_'){if(buf){out.push({t:buf});buf=''}i++;let sb='';
+      if(s[i]==='{'){const j=s.indexOf('}',i);sb=s.slice(i+1,j);i=j+1}
+      else{while(i<s.length&&/[A-Za-z0-9#]/.test(s[i]))sb+=s[i++]}
+      out.push({t:sb,sub:true})}
+    else{buf+=c;i++}}
+  if(buf)out.push({t:buf});return out}
+const html=s=>segs(s).map(g=>g.sub?'<sub>'+esc(g.t)+'</sub>':esc(g.t)).join('');
+function svgText(s){let o='',down=false;segs(s).forEach(g=>{
+  if(g.sub){o+='<tspan dy="3" font-size="8.5">'+esc(g.t)+'</tspan>';down=true}
+  else{o+='<tspan'+(down?' dy="-3"':'')+'>'+esc(g.t)+'</tspan>';down=false}});return o}
+const textW=s=>segs(s).reduce((w,g)=>w+g.t.length*(g.sub?5.1:6.6),0);
+
+/* ---------- protocol definitions (messages exactly as in the book) ---------- */
+/* m: [from, to, label, note, opts]; opts: {n, atk, short} ; from===to draws a self step */
+const P={
+kdc:{fig:'Figure 14.3',title:'Key distribution scenario',lanes:['Initiator A','KDC','Responder B'],sum:'A gets a session key K_s from the KDC; B gets its copy through A. Press Next to step through.',m:[
+ [0,1,'ID_A ‖ ID_B ‖ N_1','A asks the KDC for a session key to protect a logical connection to B. N_1 is a nonce identifying this transaction.'],
+ [1,0,'E(K_a, [K_s ‖ ID_A ‖ ID_B ‖ N_1]) ‖ E(K_b, [K_s ‖ ID_A])','Encrypted with K_a, so only A can read it and A knows it came from the KDC. For A: the one-time session key K_s and the original request with N_1, so A can match the reply, see the request was not altered, and know it is not a replay. For B: K_s and ID_A, encrypted with K_b.'],
+ [0,2,'E(K_b, [K_s ‖ ID_A])','A stores K_s and forwards B’s part, which eavesdroppers cannot read. B learns K_s, that its partner is A (ID_A), and that the KDC made it (only the KDC shares K_b).'],
+ [2,0,'E(K_s, N_2)','Using the new session key, B sends a fresh nonce N_2.'],
+ [0,2,'E(K_s, f(N_2))','A replies with f(N_2), a transformation such as adding one. Steps 4–5 assure B that step 3 was not a replay.']]},
+ssm:{fig:'Figure 14.4',title:'Automatic key distribution (connection-oriented)',lanes:['Host A','SSM A','KDC','SSM B'],sum:'The SSMs obtain and use session keys; the hosts never see them.',m:[
+ [0,1,'connection-request packet','Host A sends a packet requesting a connection.',{n:'1'}],
+ [1,2,'request for a session key','SSM A buffers the packet and asks the KDC for permission. This exchange is encrypted with a master key shared only by this SSM and the KDC.',{n:'2'}],
+ [2,1,'session key, under SSM A’s key','If the KDC approves, it generates the session key and delivers it to both SSMs, each under that SSM’s unique permanent key.',{n:'3'}],
+ [2,3,'session key, under SSM B’s key','The same session key goes to SSM B.',{n:'3'}],
+ [1,3,'buffered packet released','The connection is set up. All user data between the two end systems is encrypted by their SSMs with the one-time session key.',{n:'4'}]]},
+dec:{fig:'Figure 14.5',title:'Decentralized key distribution',lanes:['Initiator A','Responder B'],sum:'No KDC: A and B already share master key K_m.',m:[
+ [0,1,'ID_A ‖ N_1','A requests a session key from B and includes nonce N_1.'],
+ [1,0,'E(K_m, [K_s ‖ ID_A ‖ ID_B ‖ f(N_1) ‖ N_2])','Under the shared master key: the session key B selected, the identifiers, f(N_1) (proof of freshness) and a new nonce N_2.'],
+ [0,1,'E(K_s, f(N_2))','Using the new session key, A returns f(N_2).']]},
+merkle:{fig:'Figure 14.7',title:'Simple secret key distribution',lanes:['A','B'],sum:'Merkle’s protocol: a throwaway key pair carries the session key.',m:[
+ [0,1,'PU_a ‖ ID_A','A generates a fresh pair {PU_a, PR_a} and sends the public key with its identifier.'],
+ [1,0,'E(PU_a, K_s)','B generates K_s and encrypts it with A’s public key. A computes D(PR_a, E(PU_a, K_s)). Then A discards PU_a and PR_a, and B discards PU_a.']]},
+mitm:{fig:'Figure 14.8',title:'Man-in-the-middle attack',lanes:['Alice','Darth','Bob'],sum:'Darth controls the channel and swaps in his own public key.',m:[
+ [0,1,'PU_a ‖ ID_A','A sends PU_a ‖ ID_A intended for B. D intercepts it.'],
+ [1,2,'PU_d ‖ ID_A','D creates its own pair {PU_d, PR_d} and sends PU_d with A’s identifier to B.',{atk:1}],
+ [2,1,'E(PU_d, K_s)','B generates K_s and encrypts it with what it believes is A’s key.'],
+ [1,1,'K_s = D(PR_d, E(PU_d, K_s))','D decrypts and learns K_s.',{atk:1}],
+ [1,0,'E(PU_a, K_s)','D re-encrypts K_s for A. A and B both know K_s and are unaware D knows it too; D now just eavesdrops and decrypts everything.',{atk:1}]]},
+pkconf:{fig:'Figure 14.9',title:'Confidentiality and authentication',lanes:['Initiator A','Responder B'],sum:'Assumes A and B already hold each other’s public keys.',m:[
+ [0,1,'E(PU_b, [N_1 ‖ ID_A])','A uses B’s public key to send its identifier and a nonce N_1 that identifies this transaction.'],
+ [1,0,'E(PU_a, [N_1 ‖ N_2])','Only B could decrypt message 1, so N_1 in this reply assures A that its correspondent is B. B adds a new nonce N_2.'],
+ [0,1,'E(PU_b, N_2)','A returns N_2, assuring B that its correspondent is A.'],
+ [0,1,'E(PU_b, E(PR_a, K_s))','A chooses secret key K_s. Inner encryption with A’s private key: only A could have sent it. Outer encryption with B’s public key: only B can read it. B computes D(PU_a, D(PR_b, M)).']]},
+pka:{fig:'Figure 14.12',title:'Public-key authority',lanes:['Initiator A','Public-key authority','Responder B'],sum:'Every reply from the authority is encrypted with PR_auth, so anyone with PU_auth can check its origin.',m:[
+ [0,1,'Request ‖ T_1','A sends a timestamped request for B’s current public key.'],
+ [1,0,'E(PR_auth, [PU_b ‖ Request ‖ T_1])','A decrypts with PU_auth, so it knows the authority sent it. It holds PU_b, the original request (to match it and see it was not altered), and T_1 (so this is not an old reply carrying an outdated key).'],
+ [0,2,'E(PU_b, [ID_A ‖ N_1])','A stores PU_b and uses it to send its identifier and a nonce N_1 to B.'],
+ [2,1,'Request ‖ T_2','B retrieves A’s public key from the authority the same way.'],
+ [1,2,'E(PR_auth, [PU_a ‖ Request ‖ T_2])','B now holds PU_a.'],
+ [2,0,'E(PU_a, [N_1 ‖ N_2])','Only B could have decrypted message 3, so N_1 here assures A it is talking to B. B adds a new nonce N_2.'],
+ [0,2,'E(PU_b, N_2)','A returns N_2, assuring B that its correspondent is A.']]},
+certx:{fig:'Figure 14.13',title:'Exchange of public-key certificates',lanes:['A','Certificate authority','B'],sum:'(a) Each party obtains a certificate once. (b) They exchange certificates directly, with no further contact with the CA.',groups:[[0,3,'(a) obtaining certificates from the CA'],[4,5,'(b) exchanging certificates']],m:[
+ [0,1,'PU_a','A supplies its public key and requests a certificate, in person or by secure authenticated communication.',{n:''}],
+ [1,0,'C_A = E(PR_auth, [T_1 ‖ ID_A ‖ PU_a])','The CA issues A’s certificate.',{n:''}],
+ [2,1,'PU_b','B does the same.',{n:''}],
+ [1,2,'C_B = E(PR_auth, [T_2 ‖ ID_B ‖ PU_b])','The CA issues B’s certificate.',{n:''}],
+ [0,2,'C_A','A sends its certificate. B computes D(PU_auth, C_A) = (T_1 ‖ ID_A ‖ PU_a): it came from the CA, it names A and A’s key, and T_1 shows it is current.',{n:'1'}],
+ [2,0,'C_B','B sends its certificate to A.',{n:'2'}]]},
+ns:{title:'Needham–Schroeder',lanes:['A','KDC','B'],sum:'The purpose is to distribute a session key K_s securely to A and B.',m:[
+ [0,1,'ID_A ‖ ID_B ‖ N_1','A asks the KDC for a session key for talking to B.'],
+ [1,0,'E(K_a, [K_s ‖ ID_B ‖ N_1 ‖ E(K_b, [K_s ‖ ID_A])])','A securely acquires the new session key.'],
+ [0,2,'E(K_b, [K_s ‖ ID_A])','Only B can decrypt, and hence understand, this message.'],
+ [2,0,'E(K_s, N_2)','Shows that B knows K_s.'],
+ [0,2,'E(K_s, f(N_2))','Assures B that A knows K_s and that this is a fresh message (nonce N_2).']]},
+nsx:{title:'Replay with an old key',lanes:['X (opponent)','B'],sum:'X has compromised an old session key K_s and recorded the old step 3.',m:[
+ [0,1,'E(K_b, [K_s ‖ ID_A])','X replays the old step 3, impersonating A. Unless B remembers all previous session keys used with A, it cannot tell this is a replay.',{n:'3',atk:1}],
+ [1,0,'E(K_s, N_2)','B starts the handshake under the old key, and X intercepts it.',{n:'4'}],
+ [0,1,'E(K_s, f(N_2))','X knows the old K_s, so it answers correctly. From now on X sends bogus messages that appear to come from A over an “authenticated” session key.',{n:'5',atk:1}]]},
+denning:{title:'Denning',lanes:['A','KDC','B'],sum:'Needham–Schroeder plus a timestamp T in steps 2 and 3. Assumes Ka and Kb are secure.',m:[
+ [0,1,'ID_A ‖ ID_B','A asks the KDC for a session key; no nonce is needed.'],
+ [1,0,'E(K_a, [K_s ‖ ID_B ‖ T ‖ E(K_b, [K_s ‖ ID_A ‖ T])])','T assures A that the session key has only just been generated.'],
+ [0,2,'E(K_b, [K_s ‖ ID_A ‖ T])','B checks |Clock − T| < Δt_1 + Δt_2. T is encrypted under the master key, so a replay of this step is detected as untimely, even by someone holding an old session key.'],
+ [2,0,'E(K_s, N_1)','Steps 4 and 5 were added later; they confirm that B received the session key.'],
+ [0,2,'E(K_s, f(N_1))','A’s answer proves A holds K_s.']]},
+neuman:{title:'Session setup',lanes:['A','B','KDC'],sum:'Nonces for freshness, and a time limit T_b that only B checks.',m:[
+ [0,1,'ID_A ‖ N_a','A sends its identifier and a nonce N_a in plaintext. N_a will return to A encrypted with the session key, assuring A of timeliness.'],
+ [1,2,'ID_B ‖ N_b ‖ E(K_b, [ID_A ‖ N_a ‖ T_b])','B tells the KDC a session key is needed: its own nonce N_b, plus a block under K_b naming who gets credentials (A), a suggested expiration time T_b and A’s nonce.'],
+ [2,0,'E(K_a, [ID_B ‖ N_a ‖ K_s ‖ T_b]) ‖ E(K_b, [ID_A ‖ K_s ‖ T_b]) ‖ N_b','For A, under K_a: proof B received A’s first message (ID_B), freshness (N_a), the session key K_s and its time limit T_b. Also a ticket for B and B’s nonce.'],
+ [0,1,'E(K_b, [ID_A ‖ K_s ‖ T_b]) ‖ E(K_s, N_b)','The ticket gives B the session key, which decrypts E(K_s, N_b). N_b under K_s proves the message came from A and is not a replay.']]},
+neuman2:{title:'Later session, reusing the ticket',lanes:['A','B'],sum:'Within the time limit T_b, A opens a new session without the KDC.',m:[
+ [0,1,'E(K_b, [ID_A ‖ K_s ‖ T_b]) ‖ N_a′','A presents the ticket with a new nonce. B verifies the ticket has not expired.'],
+ [1,0,'N_b′ ‖ E(K_s, N_a′)','B returns A’s new nonce under K_s, plus its own new nonce.'],
+ [0,1,'E(K_s, N_b′)','The newly generated nonces assure each party that there is no replay.']]},
+mail:{title:'One-way (email)',lanes:['A','KDC','B'],sum:'Steps 4 and 5 removed, so B need not be online.',m:[
+ [0,1,'ID_A ‖ ID_B ‖ N_1','As in the KDC protocol.'],
+ [1,0,'E(K_a, [K_s ‖ ID_B ‖ N_1 ‖ E(K_b, [K_s ‖ ID_A])])','A receives the session key and B’s encrypted copy.'],
+ [0,2,'E(K_b, [K_s ‖ ID_A]) ‖ E(K_s, M)','The message M travels with B’s copy of the session key. Only B can read M, and B learns the sender is A. Replays are not prevented.']]},
+ksimple:{title:'A simple authentication dialogue',lanes:['Client C','AS','Server V'],sum:'Ticket = E(K_v, [ID_C ‖ AD_C ‖ ID_V]), where K_v is shared by the AS and V. Hypothetical, not yet Kerberos.',m:[
+ [0,1,'ID_C ‖ P_C ‖ ID_V','The client module asks for the user’s password and sends the user ID, the password and the server ID. The AS checks the password and whether this user may use V.'],
+ [1,0,'Ticket','The AS returns Ticket = E(K_v, [ID_C ‖ AD_C ‖ ID_V]). It is encrypted, so neither C nor an opponent can alter it.'],
+ [0,2,'ID_C ‖ Ticket','V decrypts the ticket and checks that its ID_C matches the unencrypted ID_C. If they match, the user is authenticated. AD_C means the ticket works only from the workstation that requested it.']]},
+ktgs:{title:'A more secure dialogue',lanes:['Client C','AS','TGS','Server V'],sum:'Ticket_tgs = E(K_tgs, [ID_C ‖ AD_C ‖ ID_tgs ‖ TS_1 ‖ Lifetime_1]); Ticket_v = E(K_v, [ID_C ‖ AD_C ‖ ID_v ‖ TS_2 ‖ Lifetime_2]). Still hypothetical.',groups:[[0,1,'once per user logon session'],[2,3,'once per type of service'],[4,4,'once per service session']],m:[
+ [0,1,'ID_C ‖ ID_tgs','The client requests a ticket-granting ticket for its user from the AS.'],
+ [1,0,'E(K_c, Ticket_tgs)','Encrypted with K_c, derived from the user’s password stored at the AS. The client prompts for the password, derives the key and decrypts; only the right user can recover the ticket, and no password was sent.'],
+ [0,2,'ID_C ‖ ID_V ‖ Ticket_tgs','The client requests a service-granting ticket. The TGS decrypts the ticket with K_tgs, checks its own ID is present (proper decryption) and the lifetime, then compares the user ID and network address with the request.'],
+ [2,0,'Ticket_v','If the user may access V, the TGS issues Ticket_v, with the same structure as the ticket-granting ticket and encrypted with K_v (TGS and V only).'],
+ [0,3,'ID_C ‖ Ticket_v','The client requests service. V authenticates the user from the ticket contents; the ticket can be reused for later accesses to V.']]},
+k4:{title:'Kerberos version 4',lanes:['Client C','AS','TGS','Server V'],sum:'Table 15.1. Each note gives the rationale of Table 15.2 for that message’s elements.',w:700,groups:[[0,1,'(a) authentication service exchange'],[2,3,'(b) ticket-granting service exchange'],[4,5,'(c) client/server authentication exchange']],m:[
+ [0,1,'ID_c ‖ ID_tgs ‖ TS_1','Client requests a ticket-granting ticket. ID_C: tells the AS who the user is. ID_tgs: the user wants the TGS. TS_1: lets the AS verify the client’s clock is synchronized with its own.'],
+ [1,0,'E(K_c, [K_{c,tgs} ‖ ID_tgs ‖ TS_2 ‖ Lifetime_2 ‖ Ticket_tgs])','K_c (from the password) lets AS and client verify the password and protects the message. K_c,tgs: a session key for client and TGS, so they need no permanent shared key. ID_tgs, TS_2, Lifetime_2: confirm the ticket is for the TGS, when it was issued and how long it lasts. Ticket_tgs = E(K_tgs, [K_c,tgs ‖ ID_C ‖ AD_C ‖ ID_tgs ‖ TS_2 ‖ Lifetime_2]) is reusable (no re-entering the password) and encrypted with K_tgs (AS and TGS only) against tampering; its copy of K_c,tgs lets the TGS decrypt the authenticator; AD_C stops use from another workstation; Lifetime_2 prevents replay after expiry.',{short:'E(K_c, [K_{c,tgs} ‖ ID_tgs ‖ TS_2 ‖ Lifetime_2 ‖ Ticket_tgs])'}],
+ [0,2,'ID_v ‖ Ticket_tgs ‖ Authenticator_c','Client requests a service-granting ticket for V. Ticket_tgs assures the TGS that the AS authenticated this user. Authenticator_c = E(K_c,tgs, [ID_C ‖ AD_C ‖ TS_3]): made by the client, with a very short lifetime against replay; encrypted with a key only client and TGS know; ID_C and AD_C must match the ticket; TS_3 says when it was generated. The TGS also compares AD_C with the address the message came from.'],
+ [2,0,'E(K_{c,tgs}, [K_{c,v} ‖ ID_v ‖ TS_4 ‖ Ticket_v])','Protected by K_c,tgs, known only to C and TGS. K_c,v: session key for client and V. ID_v, TS_4: the ticket is for V and when it was issued. Ticket_v = E(K_v, [K_c,v ‖ ID_C ‖ AD_C ‖ ID_v ‖ TS_4 ‖ Lifetime_4]): reusable for the same server, encrypted with K_v (TGS and V only), Lifetime_4 prevents replay after expiry.'],
+ [0,3,'Ticket_v ‖ Authenticator_c','Client requests service. Ticket_v assures V the AS authenticated this user. Authenticator_c = E(K_c,v, [ID_C ‖ AD_C ‖ TS_5]). V decrypts the ticket, recovers K_c,v, decrypts the authenticator and checks that ID_C and AD_C match.'],
+ [3,0,'E(K_{c,v}, [TS_5 + 1])','Optional, for mutual authentication. K_c,v assures C the reply is from V; TS_5 + 1 assures C it is not a replay of an old reply. C and V now share K_c,v.']]},
+realm:{title:'Request for service in another realm',lanes:['Client','AS','TGS','TGS_rem','V_rem'],w:720,sum:'Realm A holds the client, AS and TGS; realm B holds TGS_rem and the server V_rem. The two Kerberos servers share a secret key.',m:[
+ [0,1,'ID_c ‖ ID_tgs ‖ TS_1','Request a ticket for the local TGS.'],
+ [1,0,'E(K_c, [K_{c,tgs} ‖ ID_tgs ‖ TS_2 ‖ Lifetime_2 ‖ Ticket_tgs])','Ticket for the local TGS, as in version 4.'],
+ [0,2,'ID_tgsrem ‖ Ticket_tgs ‖ Authenticator_c','Request a ticket-granting ticket for the remote TGS.'],
+ [2,0,'E(K_{c,tgs}, [K_{c,tgsrem} ‖ ID_tgsrem ‖ TS_4 ‖ Ticket_tgsrem])','The local TGS can issue this because it shares a key with the remote realm’s Kerberos server.'],
+ [0,3,'ID_vrem ‖ Ticket_tgsrem ‖ Authenticator_c','Apply to the remote TGS for a service-granting ticket.'],
+ [3,0,'E(K_{c,tgsrem}, [K_{c,vrem} ‖ ID_vrem ‖ TS_6 ‖ Ticket_vrem])','Ticket for the remote server.'],
+ [0,4,'Ticket_vrem ‖ Authenticator_c','The ticket shows the realm where the user was originally authenticated; the remote server chooses whether to honor the request.']]},
+k5:{title:'Kerberos version 5',lanes:['Client C','AS','TGS','Server V'],w:700,sum:'Table 15.3. Tickets are no longer double-encrypted; new fields are explained below the stepper.',groups:[[0,1,'(a) authentication service exchange'],[2,3,'(b) ticket-granting service exchange'],[4,5,'(c) client/server authentication exchange']],m:[
+ [0,1,'Options ‖ ID_c ‖ Realm_c ‖ ID_tgs ‖ Times ‖ Nonce_1','Client requests a ticket-granting ticket, adding realm, requested options, times (from, till, rtime) and a nonce.'],
+ [1,0,'Realm_c ‖ ID_C ‖ Ticket_tgs ‖ E(K_c, [K_{c,tgs} ‖ Times ‖ Nonce_1 ‖ Realm_tgs ‖ ID_tgs])','The ticket travels beside the password-protected block, not inside it. Ticket_tgs = E(K_tgs, [Flags ‖ K_c,tgs ‖ Realm_c ‖ ID_C ‖ AD_C ‖ Times]); Nonce_1 shows the reply is fresh.',{short:'Realm_c ‖ ID_C ‖ Ticket_tgs ‖ E(K_c, [K_{c,tgs} ‖ Times ‖ Nonce_1 ‖ …])'}],
+ [0,2,'Options ‖ ID_v ‖ Times ‖ Nonce_2 ‖ Ticket_tgs ‖ Authenticator_c','As in version 4 plus requested times, options and a nonce. Authenticator_c = E(K_c,tgs, [ID_C ‖ Realm_c ‖ TS_1]).'],
+ [2,0,'Realm_c ‖ ID_C ‖ Ticket_v ‖ E(K_{c,tgs}, [K_{c,v} ‖ Times ‖ Nonce_2 ‖ Realm_v ‖ ID_v])','Same structure as message 2. Ticket_v = E(K_v, [Flags ‖ K_c,v ‖ Realm_c ‖ ID_C ‖ AD_C ‖ Times]).',{short:'Realm_c ‖ ID_C ‖ Ticket_v ‖ E(K_{c,tgs}, [K_{c,v} ‖ Times ‖ Nonce_2 ‖ …])'}],
+ [0,3,'Options ‖ Ticket_v ‖ Authenticator_c','Options may request mutual authentication. Authenticator_c = E(K_c,v, [ID_C ‖ Realm_c ‖ TS_2 ‖ Subkey ‖ Seq#]).'],
+ [3,0,'E(K_{c,v}, [TS_2 ‖ Subkey ‖ Seq#])','Sent when mutual authentication is required. TS_2 is returned without +1; a subkey here overrides the one in message 5; Seq# is the client’s starting sequence number.']]},
+dpk:{title:'Mutual authentication with timestamps (Denning)',lanes:['A','AS','B'],sum:'The AS signs certificates; A picks the session key.',m:[
+ [0,1,'ID_A ‖ ID_B','A asks the authentication server for both parties’ certificates.'],
+ [1,0,'E(PR_as, [ID_A ‖ PU_a ‖ T]) ‖ E(PR_as, [ID_B ‖ PU_b ‖ T])','Two timestamped public-key certificates signed with the AS’s private key.'],
+ [0,2,'E(PR_as, [ID_A ‖ PU_a ‖ T]) ‖ E(PR_as, [ID_B ‖ PU_b ‖ T]) ‖ E(PU_b, E(PR_a, [K_s ‖ T]))','A forwards both certificates with a session key it chose itself, signed with PR_a and encrypted for B. The AS never sees K_s.',{short:'certificates ‖ E(PU_b, E(PR_a, [K_s ‖ T]))'}]]},
+woo2:{title:'Woo–Lam (revised)',lanes:['A','KDC','B'],sum:'Nonces instead of timestamps. Revised version: ID_A is inside the KDC-signed block in steps 5 and 6.',m:[
+ [0,1,'ID_A ‖ ID_B','A tells the KDC it intends to set up a secure connection with B.'],
+ [1,0,'E(PR_auth, [ID_B ‖ PU_b])','A copy of B’s public-key certificate.'],
+ [0,2,'E(PU_b, [N_a ‖ ID_A])','Using B’s public key, A says it wants to communicate and sends nonce N_a.'],
+ [2,1,'ID_A ‖ ID_B ‖ E(PU_auth, N_a)','B asks for A’s certificate and a session key. A’s nonce, protected with the KDC’s public key, lets the KDC stamp the key with it.'],
+ [1,2,'E(PR_auth, [ID_A ‖ PU_a]) ‖ E(PU_b, E(PR_auth, [N_a ‖ K_s ‖ ID_A ‖ ID_B]))','A’s certificate, plus the triple binding K_s to N_a and both identities: signed with PR_auth so B can check it came from the KDC, and encrypted for B so no one else can use it.',{short:'E(PR_auth, [ID_A ‖ PU_a]) ‖ E(PU_b, E(PR_auth, [N_a ‖ K_s ‖ ID_A ‖ ID_B]))'}],
+ [2,0,'E(PU_a, [N_b ‖ E(PR_auth, [N_a ‖ K_s ‖ ID_A ‖ ID_B])])','B relays the signed block with its own nonce N_b, encrypted for A. The binding of K_s to N_a assures A that K_s is fresh.'],
+ [0,2,'E(K_s, N_b)','A shows B it knows the session key.']]},
+woo1:{title:'Woo–Lam (original)',lanes:['A','KDC','B'],sum:'The original protocol. The flaw: ID_A is missing from the signed block, so K_s is not bound to A’s identity, and N_a alone does not identify A’s request.',m:[
+ [0,1,'ID_A ‖ ID_B',''],
+ [1,0,'E(PR_auth, [ID_B ‖ PU_b])',''],
+ [0,2,'E(PU_b, [N_a ‖ ID_A])',''],
+ [2,1,'ID_A ‖ ID_B ‖ E(PU_auth, N_a)',''],
+ [1,2,'E(PR_auth, [ID_A ‖ PU_a]) ‖ E(PU_b, E(PR_auth, [N_a ‖ K_s ‖ ID_B]))','Only N_a and ID_B are bound to K_s. N_a is unique only among A’s own nonces.',{atk:1}],
+ [2,0,'E(PU_a, [E(PR_auth, [N_a ‖ K_s ‖ ID_B]) ‖ N_b])','The same unbound triple is relayed to A.',{atk:1}],
+ [0,2,'E(K_s, N_b)','']]},
+fed:{fig:'Figure 15.6',title:'Federated identity operation',lanes:['User','Identity provider','Administrator','Service provider'],sum:'The identity provider is in the user’s (source) domain; the service provider is in a remote (destination) domain.',m:[
+ [0,1,'authentication dialogue + attribute values','The user’s browser or application authenticates to the identity provider in the same domain and provides attribute values for the user’s identity.'],
+ [2,1,'attributes, e.g. allowable roles','An administrator in the same domain supplies some attributes.'],
+ [1,3,'identity, authentication info, attributes','The service provider the user wants obtains identity information, authentication information and attributes from the identity provider in the source domain.'],
+ [3,0,'session + access control','The service provider opens a session with the remote user and enforces access control based on the user’s identity and attributes.']]},
+piv:{fig:'Figure 15.9',title:'Authentication using the PIV Authentication Key',lanes:['Cardholder','Local system','PIV card edge'],nonum:1,sum:'The local system runs PIV application software and talks to the card through an API; SP 800-73 calls the card command interface the card edge.',m:[
+ [0,1,'present card','The local system detects the card, through a reader or wirelessly.'],
+ [1,2,'select application','It selects the authentication application on the card.'],
+ [2,1,'PIV card app ID and version',''],
+ [1,2,'read value (PIV Auth certificate)','It requests the certificate for the card’s PIV Authentication Key.'],
+ [2,1,'PIV Auth certificate',''],
+ [1,1,'validate certificate (CredV)','Signature, expiration and revocation. If the certificate is not valid, the card is rejected. The FASC-N is taken from the certificate.'],
+ [0,1,'PIN (HolderV)','The cardholder is asked for the card’s PIN.'],
+ [1,2,'verify PIN',''],
+ [2,1,'PIN ACK','A match returns a positive acknowledgment; otherwise a failure message and the card is rejected.'],
+ [1,2,'sign nonce','Challenge-response: the local system sends a nonce for the card to sign.'],
+ [2,1,'signed nonce',''],
+ [1,1,'verify signature (CardV)','Checked with the PIV Authentication public key: the card holds the private key. If valid, the cardholder is identified.']]}
+};
+
+/* ---------- stepper ---------- */
+function drawProto(p,i){
+  const W=p.w||(p.lanes.length>3?660:620),n=p.lanes.length,mx=W/(2*n)+14,sp=(W-2*mx)/(n-1);
+  const lx=k=>mx+k*sp, grp=p.groups||[];
+  const hw=Math.min(150,sp-10),hl=p.lanes.map(l=>{if(textW(l)*1.12<=hw-14)return [l];const w=l.split(' ');let best=null;
+    for(let c=1;c<w.length;c++){const a=w.slice(0,c).join(' '),b=w.slice(c).join(' '),m=Math.max(textW(a),textW(b));if(!best||m<best[2])best=[a,b,m]}
+    return best?[best[0],best[1]]:[l]}),two=hl.some(x=>x.length>1),hh=two?42:30;
+  let y=8+hh+26;const ys=[];
+  p.m.forEach((m,k)=>{if(grp.some(g=>g[0]===k))y+=26;ys.push(y);y+=m[0]===m[1]?50:40});
+  const H=y+4;let s='';
+  grp.forEach(g=>{const y0=ys[g[0]]-38,y1=ys[g[1]]+(p.m[g[1]][0]===p.m[g[1]][1]?26:12);
+    s+='<rect class="gb" x="2" y="'+y0+'" width="'+(W-4)+'" height="'+(y1-y0)+'" rx="6"/><text class="gl" x="8" y="'+(y0+11)+'">'+esc(g[2])+'</text>'});
+  p.lanes.forEach((l,k)=>{const x=lx(k),L=hl[k];s+='<line class="ll" x1="'+x+'" y1="'+(10+hh)+'" x2="'+x+'" y2="'+(H-2)+'"/>'+
+    '<rect class="lh" x="'+(x-hw/2)+'" y="8" width="'+hw+'" height="'+hh+'" rx="5"/>'+
+    (L.length>1?'<text class="lt" x="'+x+'" y="25" text-anchor="middle">'+svgText(L[0])+'</text><text class="lt" x="'+x+'" y="40" text-anchor="middle">'+svgText(L[1])+'</text>'
+      :'<text class="lt" x="'+x+'" y="'+(8+hh/2+4)+'" text-anchor="middle">'+svgText(L[0])+'</text>')});
+  p.m.forEach((m,k)=>{const st=i<0||k<i?'':k===i?' cur':' todo',atk=m[4]&&m[4].atk?' atk':'',x1=lx(m[0]),x2=lx(m[1]),yy=ys[k];
+    const mk=k===i?'ahm':atk?'ahb':'ah';const lab=(m[4]&&m[4].short)||m[2];
+    const nn=(m[4]&&m[4].n!=null)?m[4].n:(k+1),num=(p.nonum||nn==='')?'':'('+nn+') ';const t=num+lab,tw=textW(t);
+    if(x1===x2){s+='<path class="ms'+st+atk+'" d="M'+x1+' '+(yy-8)+' h28 v18 h-24" marker-end="url(#'+mk+')"/>';
+      let tx=x1+34,anc='start';if(tx+tw>W-4){tx=x1-8;anc='end'}
+      s+='<text class="ml'+st+atk+'" x="'+tx+'" y="'+(yy+5)+'" text-anchor="'+anc+'">'+svgText(t)+'</text>'}
+    else{const dir=x2>x1?1:-1;s+='<path class="ms'+st+atk+'" d="M'+x1+' '+yy+' H'+(x2-dir*3)+'" marker-end="url(#'+mk+')"/>';
+      let cx=(x1+x2)/2;cx=Math.max(4+tw/2,Math.min(W-4-tw/2,cx));
+      s+='<text class="ml'+st+atk+'" x="'+cx+'" y="'+(yy-7)+'" text-anchor="middle">'+svgText(t)+'</text>'}});
+  return {svg:s,W,H,ys,lx}}
+function initProto(el){
+  const ids=el.dataset.protos.split(',');let pid=ids[0],i=-1,anim=0;
+  const P0=P[pid],name=el.dataset.name||P0.title;
+  el.innerHTML='<div class="lab-h"><span class="t">Protocol · '+esc(name)+'</span>'+
+    (P0.fig?'<span class="pill">'+P0.fig+'</span>':'')+'</div><div class="lab-b">'+
+    (ids.length>1?'<div class="pvar"><span class="seg" role="group" aria-label="Protocol variant">'+ids.map((d,k)=>'<button type="button" data-v="'+d+'" aria-pressed="'+(k?'false':'true')+'">'+esc(P[d].title)+'</button>').join('')+'</span></div>':'')+
+    '<div class="figure"><svg role="img"></svg></div>'+
+    '<div class="pctl"><button type="button" class="ghost" data-a="prev">◀ Back</button><button type="button" data-a="next">Next ▶</button><button type="button" class="ghost" data-a="all">Show all</button><span class="cnt" aria-live="polite"></span></div><div class="pnote"></div></div>';
+  const svg=el.querySelector('svg'),note=el.querySelector('.pnote'),cnt=el.querySelector('.cnt'),bp=el.querySelector('[data-a=prev]'),bn=el.querySelector('[data-a=next]'),ba=el.querySelector('[data-a=all]');
+  function render(fwd){const p=P[pid],d=drawProto(p,i);
+    svg.setAttribute('viewBox','0 0 '+d.W+' '+d.H);svg.setAttribute('width',d.W);svg.innerHTML=d.svg;
+    svg.setAttribute('aria-label',p.title+': '+p.lanes.join(', ')+'. '+p.m.length+' messages.');
+    const nm=p.m.length;cnt.textContent=i<0?'All '+nm+' messages':'Message '+(i+1)+' of '+nm;
+    bp.disabled=i<0;bn.disabled=i>=nm-1;ba.disabled=i<0;
+    if(i<0){note.innerHTML='<p>'+html(p.sum)+'</p>'}
+    else{const m=p.m[i],atk=m[4]&&m[4].atk,nn=(m[4]&&m[4].n!=null)?m[4].n:(i+1),num=(p.nonum||nn==='')?'':'('+nn+') ';
+      note.innerHTML='<div class="ml1'+(atk?' atk':'')+'">'+esc(num)+html(p.lanes[m[0]])+(m[0]===m[1]?'':' → '+html(p.lanes[m[1]]))+': '+html(m[2])+'</div>'+(m[3]?'<p>'+html(m[3])+'</p>':'')}
+    if(fwd&&i>=0&&!reduce){const m=p.m[i];if(m[0]===m[1])return;const x1=d.lx(m[0]),x2=d.lx(m[1]),y=d.ys[i];
+      const c=document.createElementNS(SVGNS,'circle');c.setAttribute('class','pk');c.setAttribute('r','5');c.setAttribute('cy',y);svg.appendChild(c);
+      const t0=performance.now(),me=++anim;(function f(t){if(me!==anim){c.remove();return}const u=Math.min(1,(t-t0)/550),e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
+        c.setAttribute('cx',x1+(x2-x1)*e);if(u<1)requestAnimationFrame(f);else c.remove()})(t0)}}
+  bn.addEventListener('click',()=>{if(i<P[pid].m.length-1){i++;render(true)}});
+  bp.addEventListener('click',()=>{if(i>=0){i--;render(false)}});
+  ba.addEventListener('click',()=>{i=-1;render(false)});
+  el.querySelectorAll('[data-v]').forEach(b=>b.addEventListener('click',()=>{pid=b.dataset.v;i=-1;
+    el.querySelectorAll('[data-v]').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));render(false)}));
+  render(false)}
+document.querySelectorAll('.lab.proto').forEach(initProto);
+
+/* ---------- 14.1 key count ---------- */
+const fmt=x=>Math.round(x).toLocaleString('en-US');
+function kc(){const o=$('kc-out'),v=$('kc-n').value.trim();if(!/^\d+$/.test(v)||+v<2||+v>1e6){o.innerHTML=err('Enter a whole number of endpoints from 2 to 1 000 000.');return}
+  const N=+v,pairs=N*(N-1)/2;
+  o.innerHTML=kv([['pairwise keys N(N − 1)/2','<b>'+fmt(pairs)+'</b>'],['master keys with a KDC','<b>'+fmt(N)+'</b>'],['reduction','about '+fmt(pairs/N)+' times fewer keys to deliver by hand']]);
+  document.querySelectorAll('[data-kc]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.kc===N)));
+  const sv=$('kc-svg'),L=64,R=620,T=14,B=196,lx=n=>L+(Math.log10(n)-1)/5*(R-L),ly=k=>B-(Math.log10(k)-1)/11*(B-T);let h='';
+  for(let e=1;e<=6;e++){const x=lx(Math.pow(10,e));h+='<line class="gridl" x1="'+x+'" y1="'+T+'" x2="'+x+'" y2="'+B+'"/><text class="tm" x="'+x+'" y="'+(B+16)+'" text-anchor="middle">10<tspan dy="-5" font-size="8">'+e+'</tspan></text>'}
+  for(let e=1;e<=12;e+=1){if(e%2===0||e===1){const y=ly(Math.pow(10,e));h+='<line class="gridl" x1="'+L+'" y1="'+y+'" x2="'+R+'" y2="'+y+'"/><text class="tm" x="'+(L-6)+'" y="'+(y+4)+'" text-anchor="end">10<tspan dy="-5" font-size="8">'+e+'</tspan></text>'}}
+  let p1='',p2='';for(let e=1;e<=6.0001;e+=0.05){const n=Math.pow(10,e);p1+=(p1?'L':'M')+lx(n).toFixed(1)+' '+ly(n*(n-1)/2).toFixed(1);p2+=(p2?'L':'M')+lx(n).toFixed(1)+' '+ly(n).toFixed(1)}
+  h+='<path class="c1" d="'+p1+'"/><path class="c2" d="'+p2+'"/>';
+  const n=Math.max(10,N);h+='<circle class="d1" cx="'+lx(n)+'" cy="'+ly(Math.max(10,pairs))+'" r="5"/><circle class="d2" cx="'+lx(n)+'" cy="'+ly(n)+'" r="5"/>';
+  h+='<text class="tx" x="'+lx(3e3)+'" y="'+(ly(4.5e6)-6)+'">pairwise N(N − 1)/2</text><text class="tx" x="'+lx(1e5)+'" y="'+(ly(1e5)+18)+'">master keys N</text>';
+  h+='<text class="tm" x="'+((L+R)/2)+'" y="'+(B+30)+'" text-anchor="middle">endpoints N</text><text class="tm" x="12" y="'+T+'" transform="rotate(-90 12 '+((T+B)/2)+')" text-anchor="middle" dy="'+((B-T)/2)+'">keys</text>';
+  sv.setAttribute('viewBox','0 0 640 232');sv.innerHTML=h}
+on('kc-n','input',kc);document.querySelectorAll('[data-kc]').forEach(b=>b.addEventListener('click',()=>{$('kc-n').value=b.dataset.kc;kc()}));kc();
+
+/* ---------- 14.1 control vector (Web Crypto: SHA-256, AES-KW) ---------- */
+const CV={km:null,ks:null};const enc=s=>new TextEncoder().encode(s);
+function rnd16(){return crypto.getRandomValues(new Uint8Array(16))}
+let cvN=0;
+async function cv(){const o=$('cv-out'),my=++cvN;if(!(window.crypto&&crypto.subtle)){o.innerHTML=err('This lab needs the Web Crypto API (a current browser over https).');return}
+  try{if(!CV.km){CV.km=rnd16();CV.ks=rnd16()}
+    const h=async t=>new Uint8Array(await crypto.subtle.digest('SHA-256',enc(t))).slice(0,16);
+    const xr=(a,b)=>a.map((x,k)=>x^b[k]);
+    const ha=await h($('cv-a').value),ki=xr(CV.km,ha);
+    const kw=await crypto.subtle.importKey('raw',ki,'AES-KW',false,['wrapKey']);
+    const ksk=await crypto.subtle.importKey('raw',CV.ks,'AES-GCM',true,['encrypt']);
+    const wr=new Uint8Array(await crypto.subtle.wrapKey('raw',ksk,kw,'AES-KW'));
+    const hb=await h($('cv-b').value),ki2=xr(CV.km,hb);
+    const kw2=await crypto.subtle.importKey('raw',ki2,'AES-KW',false,['unwrapKey']);
+    let rec=null;try{const u=await crypto.subtle.unwrapKey('raw',wr,kw2,'AES-KW','AES-GCM',true,['encrypt']);rec=new Uint8Array(await crypto.subtle.exportKey('raw',u))}catch(e){rec=null}
+    if(my!==cvN)return;const same=$('cv-a').value===$('cv-b').value;
+    o.innerHTML=kv([['K<sub>m</sub> (master)','<span class="bitstr">'+hex(CV.km)+'</span>'],['K<sub>s</sub> (session)','<span class="bitstr">'+hex(CV.ks)+'</span>'],
+      ['H = h(CV)','<span class="bitstr">'+hex(ha)+'</span>'],['key input K<sub>m</sub> ⊕ H','<span class="bitstr">'+hex(ki)+'</span>'],
+      ['sent: CV in clear ‖ E([K<sub>m</sub> ⊕ H], K<sub>s</sub>)','<span class="bitstr"><b>'+hex(wr)+'</b></span>'],
+      ['user: h(CV presented)','<span class="bitstr">'+hex(hb)+'</span>'+(same?'':' <span class="pill no">differs</span>')],
+      ['user: key input','<span class="bitstr">'+hex(ki2)+'</span>'],
+      ['D([K<sub>m</sub> ⊕ H], …)',rec?(hex(rec)===hex(CV.ks)?'<span class="bitstr">'+hex(rec)+'</span> '+res(true,'K_s recovered'):res(false,'wrong key')):res(false,'recovery fails: CV does not match')]]);
+  }catch(e){if(my===cvN)o.innerHTML=err(esc(e.message))}}
+['cv-a','cv-b'].forEach(i=>on(i,'input',cv));
+on('cv-new','click',()=>{CV.km=rnd16();CV.ks=rnd16();cv()});
+on('cv-tamper','click',()=>{const b=$('cv-b'),t=$('cv-tamper');if(b.value===$('cv-a').value){b.value='type=PIN-encrypting; encrypt=yes; decrypt=yes';t.textContent='Restore matching CV'}else{b.value=$('cv-a').value;t.textContent='Change CV to PIN-encrypting'}cv()});
+cv();
+
+/* ---------- 14.4 certification path (Figure 14.16) ---------- */
+const ND={U:[260,34],V:[260,92],W:[150,152],Y:[370,152],X:[150,212],Z:[370,212],C:[95,272],A:[205,272],B:[370,272]};
+const CAE=[['U','V'],['V','W'],['V','Y'],['W','X'],['Y','Z']],XE=['X','Z'],HOME={A:'X',C:'X',B:'Z'};
+function cpath(a,b,cross){const adj={};const add=(p,q)=>{(adj[p]=adj[p]||[]).push(q);(adj[q]=adj[q]||[]).push(p)};CAE.forEach(e=>add(e[0],e[1]));if(cross)add(XE[0],XE[1]);
+  const prev={[a]:null},q=[a];while(q.length){const u=q.shift();if(u===b)break;(adj[u]||[]).forEach(v=>{if(!(v in prev)){prev[v]=u;q.push(v)}})}
+  const p=[];for(let u=b;u!=null;u=prev[u])p.unshift(u);return p}
+const cert=(y,x)=>y+'&lt;&lt;'+x+'&gt;&gt;';
+function cp(){const f=$('cp-from').value,t=$('cp-to').value,cross=$('cp-cross').checked,o=$('cp-out');
+  let path=[],ok=f!==t;if(ok)path=cpath(HOME[f],HOME[t],cross);
+  const onE=new Set();for(let k=0;k+1<path.length;k++){onE.add(path[k]+path[k+1]);onE.add(path[k+1]+path[k])}
+  if(ok){onE.add(HOME[f]+f);onE.add(HOME[t]+t)}
+  const onN=new Set(ok?path.concat([f,t]):[]);
+  let h='';const line=(p,q,x)=>{const a=ND[p],b=ND[q],o2=onE.has(p+q);h+='<line class="ed'+(x?' x':'')+(o2?' on':'')+'" x1="'+a[0]+'" y1="'+a[1]+'" x2="'+b[0]+'" y2="'+b[1]+'"/>'};
+  CAE.forEach(e=>line(e[0],e[1]));if(cross)line('X','Z',true);else h+='<line class="ed x" x1="'+ND.X[0]+'" y1="'+ND.X[1]+'" x2="'+ND.Z[0]+'" y2="'+ND.Z[1]+'" opacity=".35"/>';
+  line('X','C');line('X','A');line('Z','B');
+  Object.keys(ND).forEach(k=>{const [x,y]=ND[k],u=k in HOME,o2=onN.has(k);
+    h+=(u?'<rect class="nd u'+(o2?' on':'')+'" x="'+(x-16)+'" y="'+(y-14)+'" width="32" height="28" rx="5"/>':'<circle class="nd'+(o2?' on':'')+'" cx="'+x+'" cy="'+y+'" r="17"/>')+
+      '<text class="nt'+(o2?' on':'')+'" x="'+x+'" y="'+(y+5)+'" text-anchor="middle">'+k+'</text>'});
+  h+='<text class="tm" x="10" y="24">circles: CAs</text><text class="tm" x="10" y="40">boxes: users</text><text class="tm" x="260" y="200" text-anchor="middle">'+(cross?'cross-certified (used)':'cross-certified (not used)')+'</text>';
+  $('cp-svg').innerHTML=h;
+  if(!ok){o.innerHTML=err('Pick two different users.');return}
+  const certs=[];for(let k=0;k+1<path.length;k++)certs.push([path[k],path[k+1]]);certs.push([path[path.length-1],t]);
+  const steps=certs.map(([y,x],k)=>'<li>'+cert(y,x)+': verify with '+y+'’s public key'+(k===0?' (trusted: '+f+'’s own CA)':'')+' → trusted copy of <b>'+x+'</b>’s public key</li>').join('');
+  const rp=cpath(HOME[t],HOME[f],cross),rc=[];for(let k=0;k+1<rp.length;k++)rc.push(cert(rp[k],rp[k+1]));rc.push(cert(rp[rp.length-1],f));
+  o.innerHTML=kv([[f+' needs','<b>'+certs.map(c=>cert(c[0],c[1])).join(' ')+'</b>'],[t+' needs (reverse)',rc.join(' ')]])+'<ol class="props">'+steps+'</ol>'}
+['cp-from','cp-to','cp-cross'].forEach(i=>on(i,'change',cp));cp();
+
+/* ---------- 15.2 timestamp window / suppress-replay ---------- */
+function sr(){const w=+$('sr-w').value,off=+$('sr-o').value,r=+$('sr-r').value;$('sr-wv').textContent=w;$('sr-ov').textContent=off;$('sr-rv').textContent=r;
+  const T=off,tA=0.5,acc=t=>Math.abs(t-T)<w,oA=acc(tA),rA=acc(r);
+  const L=30,R=620,x=t=>L+(t+5)/35*(R-L),y=72;let h='';
+  const a=Math.max(-5,T-w),b=Math.min(30,T+w);if(b>a)h+='<rect class="win" x="'+x(a)+'" y="'+(y-9)+'" width="'+(x(b)-x(a))+'" height="18" rx="3" opacity=".8"/>';
+  h+='<line class="ln" x1="'+L+'" y1="'+y+'" x2="'+R+'" y2="'+y+'"/>';
+  for(let t=-5;t<=30;t+=5)h+='<line class="gridl" x1="'+x(t)+'" y1="'+(y-3)+'" x2="'+x(t)+'" y2="'+(y+4)+'"/><text class="tm" x="'+x(t)+'" y="'+(y+22)+'" text-anchor="middle">'+t+'</text>';
+  h+='<line class="ln" x1="'+x(T)+'" y1="'+(y-12)+'" x2="'+x(T)+'" y2="'+(y+12)+'"/><text class="tx" x="'+x(T)+'" y="'+(y+42)+'" text-anchor="middle">T = '+T+'</text>';
+  const oG=oA,rG=!rA;
+  const mk=(t,good,lab,ly)=>'<line class="ln dash" x1="'+x(t)+'" y1="'+(ly+4)+'" x2="'+x(t)+'" y2="'+(y-14)+'"/><path class="'+(good?'okm':'nom')+'" d="M'+x(t)+' '+(y-1)+' l-6 -11 h12 z"/><text class="tx" x="'+x(t)+'" y="'+ly+'" text-anchor="middle" font-size="11">'+lab+'</text>';
+  h+=mk(tA,oG,'original',14)+mk(r,rG,'replay',32);
+  h+='<text class="tm" x="'+R+'" y="'+(y+58)+'" text-anchor="end">recipient’s clock (min)</text>';
+  $('sr-svg').innerHTML=h;
+  let why;
+  if(!oA&&rA)why='Suppress-replay: the honest message arrives “early” and is rejected, while the copy the opponent held back is accepted once T becomes current at the recipient.';
+  else if(oA&&rA&&Math.abs(r-tA)>0.01)why='Both arrive inside the window. If the opponent lets the original through, the duplicate can be logged; if it suppresses the original, the replay goes undetected.';
+  else if(!rA)why='The replay falls outside |Clock − T| < Δt₁ + Δt₂ and is rejected.';
+  else why='The replay is accepted.';
+  $('sr-out').innerHTML=kv([['T (sender’s clock)',T+' min'],['window',(T-w)+' … '+(T+w)+' min'],['original at 0.5 min',res(oA,oA?'accepted: correct':'rejected: honest message lost')],['replay at '+r+' min',res(!rA,rA?'accepted: attack succeeds':'rejected: attack blocked')]])+'<p class="cap">'+why+'</p>'}
+['sr-w','sr-o','sr-r'].forEach(i=>on(i,'input',sr));sr();
+
+/* ===== scroll-following contents ===== */
+const links=[...document.querySelectorAll('nav.toc a')];
+const secs=links.map(l=>document.querySelector(l.getAttribute('href'))).filter(Boolean);
+const list=document.querySelector('nav.toc ol');let current=null,ticking=false;
+function spy(){ticking=false;const line=window.innerHeight*0.3;let idx=0;
+  secs.forEach((s,k)=>{if(s.getBoundingClientRect().top<=line)idx=k});
+  if((window.innerHeight+window.scrollY)>=document.documentElement.scrollHeight-4)idx=secs.length-1;
+  const l=links[idx];
+  if(l!==current){if(current){current.classList.remove('active');current.removeAttribute('aria-current')}
+    l.classList.add('active');l.setAttribute('aria-current','true');current=l;
+    if(list.scrollWidth>list.clientWidth){list.scrollTo({left:l.parentElement.offsetLeft-list.clientWidth/2+l.parentElement.offsetWidth/2,behavior:reduce?'auto':'smooth'})}}
+  const max=document.documentElement.scrollHeight-window.innerHeight;
+  $('toc-progress').style.width=(max>0?Math.min(100,window.scrollY/max*100):0)+'%'}
+window.addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(spy)}},{passive:true});
+window.addEventListener('resize',spy);spy();
+})();
+</script>
+<button class="to-top" id="to-top" type="button" aria-label="Back to top">↑ Top</button>
+<script>
+(function(){
+  var btn=document.getElementById('to-top');if(!btn)return;
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches,tick=false;
+  function upd(){tick=false;btn.classList.toggle('show',window.scrollY>600)}
+  window.addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(upd)}},{passive:true});
+  btn.addEventListener('click',function(){window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});var h=document.querySelector('.topbar a.home');if(h)h.focus({preventScroll:true})});
+  upd();
+})();
+</script>
+<script>
+/* Phones: keep wide diagrams readable; they scroll inside their own box instead of shrinking */
+(function(){var mq=window.matchMedia&&matchMedia('(max-width:600px)');if(!mq)return;
+  function fit(){document.querySelectorAll('.figure svg[viewBox]').forEach(function(s){var w=s.viewBox.baseVal.width;
+    if(mq.matches&&w>=480){s.style.minWidth=Math.round(w*0.8)+'px';s.style.maxWidth='none'}else{s.style.minWidth='';s.style.maxWidth=''}})}
+  fit();document.addEventListener('click',function(){setTimeout(fit,60)});document.addEventListener('input',function(){setTimeout(fit,60)});
+  if(mq.addEventListener)mq.addEventListener('change',fit)})();
+</script>
+<script>
+/* Side navbar: keep the highlighted entry in view while the page scrolls (wide screens only) */
+(function(){var nav=document.querySelector('nav.toc');if(!nav||!window.MutationObserver)return;
+  var wide=window.matchMedia('(min-width:901px)');
+  new MutationObserver(function(ms){if(!wide.matches||nav.scrollHeight<=nav.clientHeight)return;
+    for(var i=0;i<ms.length;i++){var a=ms[i].target;if(!/(^|\s)(active|on)(\s|$)/.test(a.className))continue;
+      var n=nav.getBoundingClientRect(),r=a.getBoundingClientRect(),pad=24;
+      if(r.top<n.top+pad)nav.scrollTop-= (n.top+pad-r.top);else if(r.bottom>n.bottom-pad)nav.scrollTop+= (r.bottom-(n.bottom-pad));break}
+  }).observe(nav,{subtree:true,attributes:true,attributeFilter:['class']});
+})();
+/* Review Questions: Expand all / Collapse all */
+(function(){var sec=document.getElementById('review');if(!sec)return;var bar=sec.querySelector('.rv-tools');if(!bar)return;
+  var ds=[].slice.call(sec.querySelectorAll('details'));if(!ds.length){bar.remove();return}
+  var op=bar.querySelector('[data-rv="open"]'),cl=bar.querySelector('[data-rv="close"]'),ct=bar.querySelector('.rv-count');
+  function upd(){var n=ds.filter(function(d){return d.open}).length;op.disabled=n===ds.length;cl.disabled=n===0;ct.textContent=n+' of '+ds.length+' open'}
+  op.addEventListener('click',function(){ds.forEach(function(d){d.open=true});upd()});
+  cl.addEventListener('click',function(){ds.forEach(function(d){d.open=false});upd()});
+  ds.forEach(function(d){d.addEventListener('toggle',upd)});upd();
+})();
+</script>
+<script src="notation.js" data-unit="9" defer></script>
+</body>
+</html>
