@@ -68,7 +68,7 @@ footer{font-size:.84rem;color:var(--muted);display:grid;gap:4px}
     <h1>Cryptography &amp; Network Security</h1>
     <p>Twelve units that follow the printed chapters of the textbook, with definitions, redrawn figures, animations and review questions.</p>
     <span class="book">Stallings · Cryptography and Network Security: Principles and Practice · 7th ed., Global Edition</span>
-    <div class="progress"><div class="bar"><i id="fill" style="width:83.33%"></i></div><span id="count">10 of 12 ready</span></div>
+    <div class="progress"><div class="bar"><i id="fill" style="width:91.67%"></i></div><span id="count">11 of 12 ready</span></div>
   </header>
 
   <a class="ref" href="notation.html"><span class="glyphs" aria-hidden="true">≡ ⊕ φ</span><span class="title"><h2>Notation</h2><span class="ch">Symbols used throughout the book · pp. 10–11</span></span><span class="status ready">Open →</span></a>
@@ -93,7 +93,7 @@ const UNITS=[
   {n:8,  t:"Digital Signatures",                   ch:"Ch. 13",      file:"unit8.html"},
   {n:9,  t:"Key Management & Authentication",      ch:"Ch. 14–15",   file:"unit9.html"},
   {n:10, t:"Access Control & Wireless",            ch:"Ch. 16 + 18", file:"unit10.html"},
-  {n:11, t:"Protocol-Layer Security",              ch:"Ch. 17 + 20", file:null},
+  {n:11, t:"Protocol-Layer Security",              ch:"Ch. 17 + 20", file:"unit11.html"},
   {n:12, t:"Email Security",                       ch:"Ch. 19",      file:null}
 ];
 const ol=document.getElementById('units');
@@ -111,6 +111,6 @@ const done=UNITS.filter(u=>u.file).length;
 document.getElementById('count').textContent=done+' of 12 ready';
 document.getElementById('fill').style.width=(done/12*100)+'%';
 </script>
-<noscript><p style="padding:20px"><a href="notation.html">Notation</a><br><a href="unit1.html">Unit 1 · Security Foundations</a><br><a href="unit2.html">Unit 2 · Number Theory</a><br><a href="unit3.html">Unit 3 · Classical Ciphers &amp; DES</a><br><a href="unit4.html">Unit 4 · Finite Fields &amp; AES</a><br><a href="unit5.html">Unit 5 · Using Symmetric Ciphers</a><br><a href="unit6.html">Unit 6 · Public-Key Cryptography</a><br><a href="unit7.html">Unit 7 · Hashes &amp; MACs</a><br><a href="unit8.html">Unit 8 · Digital Signatures</a><br><a href="unit9.html">Unit 9 · Key Management &amp; Authentication</a><br><a href="unit10.html">Unit 10 · Access Control &amp; Wireless</a></p></noscript>
+<noscript><p style="padding:20px"><a href="notation.html">Notation</a><br><a href="unit1.html">Unit 1 · Security Foundations</a><br><a href="unit2.html">Unit 2 · Number Theory</a><br><a href="unit3.html">Unit 3 · Classical Ciphers &amp; DES</a><br><a href="unit4.html">Unit 4 · Finite Fields &amp; AES</a><br><a href="unit5.html">Unit 5 · Using Symmetric Ciphers</a><br><a href="unit6.html">Unit 6 · Public-Key Cryptography</a><br><a href="unit7.html">Unit 7 · Hashes &amp; MACs</a><br><a href="unit8.html">Unit 8 · Digital Signatures</a><br><a href="unit9.html">Unit 9 · Key Management &amp; Authentication</a><br><a href="unit10.html">Unit 10 · Access Control &amp; Wireless</a><br><a href="unit11.html">Unit 11 · Protocol-Layer Security</a></p></noscript>
 </body>
 </html>
