@@ -1,0 +1,1876 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unit 12 · Email Security</title>
+<meta name="description" content="Study guide for Stallings, Cryptography and Network Security, Chapter 19: Internet mail architecture, SMTP, STARTTLS, POP3 and IMAP, RFC 5322 and MIME, base64 and quoted-printable, email threats, S/MIME services, content types, algorithms and messages, PGP, DNS and DNSSEC, DANE and TLSA, SPF, DKIM and DMARC.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,700;1,400&family=Cousine:wght@400;700&family=Noto+Sans+Mono:wght@400;600&family=Noto+Sans+Math&display=swap">
+<style>
+/* Layout: graph-paper study notebook (shared with Units 1–11) — sticky contents rail on desktop, single column on phones; each section = one book section */
+:root{
+  --bg:#f3f4f8; --paper:#ffffff; --ink:#191b2b; --muted:#585d78; --line:#d9dce8;
+  --grid:rgba(25,27,43,.045);
+  --accent:#3f46c4; --accent-soft:#e5e7fb; --mark:#b8580f; --mark-soft:#fcebdc;
+  --bad:#b4372f; --bad-soft:#f9e1de;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Noto Sans Math", "Segoe UI", system-ui, sans-serif;
+  --mono:"Cousine", "Noto Sans Mono", "Noto Sans Math", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10121c; --paper:#171a28; --ink:#e6e8f2; --muted:#9ca1bb; --line:#2c3048;
+  --grid:rgba(230,232,242,.04);
+  --accent:#9ea6ff; --accent-soft:#232955; --mark:#f6a25a; --mark-soft:#3b2615;
+  --bad:#f08c84; --bad-soft:#3c1d1a; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#10121c; --paper:#171a28; --ink:#e6e8f2; --muted:#9ca1bb; --line:#2c3048;
+  --grid:rgba(230,232,242,.04);
+  --accent:#9ea6ff; --accent-soft:#232955; --mark:#f6a25a; --mark-soft:#3b2615;
+  --bad:#f08c84; --bad-soft:#3c1d1a; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16.5px;line-height:1.6;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;padding-inline:16px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;padding-block:32px 80px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr);gap:16px}}
+
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;font-size:.88rem}
+nav.toc .lbl{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+nav.toc a{display:flex;gap:10px;padding:5px 8px;border-radius:6px;color:var(--ink);text-decoration:none}
+nav.toc a span{font-family:var(--mono);color:var(--accent);min-width:2.6em;font-size:.8rem;padding-top:2px}
+nav.toc a{position:relative;transition:background .15s,color .15s}
+nav.toc a:hover,nav.toc a:focus-visible{background:var(--accent-soft);outline:none}
+nav.toc a.active{background:var(--accent);color:var(--paper);font-weight:700}
+nav.toc a.active span{color:var(--paper)}
+nav.toc .bar{height:3px;background:var(--line);border-radius:2px;margin:12px 0 0;overflow:hidden}
+nav.toc .bar i{display:block;height:100%;width:0;background:var(--accent)}
+@media (max-width:900px){
+  nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border:1px solid var(--line);border-radius:0 0 10px 10px;padding:8px 10px;margin-inline:-4px}
+  nav.toc .lbl{display:none}
+  nav.toc ol{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth}
+  nav.toc ol::-webkit-scrollbar{display:none}
+  nav.toc li{flex:0 0 auto}
+  nav.toc a{white-space:nowrap;padding:5px 10px}
+  nav.toc .bar{margin-top:8px}
+  section.unit{scroll-margin-top:72px}}
+
+main{min-width:0}
+header.hero{padding-block:8px 28px;border-bottom:2px solid var(--ink);margin-bottom:28px}
+.eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,6vw,4rem);line-height:1;margin:.25em 0 .3em;letter-spacing:-.02em;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{max-width:65ch;color:var(--muted);margin:0}
+.formula-strip{font-family:var(--mono);font-size:.85rem;color:var(--muted);margin-top:18px;display:flex;flex-wrap:wrap;gap:8px 18px}
+.formula-strip b{color:var(--ink);font-weight:600}
+
+section.unit{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:28px clamp(18px,4vw,40px);margin-bottom:28px;scroll-margin-top:20px}
+h2{font-family:var(--display);font-weight:700;font-size:1.75rem;line-height:1.15;margin:0 0 4px;text-wrap:balance;display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
+h2 .sec{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:600}
+h3{font-family:var(--display);font-weight:700;font-size:1.2rem;margin:28px 0 8px}
+.why{color:var(--muted);font-size:.95rem;margin:0 0 18px;max-width:70ch}
+p,li{max-width:70ch}
+code,.m{font-family:var(--mono);font-size:.9em}
+.m{white-space:nowrap}
+.m.wr{white-space:normal;overflow-wrap:anywhere}
+.def,.ex,.warn{min-width:0;overflow-wrap:break-word}
+.gk{font-family:var(--mono);font-style:normal}
+
+.def{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+.def b:first-child{font-family:var(--display);font-weight:700}
+.eq{font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;overflow-x:auto;white-space:pre;line-height:1.7;font-size:.92rem}
+.eq .n{color:var(--muted)}
+.eqrows{display:grid;gap:8px;margin:12px 0}
+.eqrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px 14px;align-items:center;font-family:var(--mono);font-size:.92rem;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.eqrow .ex1{min-width:0;line-height:1.6}
+.eqrow .n{color:var(--muted)}
+.eqrow .tag{font-size:.75rem;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--accent-soft);color:var(--accent)}
+.tag.no{background:var(--bad-soft);color:var(--bad)}
+@media (max-width:560px){.eqrow{grid-template-columns:minmax(0,1fr) auto}.eqrow .ex1{grid-column:1 / -1}}
+.ex{border:1px dashed var(--mark);background:var(--mark-soft);border-radius:8px;padding:10px 16px;margin:12px 0}
+.ex .t{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mark);font-weight:600}
+.ex .eq{background:transparent;border:0;padding:4px 0;margin:2px 0}
+.warn{border-left:3px solid var(--bad);background:var(--bad-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+ul.props{padding-left:1.2em}
+ul.props li{margin:4px 0}
+
+/* tables */
+.tbl{overflow-x:auto;margin:12px 0}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.9rem}
+th,td{border:1px solid var(--line);padding:5px 9px;text-align:center}
+th{background:var(--bg);font-family:var(--mono);font-weight:600;font-size:.8rem}
+td.l,th.l{text-align:left}
+td.hi{background:var(--accent-soft);font-weight:700}
+td.one{background:var(--mark-soft);font-weight:700}
+td.dim{color:var(--muted)}
+
+/* interactive lab */
+.lab{border:1px solid var(--line);border-radius:12px;margin:18px 0;overflow:hidden}
+.lab-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--line)}
+.lab-h .t{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.lab-b{padding:14px}
+.controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:end;margin-bottom:12px}
+.controls label{display:grid;gap:3px;font-size:.78rem;font-family:var(--mono);color:var(--muted)}
+input[type=number]{width:9.5em;font:inherit;font-family:var(--mono);font-size:.95rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+button{font-family:var(--mono);font-size:.82rem;padding:7px 12px;border:1px solid var(--accent);background:var(--accent);color:var(--paper);border-radius:6px;cursor:pointer}
+button.ghost{background:transparent;color:var(--accent)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.out{font-family:var(--mono);font-size:.9rem}
+.out .res{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:600}
+.res.ok{background:var(--accent-soft);color:var(--accent)}
+.res.no{background:var(--bad-soft);color:var(--bad)}
+.err{color:var(--bad);font-family:var(--mono);font-size:.85rem}
+svg text{font-family:var(--mono)}
+.figure{margin:16px 0;overflow-x:auto}
+.figure svg{display:block;max-width:100%;height:auto}
+.cap{font-size:.82rem;color:var(--muted);margin-top:6px}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.grid2>*{min-width:0}
+
+/* totient grid */
+.cells{display:flex;flex-wrap:wrap;gap:4px}
+.cells span{font-family:var(--mono);font-size:.78rem;width:2.6em;text-align:center;padding:4px 0;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.cells span.on{background:var(--accent);border-color:var(--accent);color:var(--paper);font-weight:600}
+
+/* mapping row */
+.maprow{display:grid;grid-template-columns:7.5em repeat(8,minmax(2.2em,1fr));gap:4px;font-family:var(--mono);font-size:.85rem;min-width:420px}
+.maprow div{padding:5px 0;text-align:center;border-radius:4px}
+.maprow .h{text-align:left;color:var(--muted);font-size:.75rem;padding-top:7px}
+.maprow .c{background:var(--bg)}
+.maprow .dup{background:var(--bad-soft);color:var(--bad);font-weight:600}
+.maprow .uni{background:var(--accent-soft);color:var(--accent);font-weight:600}
+
+/* glossary & review */
+dl.gloss{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr);gap:0;margin:0}
+dl.gloss dt,dl.gloss dd{padding:9px 0;border-bottom:1px solid var(--line);margin:0}
+dl.gloss dt{font-family:var(--display);font-weight:700;padding-right:16px}
+@media (max-width:560px){dl.gloss{grid-template-columns:minmax(0,1fr)} dl.gloss dt{border-bottom:0;padding-bottom:0}}
+details{border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:8px 0;background:var(--paper)}
+summary{cursor:pointer;font-weight:700}
+details p{margin:.6em 0 0}
+.src{font-size:.85rem;color:var(--muted)}
+.src a,a{color:var(--accent)}
+footer{font-size:.82rem;color:var(--muted);margin-top:24px}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---- Sticky "All units" bar + back-to-top (shared across unit pages) ---- */
+:root{--topbar-h:52px}
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.topbar-in{max-width:1180px;margin:0 auto;height:var(--topbar-h);padding-inline:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.topbar a.home{flex:0 0 auto;font-family:var(--f-mono,var(--mono));font-size:.84rem;font-weight:600;color:var(--ink);text-decoration:none;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface,var(--paper))}
+.topbar a.home:hover{border-color:var(--accent);color:var(--accent)}
+.topbar a.home:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.topbar .where{min-width:0;font-family:var(--f-mono,var(--mono));font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.to-top{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono,var(--mono));font-size:.82rem;font-weight:600;padding:10px 14px;border:1px solid var(--accent);border-radius:999px;background:var(--accent);color:var(--surface,var(--paper));cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.18);opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .2s,transform .2s,visibility 0s linear .2s}
+.to-top.show{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .2s}
+.to-top:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.to-top{transition:none}}
+
+.topbar{margin-inline:-16px}
+.topbar-in{padding-inline:16px}
+nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h) + 20px)}
+section.unit{scroll-margin-top:calc(20px + var(--topbar-h))}
+@media (max-width:900px){nav.toc{top:calc(env(safe-area-inset-top,0px) + var(--topbar-h))}section.unit{scroll-margin-top:calc(72px + var(--topbar-h))}}
+
+input[type=text],textarea,select{font:inherit;font-family:var(--mono);font-size:.92rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);max-width:100%}
+input[type=text]{width:18em}
+input.wide{width:min(34em,100%)}
+textarea{width:100%;min-height:4.6em;resize:vertical}
+input[type=range]{accent-color:var(--accent)}
+.controls label.grow{flex:1 1 280px}
+.controls label.grow input,.controls label.grow textarea{width:100%}
+.mono{font-family:var(--mono)}
+.big{font-family:var(--mono);font-size:1.05rem;letter-spacing:.06em;overflow-wrap:anywhere}
+.hlrow td{background:var(--accent-soft);font-weight:700;color:var(--accent)}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:12px 0}
+.cmp>div{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--paper);min-width:0}
+.cmp h4{margin:0 0 6px;font-family:var(--display);font-size:1.02rem}
+.cmp p{margin:0;font-size:.95rem}
+.diffbit{color:var(--bad);font-weight:700}
+@media (max-width:560px){input[type=text]{width:100%}}
+.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;font-family:var(--mono);font-size:.84rem;align-items:baseline}
+.kv .k{color:var(--muted)}
+.kv .v{overflow-wrap:anywhere}
+.pill{display:inline-block;font-family:var(--mono);font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.pill.no{background:var(--bad-soft);color:var(--bad)}
+.pill.mk{background:var(--mark-soft);color:var(--mark)}
+.note{border-left:3px solid var(--mark);background:var(--mark-soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:14px 0;font-size:.95rem}
+.note .t{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mark);font-weight:600;display:block;margin-bottom:2px}
+.modes td,.modes th{text-align:left;vertical-align:top}
+.modes td.c{text-align:center}
+.bitstr{font-family:var(--mono);font-size:.8rem;overflow-wrap:anywhere;line-height:1.5}
+.bitstr b{color:var(--accent)}
+.bitstr i{font-style:normal;color:var(--muted);text-decoration:line-through}
+select{font:inherit;font-family:var(--mono);font-size:.88rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+@media (max-width:560px){.blkrow{grid-template-columns:minmax(0,1fr)}.blkrow .h{padding-top:0}canvas.px{width:150px;height:150px}.kv{grid-template-columns:minmax(0,1fr)}.kv .k{margin-top:4px}}
+.op{font-family:var(--mono);font-size:.92em}
+.seg{display:inline-flex;border:1px solid var(--accent);border-radius:6px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent;color:var(--accent)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--paper)}
+.eq sub,.kv sub{font-size:.75em}
+.pseudo{font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;overflow-x:auto;white-space:pre;line-height:1.55;font-size:.86rem}
+.pseudo .kw{color:var(--accent);font-weight:600}
+.pseudo .cm{color:var(--muted)}
+sub{line-height:0;font-size:.75em}
+/* justified prose (wider screens only: narrow columns get large word gaps) */
+@media (min-width:600px){
+section.unit p,section.unit li,.def,.note,.warn,.why,.lede,details p{text-align:justify;hyphens:auto;-webkit-hyphens:auto}
+section.unit .out,section.unit .cap,section.unit td,section.unit th,.lab-h,.kv{text-align:left;hyphens:manual;-webkit-hyphens:manual}
+section.unit .grid2 *,section.unit .cmp *,section.unit .src{text-align:left;hyphens:manual;-webkit-hyphens:manual}}
+
+/* ---- shared sub-entry nav (from Unit 6) ---- */
+nav.toc li.sub a{padding-left:calc(18px + 2.08rem);font-size:.84rem;color:var(--muted)}
+nav.toc li.sub a.active{color:var(--paper)}
+@media (max-width:900px){nav.toc li.sub a{padding-left:10px}}
+.lab-h .seg button{font-size:.76rem;padding:6px 10px}
+.controls output{color:var(--ink);font-weight:600}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);margin:6px 0}
+input[type=range]{width:150px}
+.kv .v .res{font-size:.78rem;padding:1px 8px}
+@media (max-width:560px){.m{white-space:normal;overflow-wrap:anywhere}input[type=range]{width:100%}}
+
+/* ---- Unit 7 additions (shared figure classes) ---- */
+.hidden-defs{position:absolute;width:0;height:0;overflow:hidden}
+svg .bx{fill:var(--paper);stroke:var(--ink);stroke-width:1.2}
+svg .bxa{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+svg .bxm{fill:var(--mark-soft);stroke:var(--mark);stroke-width:1.2}
+svg .bxb{fill:var(--bad-soft);stroke:var(--bad);stroke-width:1.2}
+svg .op{fill-opacity:.55}
+svg .ln{stroke:var(--ink);stroke-width:1.3;fill:none}
+svg .ln.dash{stroke-dasharray:5 4;stroke:var(--muted)}
+svg .ah{fill:var(--ink)}
+svg .tx{fill:var(--ink);font-size:12px}
+svg .tm{fill:var(--muted);font-size:11px}
+svg .hot{fill:var(--mark-soft);stroke:var(--mark);stroke-width:2.6}
+svg .lane{cursor:pointer}
+svg .lane:focus-visible rect,svg .lane:hover rect{stroke-width:2.4}
+svg .lane:focus{outline:none}
+svg .heat{fill:color-mix(in srgb,var(--accent) calc(var(--h,0) * 100%),var(--paper));stroke:var(--line);stroke-width:1}
+svg .heat.selc{stroke:var(--mark);stroke-width:2.6}
+td.newv{background:var(--mark-soft);color:var(--mark);font-weight:700}
+.yv{font-size:.82rem;line-height:1.7;margin:.3em 0 .8em}
+.yv b{color:var(--accent);font-weight:600}
+.kv .v b{overflow-wrap:anywhere}
+.mitm-pkt.p1{transform:translate(150px,28px)}
+.mitm-pkt.p2{transform:translate(420px,28px)}
+.mitm-ok{fill:var(--bad)}
+@keyframes mitm1{0%{transform:translate(105px,28px);opacity:1}40%{transform:translate(225px,28px);opacity:1}50%,100%{transform:translate(225px,28px);opacity:0}}
+@keyframes mitm2{0%,45%{transform:translate(370px,28px);opacity:0}50%{transform:translate(370px,28px);opacity:1}90%,100%{transform:translate(470px,28px);opacity:1}}
+@media (prefers-reduced-motion:no-preference){.mitm-pkt.p1{animation:mitm1 6s linear infinite}.mitm-pkt.p2{animation:mitm2 6s linear infinite}}
+#rd-svg .rd-mv{opacity:0}
+#rd-svg.play .rd-mv{animation:rdmv 1.6s ease-in-out forwards}
+#rd-svg.play .rdv{animation:rdfade 2.2s ease forwards}
+@keyframes rdmv{0%{opacity:1;transform:none}75%{opacity:1;transform:translate(var(--dx),118px)}100%{opacity:0;transform:translate(var(--dx),118px)}}
+@keyframes rdfade{0%,70%{opacity:0}100%{opacity:1}}
+#sp-svg .sp-f,#sp-svg .sp-p,#sp-svg .sp-z,#sp-svg .sp-x,#it-svg rect{transition:fill .2s,stroke-width .2s}
+#kg-svg,#k3-svg{max-width:320px}
+.seg{flex-wrap:wrap}
+.out .cap{font-family:var(--body)}
+@media (max-width:600px){.figure svg[width]{max-width:none}}
+
+/* ---- Scrollable side navbar (wide screens) + Review expand/collapse (shared across unit pages) ---- */
+@media (min-width:901px){
+  nav.toc{max-height:calc(100vh - var(--topbar-h,0px) - 40px - env(safe-area-inset-top,0px));overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--line) transparent;padding-right:6px;margin-right:-6px}
+  nav.toc::-webkit-scrollbar{width:6px}
+  nav.toc::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+  nav.toc ol{max-height:none;overflow:visible}
+}
+.rv-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 4px}
+.rv-tools button{font-family:var(--mono,var(--f-mono));font-size:.78rem;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper,var(--surface));color:var(--ink);cursor:pointer;transition:border-color .15s,color .15s}
+.rv-tools button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.rv-tools button:disabled{opacity:.45;cursor:default}
+.rv-tools button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rv-tools .rv-count{font-family:var(--mono,var(--f-mono));font-size:.74rem;color:var(--muted);margin-left:4px}
+
+/* ---- Unit 9 additions: protocol steppers, certificate fields, path tree ---- */
+svg .ahm{fill:var(--mark)}
+svg .ahb{fill:var(--bad)}
+svg .ahd{fill:var(--muted)}
+svg .lh{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+svg .lt{fill:var(--ink);font-size:12px;font-weight:600}
+svg .ll{stroke:var(--line);stroke-width:1.4;stroke-dasharray:4 4}
+svg .ms{stroke:var(--ink);stroke-width:1.4;fill:none}
+svg .ms.cur{stroke:var(--mark);stroke-width:2.4}
+svg .ms.atk{stroke:var(--bad)}
+svg .ms.todo,svg .ml.todo{opacity:.18}
+svg .ml{fill:var(--ink);font-size:11px;paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
+svg .ml.cur{fill:var(--mark);font-weight:700}
+svg .ml.atk{fill:var(--bad)}
+svg .gb{fill:var(--bg);stroke:var(--line);stroke-width:1}
+svg .gl{fill:var(--muted);font-size:10px;letter-spacing:.04em;paint-order:stroke;stroke:var(--bg);stroke-width:3px}
+svg .pk{fill:var(--mark)}
+.proto .figure{margin:4px 0 8px}
+.pctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pctl .cnt{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+.pnote{border-top:1px solid var(--line);padding-top:10px;margin-top:10px;min-height:3.6em}
+.pnote .ml1{font-family:var(--mono);font-size:.86rem;overflow-wrap:anywhere;color:var(--mark);font-weight:600}
+.pnote .ml1.atk{color:var(--bad)}
+.pnote p{margin:.35em 0 0}
+button:disabled{opacity:.45;cursor:default}
+
+.certgrid{display:grid;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:12px 0;background:var(--paper)}
+.cf{display:grid;grid-template-columns:3.4em minmax(9em,14em) minmax(0,1fr);gap:4px 12px;align-items:baseline;padding:8px 12px;border-bottom:1px solid var(--line);font-size:.92rem}
+.cf:last-child{border-bottom:0}
+.cf.sig{background:var(--mark-soft)}
+.cf b{font-family:var(--display)}
+.cf .pill{justify-self:start}
+@media (max-width:560px){.cf{grid-template-columns:3.4em minmax(0,1fr)}.cf>span:last-child{grid-column:2}}
+
+svg .nd{fill:var(--paper);stroke:var(--ink);stroke-width:1.2}
+svg .nd.u{fill:var(--mark-soft);stroke:var(--mark)}
+svg .nd.on{fill:var(--accent);stroke:var(--accent)}
+svg .nt{fill:var(--ink);font-size:13px;font-weight:700}
+svg .nt.on{fill:var(--paper)}
+svg .ed{stroke:var(--line);stroke-width:2;fill:none}
+svg .ed.x{stroke-dasharray:5 4}
+svg .ed.on{stroke:var(--accent);stroke-width:3.6}
+svg .gridl{stroke:var(--line);stroke-width:1}
+svg .c1{stroke:var(--bad);stroke-width:2.2;fill:none}
+svg .c2{stroke:var(--accent);stroke-width:2.2;fill:none}
+svg .d1{fill:var(--bad)}
+svg .d2{fill:var(--accent)}
+svg .win{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+svg .okm{fill:var(--accent)}
+svg .nom{fill:var(--bad)}
+.out .kv .v .res{white-space:normal}
+.eqg{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 32px;align-items:baseline;font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:.92rem;line-height:1.6;overflow-x:auto}
+.eqg>span{white-space:nowrap}
+.eqg .n{color:var(--muted)}
+.eqg sub{font-size:.75em}
+@media (max-width:560px){.eqg{grid-template-columns:minmax(0,1fr);gap:0}.eqg .n{margin-bottom:8px}.eqg .n:empty{display:none}}
+.pvar{margin-bottom:10px}
+.pvar .seg{flex-wrap:wrap}
+.tbl .pill{white-space:nowrap}
+
+/* ---- Unit 10 additions: packet fields, NAC/ESS figures ---- */
+.pkt{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 10px}
+.pf{display:grid;gap:2px;border:1px solid var(--line);border-radius:6px;padding:5px 9px;min-width:0;background:var(--paper)}
+.pf.a{background:var(--accent-soft);border-color:var(--accent)}
+.pf.m{background:var(--mark-soft);border-color:var(--mark)}
+.pf.d{background:var(--bg)}
+.pfl{font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.pfv{font-family:var(--mono);font-size:.84rem;overflow-wrap:anywhere}
+svg .bss{fill:var(--accent-soft);stroke:var(--accent);stroke-dasharray:5 4;opacity:.7}
+svg .rf{fill:var(--bad);font-weight:700}
+.controls label:has(input[type=checkbox]){grid-auto-flow:column;align-items:center;gap:8px}
+.seg button{white-space:nowrap}
+.pick{display:grid;grid-template-columns:minmax(190px,250px) minmax(0,1fr);gap:18px;align-items:start}
+.pick-list{display:grid;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--paper)}
+.pick-list button.pk-i{display:block;width:100%;text-align:left;white-space:normal;font-family:var(--body);font-size:.92rem;line-height:1.35;padding:10px 12px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;color:var(--ink)}
+.pick-list button.pk-i:last-child{border-bottom:0}
+.pick-list button.pk-i:hover{background:var(--bg)}
+.pick-list button.pk-i[aria-pressed=true]{background:var(--accent-soft);color:var(--accent);font-weight:700;box-shadow:inset 4px 0 0 var(--accent)}
+.pick-detail{font-family:var(--body);font-size:1rem;min-width:0}
+.pk-h{font-family:var(--display);font-size:1.1rem;margin:0 0 6px}
+@media (max-width:640px){.pick{grid-template-columns:minmax(0,1fr)}}
+.sendrow button.act{background:var(--paper);color:var(--ink);border:1px solid var(--ink);border-radius:999px;font-weight:600}
+.sendrow button.act:hover{border-color:var(--accent);color:var(--accent)}
+.sendrow .cap{margin:0;align-self:center}
+.seg.smseg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
+.seg.smseg button{white-space:normal;line-height:1.35;padding:8px 10px}
+.seg.smseg button+button{border-left:1px solid var(--accent)}
+@media (max-width:560px){.seg.smseg{grid-template-columns:minmax(0,1fr)}.seg.smseg button+button{border-left:0;border-top:1px solid var(--accent)}}
+
+svg .glb{fill:var(--bg)}
+.ckflow{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:12px}
+.ckstep{display:grid;gap:6px;align-content:start;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--bg)}
+.ckstep.alt{border-style:dashed}
+.ckstep button{justify-self:start}
+details ul.props{margin:.6em 0 0;padding-left:1.2em}
+/* ---- Unit 11 additions: layer stacks, packet scope bars, replay window, SPD rows ---- */
+svg .enc{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+svg .au{fill:none;stroke:var(--mark);stroke-width:2}
+svg .tf{fill:var(--paper);stroke:var(--ink);stroke-width:1.1}
+svg .tf.new{fill:var(--mark-soft);stroke:var(--mark)}
+svg .tf.esp{fill:var(--bad-soft);stroke:var(--bad)}
+svg .tf.dim{fill:var(--bg);stroke:var(--line)}
+svg .fl{stroke:var(--line);stroke-width:1.6;fill:none}
+svg .fl.on{stroke:var(--mark);stroke-width:2.6}
+svg .fb{fill:var(--paper);stroke:var(--line);stroke-width:1.2}
+svg .fb.on{fill:var(--mark-soft);stroke:var(--mark);stroke-width:2.2}
+svg .fb.end{fill:var(--accent-soft);stroke:var(--accent)}
+svg .fb.end.on{fill:var(--accent);stroke:var(--accent)}
+svg .fb.end.on+text{fill:var(--paper)}
+.cells.win span{width:auto;min-width:2.9em;padding:4px 4px}
+.cells.win span.edge{outline:2px solid var(--accent);outline-offset:1px}
+.cells.win span.hit{background:var(--mark);border-color:var(--mark);color:var(--paper);font-weight:700}
+.cells.win span.lost{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.tbl tr.match td{background:var(--mark-soft);font-weight:700}
+.tbl tr.skip td{color:var(--muted)}
+.hx{font-family:var(--mono);font-size:.8rem;overflow-wrap:anywhere;line-height:1.5}
+.hx .h0{color:var(--mark);font-weight:700}.hx .h1{color:var(--accent);font-weight:700}.hx .h2{color:var(--bad);font-weight:700}.hx .h3{color:var(--ink);font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.8rem;color:var(--muted);margin:4px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:5px;border:1px solid var(--line)}
+.legend i.e{background:var(--accent-soft);border-color:var(--accent)}
+.legend i.a{border:2px solid var(--mark)}
+.legend i.n{background:var(--mark-soft);border-color:var(--mark)}
+.legend i.s{background:var(--bad-soft);border-color:var(--bad)}
+.reqline{font-family:var(--mono);font-size:.84rem;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px;overflow-x:auto;white-space:pre;line-height:1.6}
+.reqline .sec{background:var(--accent-soft);color:var(--accent);border-radius:3px}
+.reqline .clr{background:var(--mark-soft);color:var(--mark);border-radius:3px}
+.reqline .blur{color:var(--muted)}
+.out>p{font-family:var(--body);font-size:.95rem;text-align:left;hyphens:manual;-webkit-hyphens:manual}
+.out .pk-h{font-family:var(--display)}
+.out ol.props{font-family:var(--body)}
+/* ---- Unit 12 additions: mail architecture, encodings, DNS chain, alignment ---- */
+svg .ag{cursor:pointer}
+svg .ag:focus{outline:none}
+svg .ag:focus-visible rect,svg .ag:hover rect{stroke-width:2.4}
+svg .ag.sel rect{fill:var(--mark-soft);stroke:var(--mark);stroke-width:2.6}
+svg .pl{fill:var(--muted);font-size:10px}
+svg .mhs{fill:none;stroke:var(--accent);stroke-width:1.2;stroke-dasharray:6 4}
+svg .hl rect,svg rect.hl{fill:var(--mark-soft);stroke:var(--mark);stroke-width:2.4}
+svg .hl text{fill:var(--mark);font-weight:700}
+svg .lk{stroke:var(--line);stroke-width:1.6;fill:none}
+svg .lk.on{stroke:var(--mark);stroke-width:2.8}
+svg .dimg{opacity:.35;transition:opacity .2s}
+svg .dimg.hl{opacity:1}
+.b64{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:8px 0;max-width:520px}
+.b64.s6{grid-template-columns:repeat(4,minmax(0,1fr))}
+.b64 div{font-family:var(--mono);font-size:.78rem;text-align:center;border:1px solid var(--line);border-radius:6px;padding:4px 2px;background:var(--paper);overflow-wrap:anywhere}
+.b64 div b{display:block;font-size:.95rem;color:var(--accent)}
+.b64.s6 div{background:var(--accent-soft);border-color:var(--accent)}
+.b64.s6 div b{color:var(--ink)}
+.encout{font-family:var(--mono);font-size:.84rem;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55;margin:6px 0 10px;max-height:16em;overflow:auto}
+.encout .q{color:var(--mark);font-weight:700}
+.encout .sp{color:var(--muted)}
+.vis{color:var(--muted)}
+.stagegrid{display:grid;gap:8px;margin:8px 0}
+.stage{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--paper);min-width:0}
+.stage.ok{border-color:var(--accent);background:var(--accent-soft)}
+.stage.no{border-color:var(--bad);background:var(--bad-soft)}
+.stage .h{font-family:var(--mono);font-size:.76rem;color:var(--muted);display:block;margin-bottom:2px}
+.stage .v{font-family:var(--mono);font-size:.82rem;overflow-wrap:anywhere}
+.chain-steps{margin:8px 0 0;padding-left:1.4em}
+.chain-steps li{margin:3px 0;color:var(--muted)}
+.chain-steps li.cur{color:var(--ink);font-weight:700}
+.chain-steps li.done{color:var(--ink)}
+.rec{font-family:var(--mono);font-size:.86rem;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px;overflow-x:auto;white-space:pre;line-height:1.6;margin:8px 0}
+.rec .t0{color:var(--mark);font-weight:700}.rec .t1{color:var(--accent);font-weight:700}.rec .t2{color:var(--bad);font-weight:700}
+.rec .dm{color:var(--muted)}
+.terms{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.terms span{font-family:var(--mono);font-size:.8rem;border:1px solid var(--line);border-radius:6px;padding:3px 8px;background:var(--paper)}
+.terms span.hit{background:var(--mark-soft);border-color:var(--mark);color:var(--mark);font-weight:700}
+.terms span.miss{color:var(--muted)}
+.terms span.err{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.verdict{display:inline-block;font-family:var(--mono);font-weight:700;font-size:.95rem;padding:4px 12px;border-radius:999px;margin:4px 0}
+.verdict.pass{background:var(--accent-soft);color:var(--accent)}
+.verdict.fail{background:var(--bad-soft);color:var(--bad)}
+.verdict.soft{background:var(--mark-soft);color:var(--mark)}
+.verdict.neu{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.alg{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:10px 0}
+.alg>div{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--bg);min-width:0}
+.alg .h{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.alg .d{font-family:var(--mono);font-size:.92rem;overflow-wrap:anywhere;margin-top:2px}
+.alg .d.ok{color:var(--accent);font-weight:700}.alg .d.no{color:var(--bad);font-weight:700}
+.controls .grow textarea{min-height:6.5em}
+#sm-svg .dimg,#mp-svg .dimg{opacity:1}
+.grid2:has(> .def:nth-child(4)){grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
+svg .lk.on{stroke-width:2}
+.tryset button{transition:background .15s,color .15s}
+.tryset button[aria-pressed=true]{background:var(--accent);color:var(--paper);box-shadow:inset 0 0 0 1px var(--accent)}
+.lab-res{border-top:1px solid var(--line);margin-top:6px;padding-top:12px}
+.lab-res>.t{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.bhv{font-family:var(--mono);font-size:.78rem;overflow-wrap:anywhere;word-break:break-all;color:var(--muted);line-height:1.45}
+</style>
+</head>
+<body>
+<svg class="hidden-defs" aria-hidden="true" focusable="false"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker><marker id="ahm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahm" d="M0 0 L10 5 L0 10 z"/></marker><marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahb" d="M0 0 L10 5 L0 10 z"/></marker><marker id="ahd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahd" d="M0 0 L10 5 L0 10 z"/></marker></defs></svg>
+<header class="topbar"><div class="topbar-in"><a class="home" href="./">← All units</a><span class="where">Unit 12 · Email Security</span></div></header>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <div class="lbl">Contents</div>
+  <ol>
+    <li><a href="#s191"><span>19.1</span>Internet mail architecture</a></li>
+    <li class="sub"><a href="#s191b">Email protocols</a></li>
+    <li><a href="#s192"><span>19.2</span>Email formats</a></li>
+    <li class="sub"><a href="#s192b">MIME types and encodings</a></li>
+    <li><a href="#s193"><span>19.3</span>Email threats</a></li>
+    <li><a href="#s194"><span>19.4</span>S/MIME</a></li>
+    <li class="sub"><a href="#s194b">Content types and algorithms</a></li>
+    <li class="sub"><a href="#s194c">S/MIME messages</a></li>
+    <li class="sub"><a href="#s194d">Certificates and services</a></li>
+    <li><a href="#s195"><span>19.5</span>Pretty Good Privacy</a></li>
+    <li><a href="#s196"><span>19.6</span>DNSSEC</a></li>
+    <li><a href="#s197"><span>19.7</span>DANE</a></li>
+    <li><a href="#s198"><span>19.8</span>Sender Policy Framework</a></li>
+    <li><a href="#s199"><span>19.9</span>DomainKeys Identified Mail</a></li>
+    <li><a href="#s1910"><span>19.10</span>DMARC</a></li>
+    <li><a href="#terms">Key terms</a></li>
+    <li><a href="#review">Review</a></li>
+    <li><a href="#res"><span>Ref</span>Sources</a></li>
+  </ol>
+  <div class="bar" aria-hidden="true"><i id="toc-progress"></i></div>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Unit 12 · Stallings, Chapter 19</div>
+  <h1>Email <em>Security</em></h1>
+  <p class="lede">Email is the most heavily used network application, and its basic machinery (SMTP and the RFC 5322 format) has no security of its own. This unit first describes how mail moves and how messages are formatted (MIME), then the protections layered on top: S/MIME and PGP protect the message itself, STARTTLS protects the hop between servers, and a family of DNS-based mechanisms (DNSSEC, DANE, SPF, DKIM, DMARC) lets receivers check that mail really comes from the domain it claims.</p>
+  <div class="formula-strip">
+    <span><b>sig = E(PR<sub>a</sub>, SHA-256(M))</b></span>
+    <span><b>E(K<sub>s</sub>, M ‖ sig) ‖ E(PU<sub>b</sub>, K<sub>s</sub>)</b></span>
+    <span><b>3 octets → 4 base64 characters</b></span>
+    <span><b>DMARC: RFC 5322 From ≈ SPF or DKIM domain</b></span>
+  </div>
+</header>
+
+<!-- ============ 19.1 ============ -->
+<section class="unit" id="s191">
+  <h2><span class="sec">19.1</span>Internet Mail Architecture</h2>
+  <p class="why">The architecture is defined in RFC 5598. Knowing which component does what tells you where each security mechanism later in the chapter is applied.</p>
+  <div class="def"><b>Message User Agent (MUA)</b> — the user world: acts for users and user applications inside the email service. <b>Message Handling Service (MHS)</b> — the transfer world: accepts a message from one user and delivers it to one or more others, creating a virtual MUA-to-MUA exchange. The MHS is made of <b>Message Transfer Agents (MTA)</b>.</div>
+  <p>The architecture needs three types of interoperability:</p>
+  <ul class="props">
+    <li><b>User to user</b>: the author’s MUA must format the message so the recipient’s MUA can display it.</li>
+    <li><b>MUA to MHS</b>: when a message is posted into the MHS, and again when the MHS delivers it to the destination MUA.</li>
+    <li><b>MTA to MTA</b>: among the MTAs along the transfer path.</li>
+  </ul>
+
+  <div class="lab">
+    <div class="lab-h"><span class="t">Figure · Function modules and protocols</span><span class="pill">Figure 19.1</span></div>
+    <div class="lab-b">
+      <div class="controls"><button type="button" id="arch-send">Send a message ▶</button><span class="cap" style="margin:0;align-self:center">Or select a component to read its role.</span></div>
+      <div class="figure"><svg id="arch-svg" viewBox="0 0 640 300" width="640" role="img" aria-label="Internet mail architecture: author MUA to MSA to MTAs inside the Message Handling System, then MDA, Message Store and recipient MUA, with the protocol used on each link."></svg></div>
+      <div id="arch-out" class="out"></div>
+    </div>
+  </div>
+
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Component</th><th class="l">Role</th></tr>
+    <tr><td class="l"><b>MUA</b> (Message User Agent)</td><td class="l">Usually a client email program or local network email server on the user’s computer. The author MUA formats a message and submits it into the MHS through an MSA; the recipient MUA processes received mail for storage and/or display.</td></tr>
+    <tr><td class="l"><b>MSA</b> (Mail Submission Agent)</td><td class="l">Accepts the message from an MUA and enforces the hosting domain’s policies and Internet standards. May be co-located with the MUA; if separate, SMTP is used between them.</td></tr>
+    <tr><td class="l"><b>MTA</b> (Message Transfer Agent)</td><td class="l">Relays mail one application-level hop, like a packet switch or IP router: makes routing assessments and moves the message closer to the recipients. Adds trace information to the header. SMTP is used between MTAs and between an MTA and an MSA or MDA.</td></tr>
+    <tr><td class="l"><b>MDA</b> (Mail Delivery Agent)</td><td class="l">Transfers the message from the MHS to the MS.</td></tr>
+    <tr><td class="l"><b>MS</b> (Message Store)</td><td class="l">Long-term storage an MUA can use, on a remote server or the MUA’s machine. The MUA typically retrieves from a remote server with POP or IMAP.</td></tr>
+  </table></div>
+  <div class="def"><b>Administrative management domain (ADMD)</b> — an Internet email provider: a department running a local mail relay (MTA), an IT department running an enterprise relay, or an ISP running a public shared service. Each ADMD can have its own operating policies and trust-based decisions; mail exchanged <i>within</i> an organization is usually handled under quite different rules from mail exchanged <i>between</i> independent organizations.</div>
+  <div class="def"><b>Domain Name System (DNS)</b> — a directory lookup service mapping the name of an Internet host to its numerical address (Section 19.6).</div>
+</section>
+
+<!-- ============ 19.1b ============ -->
+<section class="unit" id="s191b">
+  <h2>Email Protocols</h2>
+  <p class="why">Two kinds of protocol move mail: one carries messages across the Internet from source to destination (SMTP); the other lets a user’s client retrieve mail from a mail server (POP3, IMAP).</p>
+  <h3>Simple Mail Transfer Protocol</h3>
+  <div class="def"><b>SMTP</b> — encapsulates a message in an <b>envelope</b> and relays it from source to destination through multiple MTAs. Specified as RFC 821, currently RFC 5321. Later versions with added commands and extensions are called <b>Extended SMTP (ESMTP)</b>.</div>
+  <ul class="props">
+    <li>Text-based client/server: the <b>client</b> (sender) contacts the <b>server</b> (next-hop recipient), issues commands describing the message, then sends the message itself.</li>
+    <li>A transfer can be one client/server conversation over one TCP connection, or pass through relays: an SMTP server that receives a message then acts as a client toward the next server.</li>
+    <li>The sender opens the TCP connection (server port 25). Each command is one line: a four-letter code, sometimes followed by an argument. Each command gets exactly one reply, beginning with a three-digit code.</li>
+  </ul>
+  <div class="lab proto" data-protos="smtp,starttls" data-name="SMTP transaction"></div>
+
+  <h3>STARTTLS and SUBMISSION</h3>
+  <div class="def"><b>STARTTLS</b> (RFC 3207) — an SMTP service extension that adds confidentiality and authentication between SMTP agents by running SMTP over TLS (Unit 11). The server advertises the option; the client issues the STARTTLS command in the SMTP command stream and both sides set up a TLS connection.</div>
+  <ul class="props">
+    <li>Advantage: the server offers SMTP on a <b>single port</b> instead of separate ports for secure and cleartext operation. (Port 465 was previously used for SMTP over SSL.)</li>
+    <li>Similar mechanisms exist for running TLS under IMAP and POP.</li>
+  </ul>
+  <div class="def"><b>SUBMISSION</b> (RFC 6409) — the currently preferred standard for MUA-to-MSA transfer, which historically used SMTP. Derived from SMTP, but uses a separate TCP port and imposes distinct requirements such as access authorization.</div>
+
+  <h3>Mail access protocols</h3>
+  <div class="cmp">
+    <div><h4>POP3 · Post Office Protocol</h4><p>Lets an email client (user agent) download mail from a mail server (MTA). Connects over TCP, typically port 110. The user agent sends a username and password (stored for convenience, or typed each time for stronger security), then issues POP3 commands to retrieve and delete mail.</p></div>
+    <div><h4>IMAP · Internet Mail Access Protocol</h4><p>Also lets a client access mail on a server, over TCP port 143. More complex than POP3: stronger authentication and functions POP3 does not support.</p></div>
+  </div>
+</section>
+
+<!-- ============ 19.2 ============ -->
+<section class="unit" id="s192">
+  <h2><span class="sec">19.2</span>Email Formats</h2>
+  <p class="why">S/MIME is built on MIME, and MIME is built on the traditional text-message format, RFC 822 (current version RFC 5322).</p>
+  <h3>RFC 5322</h3>
+  <div class="def"><b>RFC 5322</b> (Internet Message Format) — defines the format of text messages sent by email. A message has an <b>envelope</b> (whatever is needed for transmission and delivery) and <b>contents</b> (the object delivered). The standard covers only the contents, but its header fields can be used by the mail system to create the envelope.</div>
+  <ul class="props">
+    <li>A message is ASCII text: some number of <b>header lines</b>, a <b>blank line</b>, then unrestricted text (the <b>body</b>).</li>
+    <li>A header line is a keyword, a colon, and the keyword’s arguments; a long line may be split over several lines. Most frequent keywords: <code>From</code>, <code>To</code>, <code>Subject</code>, <code>Date</code>. <code>Message-ID</code> holds a unique identifier for the message.</li>
+  </ul>
+  <div class="reqline"><span class="clr">Date: October 8, 2009 2:15:49 PM EDT
+From: “William Stallings” &lt;ws@shore.net&gt;
+Subject: The Syntax in RFC 5322
+To: Smith@Other-host.com
+Cc: Jones@Yet-Another-Host.com</span>
+<span class="blur">(blank line)</span>
+<span class="sec">Hello. This section begins the actual
+message body, which is delimited from the
+message heading by a blank line.</span></div>
+  <div class="legend"><span><i class="n"></i>header</span><span><i class="e"></i>body</span></div>
+
+  <h3>Multipurpose Internet Mail Extensions</h3>
+  <div class="def"><b>MIME</b> (RFCs 2045–2049) — an extension to the RFC 5322 framework that addresses the problems and limitations of using SMTP (or another transfer protocol) with RFC 5322, while staying compatible with existing RFC 5322 implementations.</div>
+  <p>Limitations of the SMTP/5322 scheme that MIME addresses:</p>
+  <ol class="props">
+    <li>SMTP cannot transmit executable files or other binary objects; conversion schemes such as UNIX UUencode/UUdecode exist but none is a standard.</li>
+    <li>SMTP cannot transmit national-language characters: they use 8-bit codes (128 or higher) and SMTP is limited to 7-bit ASCII.</li>
+    <li>SMTP servers may reject messages over a certain size.</li>
+    <li>SMTP gateways translating between ASCII and EBCDIC use inconsistent mappings.</li>
+    <li>SMTP gateways to X.400 networks cannot handle nontextual data in X.400 messages.</li>
+    <li>Some implementations do not follow RFC 821: they add, delete or reorder CR and LF; truncate or wrap lines over 76 characters; remove trailing white space; pad lines to the same length; or convert tabs into spaces.</li>
+  </ol>
+  <p>The MIME specification has three elements: <b>five new header fields</b> giving information about the body; <b>content formats</b> standardizing multimedia representations; and <b>transfer encodings</b> that protect any content format from alteration by the mail system.</p>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Header field</th><th class="l">Meaning</th><th class="l">Support</th></tr>
+    <tr><td class="l"><code>MIME-Version</code></td><td class="l">Must be 1.0: the message conforms to RFCs 2045 and 2046.</td><td class="l"><span class="pill">required</span></td></tr>
+    <tr><td class="l"><code>Content-Type</code></td><td class="l">Describes the body’s data well enough that the receiving agent can pick a way to represent it to the user.</td><td class="l"><span class="pill">required</span></td></tr>
+    <tr><td class="l"><code>Content-Transfer-Encoding</code></td><td class="l">The transformation used to represent the body acceptably for mail transport.</td><td class="l"><span class="pill">required</span></td></tr>
+    <tr><td class="l"><code>Content-ID</code></td><td class="l">Identifies MIME entities uniquely in multiple contexts.</td><td class="l"><span class="pill mk">optional</span></td></tr>
+    <tr><td class="l"><code>Content-Description</code></td><td class="l">Text description of the body’s object; useful when it is not readable (e.g., audio).</td><td class="l"><span class="pill mk">optional</span></td></tr>
+  </table></div>
+  <p class="cap">“Required” = a compliant implementation must support it; the optional fields may be ignored by the recipient.</p>
+</section>
+
+<!-- ============ 19.2b ============ -->
+<section class="unit" id="s192b">
+  <h2>MIME Content Types and Transfer Encodings</h2>
+  <p class="why">A content type declares the general type of data; the subtype gives its particular format. RFC 2046 defines 7 types and 15 subtypes.</p>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Type</th><th class="l">Subtype</th><th class="l">Description (Table 19.1)</th></tr>
+    <tr><td class="l" rowspan="2"><b>Text</b></td><td class="l">Plain</td><td class="l">Unformatted text; ASCII or ISO 8859.</td></tr>
+    <tr><td class="l">Enriched</td><td class="l">Greater format flexibility.</td></tr>
+    <tr><td class="l" rowspan="4"><b>Multipart</b></td><td class="l">Mixed</td><td class="l">Independent parts sent together, presented in the order they appear.</td></tr>
+    <tr><td class="l">Parallel</td><td class="l">Like Mixed but no delivery order (e.g., a picture with a voice commentary played at the same time).</td></tr>
+    <tr><td class="l">Alternative</td><td class="l">Alternative versions of the same information, in increasing faithfulness; the recipient’s system shows the “best” one it can.</td></tr>
+    <tr><td class="l">Digest</td><td class="l">Like Mixed, but each part defaults to message/rfc822 (e.g., a moderator bundling participants’ messages).</td></tr>
+    <tr><td class="l" rowspan="3"><b>Message</b></td><td class="l">rfc822</td><td class="l">The body is an encapsulated message (header and body); despite the name, any MIME message.</td></tr>
+    <tr><td class="l">Partial</td><td class="l">Fragments a large item transparently: parameters <code>id</code> (common to all fragments), <code>number</code> and <code>total</code>.</td></tr>
+    <tr><td class="l">External-body</td><td class="l">Pointer to data held elsewhere; the outer Content-Type needs an <code>access-type</code> parameter, such as FTP.</td></tr>
+    <tr><td class="l" rowspan="2"><b>Image</b></td><td class="l">jpeg</td><td class="l">JPEG format, JFIF encoding.</td></tr>
+    <tr><td class="l">gif</td><td class="l">GIF format.</td></tr>
+    <tr><td class="l"><b>Video</b></td><td class="l">mpeg</td><td class="l">MPEG format.</td></tr>
+    <tr><td class="l"><b>Audio</b></td><td class="l">Basic</td><td class="l">Single-channel 8-bit ISDN μ-law at 8 kHz.</td></tr>
+    <tr><td class="l" rowspan="2"><b>Application</b></td><td class="l">PostScript</td><td class="l">Adobe PostScript.</td></tr>
+    <tr><td class="l">octet-stream</td><td class="l">General binary data of 8-bit bytes.</td></tr>
+  </table></div>
+  <p>A multipart body is split into parts by a <b>boundary</b> string given as a parameter of Content-Type. Each part starts with <code>--boundary</code> and may have its own header lines; the last boundary ends with <code>--</code>. A part with no header fields is text/plain in US-ASCII.</p>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Figure · Structure of a multipart message</span><span class="pill">Figure 19.3</span></div>
+    <div class="lab-b">
+      <div class="controls"><span class="seg" role="group" aria-label="Example"><button type="button" data-mp="mixed" aria-pressed="true">multipart/mixed (Figure 19.3)</button><button type="button" data-mp="alt" aria-pressed="false">multipart/alternative</button></span></div>
+      <div class="figure"><svg id="mp-svg" viewBox="0 0 620 300" width="620" role="img" aria-label="Nested boxes showing the parts of a multipart MIME message."></svg></div>
+      <div id="mp-out" class="out"></div>
+    </div>
+  </div>
+
+  <h3>Transfer encodings</h3>
+  <p>Content-Transfer-Encoding can take six values. Three only describe the data (no encoding done); for SMTP the 7-bit form is safe, the 8-bit and binary forms may suit other transports. The two actual encodings give a choice between human readability and safety for all data with reasonable compactness.</p>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Value (Table 19.2)</th><th class="l">Meaning</th></tr>
+    <tr><td class="l"><code>7bit</code></td><td class="l">All short lines of ASCII characters.</td></tr>
+    <tr><td class="l"><code>8bit</code></td><td class="l">Short lines, but non-ASCII characters (octets with the high-order bit set) may be present.</td></tr>
+    <tr><td class="l"><code>binary</code></td><td class="l">Non-ASCII characters, and lines not necessarily short enough for SMTP.</td></tr>
+    <tr class="match"><td class="l"><code>quoted-printable</code></td><td class="l">If the data are mostly ASCII text, the encoded form stays largely recognizable by humans: nonsafe characters are replaced by the hex of their code, and reversible (soft) line breaks keep lines to 76 characters.</td></tr>
+    <tr class="match"><td class="l"><code>base64</code></td><td class="l">Also called radix-64. Maps 6-bit blocks of input to 8-bit blocks of output, all printable ASCII; safe from processing by mail-transport programs. Also used in PGP (Appendix X).</td></tr>
+    <tr><td class="l"><code>x-token</code></td><td class="l">A named nonstandard encoding (vendor- or application-specific).</td></tr>
+  </table></div>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Base64 and quoted-printable</span><span class="pill">Table 19.2 · RFC 2045</span></div>
+    <div class="lab-b">
+      <div class="controls"><label class="grow">Text to encode (UTF-8)<textarea id="enc-in" spellcheck="false">Café menu: crème brûlée = 6€
+Two spaces at the end  </textarea></label></div>
+      <div id="enc-out" class="out"></div>
+    </div>
+  </div>
+  <h3>Canonical form</h3>
+  <div class="cmp">
+    <div><h4>Native form</h4><p>The body is created in the system’s own format: its native character set and, where appropriate, local end-of-line conventions (e.g., a UNIX-style text file, a Sun raster image, a VMS indexed file, audio held only in memory).</p></div>
+    <div><h4>Canonical form</h4><p>The entire body, including out-of-band information such as record lengths and file attributes, is converted to a universal form standardized for use between systems. The media type dictates the form; conversion may involve character-set conversion, audio transformation, compression and so on.</p></div>
+  </div>
+</section>
+
+<!-- ============ 19.3 ============ -->
+<section class="unit" id="s193">
+  <h2><span class="sec">19.3</span>Email Threats and Comprehensive Email Security</h2>
+  <p class="why">Email is pervasive and especially vulnerable. NIST SP 800-177 (<i>Trustworthy Email</i>) lists the threats and recommends a set of standard protocols to counter them.</p>
+  <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))">
+    <div class="def"><b>Authenticity-related</b> — could result in unauthorized access to an enterprise’s email system.</div>
+    <div class="def"><b>Integrity-related</b> — could result in unauthorized modification of email content.</div>
+    <div class="def"><b>Confidentiality-related</b> — could result in unauthorized disclosure of sensitive information.</div>
+    <div class="def"><b>Availability-related</b> — could prevent end users from sending or receiving email.</div>
+  </div>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Threat (Table 19.3)</th><th class="l">Impact on purported sender</th><th class="l">Impact on receiver</th><th class="l">Mitigation</th></tr>
+    <tr><td class="l">Email sent by unauthorized MTA in enterprise (e.g., malware botnet)</td><td class="l" rowspan="3">Loss of reputation; valid email from the enterprise may be blocked as possible spam/phishing.</td><td class="l" rowspan="2">UBE and/or email with malicious links may be delivered into user inboxes.</td><td class="l" rowspan="3">Domain-based authentication techniques; digital signatures over email.</td></tr>
+    <tr><td class="l">Email sent using spoofed or unregistered sending domain</td></tr>
+    <tr><td class="l">Email sent using forged sending address (phishing, spear phishing)</td><td class="l">UBE and/or malicious links delivered; users may divulge sensitive information or PII.</td></tr>
+    <tr><td class="l">Email modified in transit</td><td class="l" rowspan="2">Leak of sensitive information or PII.</td><td class="l" rowspan="2">Leak of sensitive information; altered message may contain malicious information.</td><td class="l" rowspan="2">TLS between servers; end-to-end email encryption.</td></tr>
+    <tr><td class="l">Disclosure of sensitive information (e.g., PII) by monitoring and capturing traffic</td></tr>
+    <tr><td class="l">Unsolicited Bulk Email (UBE, spam)</td><td class="l">None, unless the purported sender is spoofed.</td><td class="l">UBE and/or malicious links delivered.</td><td class="l">Techniques to address UBE.</td></tr>
+    <tr><td class="l">DoS/DDoS attack on an enterprise’s mail servers</td><td class="l">Inability to send email.</td><td class="l">Inability to receive email.</td><td class="l">Multiple mail servers; cloud-based email providers.</td></tr>
+  </table></div>
+  <p class="cap">PII = personally identifiable information. UBE = unsolicited bulk email.</p>
+
+  <h3>The SP 800-177 protocol set</h3>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Figure · How the protocols fit together</span><span class="pill">Figure 19.4</span></div>
+    <div class="lab-b">
+      <div class="controls"><span class="seg" role="group" aria-label="Protocol"><button type="button" data-cp="starttls" aria-pressed="true">STARTTLS</button><button type="button" data-cp="smime" aria-pressed="false">S/MIME</button><button type="button" data-cp="dnssec" aria-pressed="false">DNSSEC</button><button type="button" data-cp="dane" aria-pressed="false">DANE</button><button type="button" data-cp="spf" aria-pressed="false">SPF</button><button type="button" data-cp="dkim" aria-pressed="false">DKIM</button><button type="button" data-cp="dmarc" aria-pressed="false">DMARC</button></span></div>
+      <div class="figure"><svg id="cp-svg" viewBox="0 0 640 270" width="640" role="img" aria-label="Sender MUA, sending MTA, receiving MTA and receiver MUA, with sender and receiver DNS above; the selected protocol's parts are highlighted."></svg></div>
+      <div id="cp-out" class="out"></div>
+    </div>
+  </div>
+  <p class="cap">Figure 19.4 shows authenticity and integrity only; S/MIME also gives confidentiality by encrypting messages.</p>
+</section>
+
+<!-- ============ 19.4 ============ -->
+<section class="unit" id="s194">
+  <h2><span class="sec">19.4</span>S/MIME</h2>
+  <p class="why">S/MIME protects the message body end to end, from the author’s MUA to the recipient’s MUA, whatever happens to it on the way.</p>
+  <div class="def"><b>Secure/Multipurpose Internet Mail Extension (S/MIME)</b> — a security enhancement to the MIME email format standard, based on technology from RSA Data Security. The book describes version 3.2.</div>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Document</th><th class="l">Covers</th></tr>
+    <tr><td class="l">RFC 5750</td><td class="l">S/MIME 3.2 certificate handling: conventions for X.509 certificate use.</td></tr>
+    <tr><td class="l">RFC 5751</td><td class="l">S/MIME 3.2 message specification: the principal document for creating and processing messages.</td></tr>
+    <tr><td class="l">RFC 4134</td><td class="l">Examples of S/MIME message bodies.</td></tr>
+    <tr><td class="l">RFC 2634</td><td class="l">Four optional enhanced security services.</td></tr>
+    <tr><td class="l">RFC 5652</td><td class="l"><b>Cryptographic Message Syntax (CMS)</b>: the syntax used to digitally sign, digest, authenticate or encrypt arbitrary content.</td></tr>
+    <tr><td class="l">RFC 3370</td><td class="l">Conventions for using several algorithms with CMS.</td></tr>
+    <tr><td class="l">RFC 5752</td><td class="l">Multiple, parallel signatures in CMS.</td></tr>
+    <tr><td class="l">RFC 1847</td><td class="l">Security multiparts for MIME (multipart/signed, multipart/encrypted).</td></tr>
+  </table></div>
+
+  <h3>Operational description: four services</h3>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Function (Table 19.4)</th><th class="l">Typical algorithm</th><th class="l">Typical action</th></tr>
+    <tr><td class="l"><b>Digital signature</b></td><td class="l">RSA / SHA-256</td><td class="l">A SHA-256 hash of the message is encrypted with RSA using the sender’s private key and included with the message.</td></tr>
+    <tr><td class="l"><b>Message encryption</b></td><td class="l">AES-128 with CBC</td><td class="l">The message is encrypted with AES-128/CBC under a one-time session key generated by the sender; the session key is encrypted with RSA under the recipient’s public key and included.</td></tr>
+    <tr><td class="l"><b>Compression</b></td><td class="l">unspecified</td><td class="l">The message may be compressed for storage or transmission.</td></tr>
+    <tr><td class="l"><b>Email compatibility</b></td><td class="l">Radix-64 conversion</td><td class="l">An encrypted message may be converted to an ASCII string for transparency to email applications.</td></tr>
+  </table></div>
+  <div class="note"><span class="t">Correction</span>Table 19.4 in the book says the digest is “encrypted using SHA-256 with the sender’s private key”; SHA-256 is the hash, and the encryption of the digest uses RSA, as the book’s step list below says.</div>
+
+  <div class="grid2">
+  <div>
+  <h3>Authentication</h3>
+  <p>A digital signature (Chapter 13), most commonly RSA with SHA-256:</p>
+  <ol class="props">
+    <li>The sender creates a message.</li>
+    <li>SHA-256 gives a 256-bit message digest.</li>
+    <li>The digest is encrypted with RSA under the sender’s private key and appended, with signer-identifying information so the receiver can retrieve the signer’s public key.</li>
+    <li>The receiver decrypts with the sender’s public key to recover the digest.</li>
+    <li>The receiver hashes the message itself and compares; a match means the message is authentic.</li>
+  </ol>
+  </div>
+  <div>
+  <h3>Confidentiality</h3>
+  <p>Most commonly AES-128 in CBC mode. Each symmetric key, the <b>content-encryption key</b>, is used once: a new random number for every message.</p>
+  <ol class="props">
+    <li>The sender generates the message and a random 128-bit content-encryption key.</li>
+    <li>The message is encrypted with the content-encryption key.</li>
+    <li>The key is encrypted with RSA under the recipient’s public key and attached.</li>
+    <li>The receiver recovers the key with RSA and its private key.</li>
+    <li>The key decrypts the message.</li>
+  </ol>
+  </div>
+  </div>
+  <p>Why this design:</p>
+  <ul class="props">
+    <li>Symmetric algorithms are substantially faster than asymmetric ones for large content, so public-key encryption is used only on the short key.</li>
+    <li>Public-key encryption solves session-key distribution: only the recipient can recover the key bound to the message. No session-key exchange protocol (Chapter 14) is needed, and handshaking would be impractical anyway given email’s store-and-forward nature.</li>
+    <li>One-time keys strengthen the symmetric scheme: little plaintext per key, no relationship among keys. As far as the public-key algorithm is secure, the whole scheme is.</li>
+  </ul>
+
+  <h3>Signing and encryption together</h3>
+  <p>S/MIME allows the two operations in either order.</p>
+  <div class="cmp">
+    <div><h4>Sign first, then encrypt</h4><p>The encryption hides the signer’s identity. It is more convenient to store a signature with the plaintext, and a third party verifying the signature need not deal with the symmetric key.</p></div>
+    <div><h4>Encrypt first, then sign</h4><p>A signature can be verified without exposing the content, useful for automatic verification since no private key is needed. But the recipient cannot relate the signer to the unencrypted content.</p></div>
+  </div>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · S/MIME sign and encrypt, then decrypt and verify</span><span class="pill">Figure 19.5</span></div>
+    <div class="lab-b">
+      <div class="pvar"><span class="seg" role="group" aria-label="Order of operations"><button type="button" data-so="se" aria-pressed="true">Sign, then encrypt</button><button type="button" data-so="es" aria-pressed="false">Encrypt, then sign</button></span></div>
+      <div class="controls">
+        <label class="grow">Message M<input type="text" id="sm-msg" class="wide" value="Pay Bob 100 dollars on Friday." spellcheck="false"></label>
+        <label>Attacker in transit<select id="sm-tamper"><option value="none">does nothing</option><option value="ct">flips a ciphertext bit</option><option value="key">swaps in her own session key</option></select></label>
+        <button type="button" id="sm-run">Send ▶</button>
+      </div>
+      <div class="figure"><svg id="sm-svg" viewBox="0 0 640 170" width="640" role="img" aria-label="S/MIME functional flow for the chosen order: signing with the sender's private key, AES-128-CBC encryption under a one-time key, RSA encryption of that key with the receiver's public key."></svg></div>
+      <div id="sm-out" class="out"><p class="cap">Generating the sender’s and receiver’s RSA key pairs…</p></div>
+    </div>
+  </div>
+  <p class="cap">The lab uses your browser’s Web Crypto API: RSA-2048 with SHA-256 (PKCS #1 v1.5) for the signature, AES-128-CBC for the content and RSAES-OAEP (a SHOULD in Table 19.5) for the key. Keys are made fresh on each page load.</p>
+
+  <h3>Email compatibility</h3>
+  <p>With signing only, the digest is encrypted; with confidentiality, the message plus any signature is encrypted. Either way, part or all of the block is arbitrary 8-bit octets, but many mail systems accept only ASCII text. S/MIME converts the raw binary to printable ASCII, called <b>7-bit encoding</b>, typically with base64: each group of <b>three octets</b> becomes <b>four ASCII characters</b>.</p>
+  <ul class="props">
+    <li>Base64 converts the input blindly, even ASCII text. A message that is signed but not encrypted, if converted whole, is unreadable to a casual observer: a certain level of confidentiality.</li>
+    <li>RFC 5751 recommends 7-bit encoding the original MIME content even when no outer 7-bit encoding is used, so the entity can be handled in any environment unchanged. Example: a trusted gateway removes the encryption but not the signature; if the site’s internal transport is not 8-bit clean, the end recipient can verify the signature only if the original entity was 7-bit data.</li>
+  </ul>
+  <h3>Compression</h3>
+  <p>Saves space for transmission and storage. It can be applied in any order relative to signing and encryption. RFC 5751 guidelines:</p>
+  <ul class="props">
+    <li>Compressing binary-encoded encrypted data is discouraged: it gives little compression. Base64-encrypted data could benefit.</li>
+    <li>With a <b>lossy</b> compression algorithm and signing, compress first, then sign.</li>
+  </ul>
+</section>
+
+<!-- ============ 19.4b ============ -->
+<section class="unit" id="s194b">
+  <h2>S/MIME Content Types and Approved Algorithms</h2>
+  <p class="why">S/MIME uses content types defined in CMS (RFC 5652) and states its algorithm requirements with RFC 2119 key words.</p>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">CMS content type</th><th class="l">Use</th></tr>
+    <tr><td class="l"><b>Data</b></td><td class="l">The inner MIME-encoded content, which may be encapsulated in SignedData, EnvelopedData or CompressedData.</td></tr>
+    <tr><td class="l"><b>SignedData</b></td><td class="l">Applies a digital signature to a message.</td></tr>
+    <tr><td class="l"><b>EnvelopedData</b></td><td class="l">Encrypted content of any type, plus encrypted content-encryption keys for one or more recipients.</td></tr>
+    <tr><td class="l"><b>CompressedData</b></td><td class="l">Applies data compression to a message.</td></tr>
+  </table></div>
+  <div class="def"><b>Clear signing</b> — uses the Data type: a signature is calculated over a MIME-encoded message, and message and signature form a two-part multipart message. Unlike SignedData, which encapsulates both in a special format, a clear-signed message can be read, and its signature verified, by email entities that do not implement S/MIME.</div>
+
+  <h3>Requirement levels</h3>
+  <div class="cmp">
+    <div><h4>MUST</h4><p>An absolute requirement: an implementation must include the feature to conform.</p></div>
+    <div><h4>SHOULD</h4><p>There may be valid reasons to ignore the feature in particular circumstances, but implementing it is recommended.</p></div>
+  </div>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Function (Table 19.5)</th><th class="l">MUST</th><th class="l">SHOULD</th></tr>
+    <tr><td class="l">Create a message digest for a signature</td><td class="l">SHA-256</td><td class="l">SHA-1; receiver: MD5 for backward compatibility</td></tr>
+    <tr><td class="l">Use the digest to form a signature</td><td class="l">RSA with SHA-256</td><td class="l">DSA with SHA-256; RSASSA-PSS with SHA-256; RSA with SHA-1; DSA with SHA-1; RSA with MD5</td></tr>
+    <tr><td class="l">Encrypt the session key</td><td class="l">RSA encryption</td><td class="l">RSAES-OAEP; Diffie–Hellman ephemeral-static mode</td></tr>
+    <tr><td class="l">Encrypt the message with a one-time session key</td><td class="l">AES-128 with CBC</td><td class="l">AES-192 CBC and AES-256 CBC; Triple DES CBC</td></tr>
+  </table></div>
+
+  <h3>Choosing a content-encryption algorithm</h3>
+  <p>The sending agent decides (1) whether the receiver can decrypt a given algorithm and (2), if the receiver accepts only weakly encrypted content, whether weak encryption is acceptable. A sending agent may announce its decrypting capabilities, in order of preference, in any message it sends; receivers may store them.</p>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Sending agent’s decision rules</span><span class="pill">Section 19.4</span></div>
+    <div class="lab-b">
+      <div class="ckflow">
+        <div class="ckstep"><label class="mono" style="font-size:.8rem;color:var(--muted)"><input type="checkbox" id="ar-list"> Recipient sent a preference list</label><select id="ar-pref" aria-label="Recipient's preferred algorithm"><option>AES-256 CBC</option><option>AES-128 CBC</option><option>Triple DES CBC</option></select></div>
+        <div class="ckstep"><label class="mono" style="font-size:.8rem;color:var(--muted)"><input type="checkbox" id="ar-prev"> Received signed + encrypted mail from recipient</label><select id="ar-last" aria-label="Algorithm used in the last message"><option>AES-128 CBC</option><option>AES-192 CBC</option><option>Triple DES CBC</option></select></div>
+        <div class="ckstep"><label class="mono" style="font-size:.8rem;color:var(--muted)"><input type="checkbox" id="ar-risk" checked> Willing to risk recipient can’t decrypt</label></div>
+      </div>
+      <div id="ar-out" class="out"></div>
+    </div>
+  </div>
+  <div class="warn">If a message goes to several recipients and no common algorithm can be chosen, the agent must send two messages, and the copy with lower security makes the message vulnerable.</div>
+  <div class="note"><span class="t">Note</span>Rules 3 and 4 (triple DES, then RC2/40) are carried over from an earlier S/MIME version and sit awkwardly with the AES-128 MUST in Table 19.5; the envelopedData steps below mention RC2/40 and triple DES for the same reason. The lab follows the book’s rules as written.</div>
+</section>
+
+<!-- ============ 19.4c ============ -->
+<section class="unit" id="s194c">
+  <h2>S/MIME Messages</h2>
+  <p class="why">S/MIME adds new MIME content types, all named with PKCS (public-key cryptography specifications issued by RSA Laboratories).</p>
+  <h3>Securing a MIME entity</h3>
+  <ol class="props">
+    <li>A <b>MIME entity</b> (a whole message except the RFC 5322 headers, or one or more subparts of a multipart message) is prepared by the normal MIME rules and converted to <b>canonical form</b> (for multipart, each subpart in its own canonical form).</li>
+    <li>The entity plus security-related data (algorithm identifiers, certificates) is processed by S/MIME into a <b>PKCS object</b>.</li>
+    <li>The PKCS object is treated as message content and wrapped in MIME with appropriate headers; transfer encoding, typically base64, is applied at that point because the object is mostly arbitrary binary.</li>
+  </ol>
+  <p>Exception: in a multipart/signed message, the content of one subpart is not changed by the security process. Unless it is 7-bit, it should be transfer encoded (base64 or quoted-printable) so the signed content cannot be altered.</p>
+  <p>The <code>application/pkcs7-mime</code> subtype covers four categories, each with an <code>smime-type</code> parameter. The resulting object is represented in <b>Basic Encoding Rules (BER)</b> (ITU-T X.209): arbitrary octet strings, so binary, and base64-encoded in the outer MIME message.</p>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Explorer · S/MIME message types</span><span class="pill">Section 19.4</span></div>
+    <div class="lab-b">
+      <div class="pick">
+        <div class="pick-list" role="group" aria-label="Message type">
+          <button type="button" class="pk-i" data-mt="env" aria-pressed="true">envelopedData</button>
+          <button type="button" class="pk-i" data-mt="sig" aria-pressed="false">signedData</button>
+          <button type="button" class="pk-i" data-mt="clear" aria-pressed="false">Clear signing (multipart/signed)</button>
+          <button type="button" class="pk-i" data-mt="reg" aria-pressed="false">Registration request</button>
+          <button type="button" class="pk-i" data-mt="cert" aria-pressed="false">Certificates-only message</button>
+        </div>
+        <div class="pick-detail" id="mt-out"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 19.4d ============ -->
+<section class="unit" id="s194d">
+  <h2>Certificate Processing and Enhanced Services</h2>
+  <p class="why">S/MIME uses X.509 version 3 public-key certificates (Chapter 14). Managers and/or users configure each client with a list of trusted keys and certificate revocation lists: maintaining the certificates is a local responsibility, while the certificates themselves are signed by certification authorities.</p>
+  <h3>User agent role</h3>
+  <ul class="props">
+    <li><b>Key generation</b>: the user or an administrative utility MUST be able to generate separate Diffie–Hellman and DSS key pairs and SHOULD be able to generate RSA key pairs. Each pair MUST come from a good source of nondeterministic random input and be protected securely. RSA key pairs SHOULD be 768–1024 bits and MUST NOT be shorter than 512 bits.</li>
+    <li><b>Registration</b>: the public key must be registered with a certification authority to receive an X.509 certificate.</li>
+    <li><b>Certificate storage and retrieval</b>: a local list of certificates is needed to verify incoming signatures and encrypt outgoing messages, kept by the user or by a local administrative entity for many users.</li>
+  </ul>
+  <h3>Enhanced security services (RFC 2634)</h3>
+  <div class="grid2">
+    <div class="def"><b>Signed receipts</b> — requested in a SignedData object. The recipient signs the original message plus the sender’s signature and appends the new signature, forming a new S/MIME message: proof of delivery that the originator can show a third party.</div>
+    <div class="def"><b>Security labels</b> — included in the authenticated attributes of SignedData: security information about the sensitivity of the content. Used for access control, priority (secret, confidential, restricted) or roles (e.g., a patient’s health-care team).</div>
+    <div class="def"><b>Secure mailing lists</b> — an S/MIME <b>Mail List Agent (MLA)</b> takes one incoming message, performs the recipient-specific encryption for each recipient and forwards it. The originator encrypts once, with the MLA’s public key.</div>
+    <div class="def"><b>Signing certificates</b> — securely binds a sender’s certificate to their signature through a signing certificate attribute.</div>
+  </div>
+</section>
+
+<!-- ============ 19.5 ============ -->
+<section class="unit" id="s195">
+  <h2><span class="sec">19.5</span>Pretty Good Privacy</h2>
+  <p class="why">An alternative email security protocol with essentially the same functionality as S/MIME.</p>
+  <div class="def"><b>Pretty Good Privacy (PGP)</b> — originally a proprietary protocol using some algorithms with intellectual-property restrictions. <b>OpenPGP</b> is the standard protocol developed from PGP version 5.x, defined in RFC 4880 (message format) and RFC 3156 (MIME security with OpenPGP).</div>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l"></th><th class="l">S/MIME</th><th class="l">OpenPGP</th></tr>
+    <tr><td class="l"><b>Key certification</b></td><td class="l">X.509 certificates issued by Certificate Authorities (or local agencies delegated by a CA). Trusted if there is a valid PKIX chain to a trusted root.</td><td class="l">Users generate their own key pairs and ask individuals or organizations who know them to sign their public keys. A key is trusted if it is signed by another key the recipient trusts: the <b>Web-of-Trust</b>.</td></tr>
+    <tr><td class="l"><b>Key distribution</b></td><td class="l">The sender’s certificate can travel with the message.</td><td class="l">The sender’s public key is not included with each message; recipients must obtain it separately: from TLS-protected websites (downloaded manually), or from OpenPGP public key servers, where anyone may post a key with any email address, unvetted.</td></tr>
+  </table></div>
+  <div class="note"><span class="t">Recommendation</span>NIST SP 800-177 recommends S/MIME over PGP because of the greater confidence in the CA system of verifying public keys. The book’s Appendix P (online) covers PGP in detail.</div>
+</section>
+
+<!-- ============ 19.6 ============ -->
+<section class="unit" id="s196">
+  <h2><span class="sec">19.6</span>DNSSEC</h2>
+  <p class="why">Several email security protocols publish their data in the DNS, so they are only as trustworthy as the DNS answers. DNSSEC makes those answers verifiable.</p>
+  <h3>Domain Name System</h3>
+  <p>DNS is essential to the Internet. MUAs and MTAs use it to find the next-hop mail server: a sending MTA queries the <b>Mail Exchange Resource Record (MX RR)</b> of the recipient’s domain (the right-hand side of the “@”) to find the receiving MTA.</p>
+  <div class="grid2">
+    <div class="def"><b>Domain name space</b> — a tree-structured name space identifying resources on the Internet.</div>
+    <div class="def"><b>DNS database</b> — each node and leaf of the tree names a set of information (IP address, name server, …) held in <b>resource records (RRs)</b>; all RRs form a distributed database.</div>
+    <div class="def"><b>Name servers</b> — server programs holding information about a portion of the name tree and its RRs.</div>
+    <div class="def"><b>Resolvers</b> — programs that extract information from name servers for client requests, typically an IP address for a domain name.</div>
+  </div>
+  <p>Key features of the database: a <b>variable-depth hierarchy</b> of names, with the period as level delimiter; a <b>distributed database</b> on DNS servers across the Internet; and <b>distribution controlled by the database</b>: thousands of separately administered <b>zones</b>, with distribution and update controlled by the database software. Dynamic updating lets name servers send updates to other relevant servers, coping with Internet growth and dynamically assigned addresses (e.g., home DSL).</p>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Type (Table 19.6)</th><th class="l">Description</th></tr>
+    <tr><td class="l"><code>A</code></td><td class="l">Host address: maps a system name to its IPv4 address (one RR per address).</td></tr>
+    <tr><td class="l"><code>AAAA</code></td><td class="l">Like A, for IPv6.</td></tr>
+    <tr><td class="l"><code>CNAME</code></td><td class="l">Canonical name: an alias for a host, mapped to the true name.</td></tr>
+    <tr><td class="l"><code>HINFO</code></td><td class="l">Host information: processor and operating system.</td></tr>
+    <tr><td class="l"><code>MINFO</code></td><td class="l">Mailbox or mail list information: maps the name to a host name.</td></tr>
+    <tr class="match"><td class="l"><code>MX</code></td><td class="l">Mail exchange: the system(s) through which mail to the queried domain should be relayed.</td></tr>
+    <tr><td class="l"><code>NS</code></td><td class="l">Authoritative name server for this domain.</td></tr>
+    <tr><td class="l"><code>PTR</code></td><td class="l">Domain name pointer: points to another part of the name space.</td></tr>
+    <tr><td class="l"><code>SOA</code></td><td class="l">Start of a zone of authority, with parameters for the zone.</td></tr>
+    <tr><td class="l"><code>SRV</code></td><td class="l">Names the server(s) in the domain providing a given service.</td></tr>
+    <tr class="match"><td class="l"><code>TXT</code></td><td class="l">Arbitrary text. SPF, DKIM and DMARC publish their data in TXT records.</td></tr>
+    <tr><td class="l"><code>WKS</code></td><td class="l">Well-known services available at this host.</td></tr>
+  </table></div>
+  <div class="lab proto" data-protos="dns" data-name="DNS name resolution"></div>
+
+  <h3>DNS Security Extensions</h3>
+  <div class="def"><b>DNSSEC</b> — end-to-end protection of DNS data by digital signatures created by the responding zone administrators and verified by the recipient’s resolver. There is no need to trust the intermediate name servers and resolvers that cache or route the records. Defined in RFC 4033 (introduction and requirements), RFC 4034 (new resource records) and RFC 4035 (protocol modifications: signed zones, serving and resolving).</div>
+  <p>DNSSEC protects DNS clients from accepting forged or altered RRs by providing:</p>
+  <ul class="props">
+    <li><b>Data origin authentication</b>: the data came from the correct source.</li>
+    <li><b>Data integrity verification</b>: the RR content has not been modified.</li>
+  </ul>
+  <p>The zone administrator signs every <b>RRset</b> (all RRs with the same label, class and type) and publishes the signatures and the zone’s public key in the DNS itself. Trust in that key is not built from a third party or a PKI chain, but by starting from a trusted zone, such as the root, and verifying each child’s public key with its parent’s signature down to the answering zone. The trusted zone’s public key is the <b>trust anchor</b>.</p>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">New RR (RFC 4034)</th><th class="l">Role</th></tr>
+    <tr><td class="l"><code>DNSKEY</code></td><td class="l">Contains a public key.</td></tr>
+    <tr><td class="l"><code>RRSIG</code></td><td class="l">Digital signature over one RRset; returned with the RRset so the client can verify it with the DNSKEY.</td></tr>
+    <tr><td class="l"><code>NSEC</code></td><td class="l">Authenticated denial of existence: identifies the range of names or record types that do not exist in a zone, so negative answers are authenticated too.</td></tr>
+    <tr><td class="l"><code>DS</code></td><td class="l">Delegation signer: lets a parent zone vouch for a child zone’s key, linking zones into an authentication chain from the root down.</td></tr>
+  </table></div>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Figure · Following the chain of trust</span><span class="pill">Section 19.6</span></div>
+    <div class="lab-b">
+      <div class="pvar"><span class="seg" role="group" aria-label="Scenario"><button type="button" data-ch="ok" aria-pressed="true">Intact chain</button><button type="button" data-ch="forged" aria-pressed="false">Forged MX record</button><button type="button" data-ch="nods" aria-pressed="false">Missing DS link</button></span></div>
+      <div class="figure"><svg id="ch-svg" viewBox="0 0 640 250" width="640" role="img" aria-label="Three zones, root, org and example.org, each with a DNSKEY; DS records in parents vouch for the child keys; the MX RRset in example.org is signed by an RRSIG."></svg></div>
+      <div class="pctl"><button type="button" class="ghost" id="ch-prev">◀ Back</button><button type="button" id="ch-next">Next ▶</button><button type="button" class="ghost" id="ch-reset">Restart</button><span class="cnt" id="ch-cnt" aria-live="polite"></span></div>
+      <div class="pnote" id="ch-out"></div>
+    </div>
+  </div>
+  <p class="cap">The zone names, the single key per zone and the step wording are illustrative; the book describes the mechanism only in prose.</p>
+</section>
+
+<!-- ============ 19.7 ============ -->
+<section class="unit" id="s197">
+  <h2><span class="sec">19.7</span>DNS-Based Authentication of Named Entities</h2>
+  <p class="why">DANE lets a domain say, in DNSSEC-signed DNS data, which certificate its TLS servers use, instead of relying only on the many certificate authorities.</p>
+  <div class="def"><b>DANE</b> (RFC 6698) — a protocol that binds X.509 certificates, as used by TLS, to DNS names using DNSSEC, so TLS clients and servers can be authenticated without a certificate authority.</div>
+  <h3>Why: the weakness of the CA system</h3>
+  <ul class="props">
+    <li>Every browser developer and OS supplier keeps a list of CA <b>root certificates</b> (trust anchors) in a <b>root certificate store</b>; the PKIX procedure traces a certificate back to a root.</li>
+    <li>If <i>any</i> of the hundreds of CAs is compromised, an attacker can get its private key, have certificates issued under false names, or add bogus roots to stores. The global PKI has no limit of scope, so one compromised CA damages the whole system.</li>
+    <li>Some CAs have had poor practices, e.g., issuing wildcard certificates that let the holder issue sub-certificates for any domain anywhere.</li>
+  </ul>
+  <p>DANE replaces reliance on CA security with reliance on DNSSEC: the DNS administrator for a domain is already authorized to give information about the zone, so it can also authoritatively bind the domain name to a certificate used by a host there.</p>
+  <h3>TLSA record</h3>
+  <div class="def"><b>TLSA RR</b> — a DNS record type for authenticating SSL/TLS certificates. It can constrain which CA may vouch for a certificate, or which PKIX end-entity certificate is valid; or state that a service certificate or CA is authenticated directly in the DNS. The server’s domain owner creates a TLSA RR identifying the certificate and its public key; a client receiving an X.509 certificate in TLS negotiation looks up the TLSA RR and matches it as part of certificate validation.</div>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Certificate usage</th><th class="l">Meaning</th><th class="l">Chain must pass PKIX to a client root?</th></tr>
+    <tr><td class="l"><b>PKIX-TA</b> · CA constraint</td><td class="l">Which CA should be trusted to authenticate the service’s certificate; limits which CA can issue certificates for the service.</td><td class="l"><span class="pill">yes</span></td></tr>
+    <tr><td class="l"><b>PKIX-EE</b> · service certificate constraint</td><td class="l">Which specific end-entity certificate should be trusted for the service.</td><td class="l"><span class="pill">yes</span></td></tr>
+    <tr><td class="l"><b>DANE-TA</b> · trust anchor assertion</td><td class="l">A domain-operated CA used as trust anchor, e.g., when the domain issues certificates under its own CA that end users will not have.</td><td class="l"><span class="pill no">no (self-issued)</span></td></tr>
+    <tr><td class="l"><b>DANE-EE</b> · domain-issued certificate</td><td class="l">Lets the domain administrator issue certificates for the domain without any third-party CA.</td><td class="l"><span class="pill no">no (self-issued)</span></td></tr>
+  </table></div>
+  <p>The first two models co-exist with and strengthen the public CA system; the last two work without public CAs.</p>
+  <div class="note"><span class="t">Correction</span>The book’s first sentence for DANE-EE repeats the DANE-TA text (“a domain-operated CA used as a trust anchor”). In RFC 6698, DANE-EE (usage 3) names the server’s end-entity certificate itself, which must match the certificate presented in TLS.</div>
+  <p>The other fields: <b>Selector</b> — match the full certificate or only its public key; <b>Matching Type</b> — exact match, SHA-256 hash or SHA-512 hash; <b>Certificate Association Data</b> — the raw certificate data in hex.</p>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Build a TLSA record</span><span class="pill">Figure 19.7 · RFC 6698</span></div>
+    <div class="lab-b">
+      <div class="pkt" aria-label="TLSA RR transmission format"><div class="pf a"><span class="pfl">Certificate usage · 8 bits</span><span class="pfv" id="tl-f0">3</span></div><div class="pf m"><span class="pfl">Selector · 8 bits</span><span class="pfv" id="tl-f1">1</span></div><div class="pf d"><span class="pfl">Matching type · 8 bits</span><span class="pfv" id="tl-f2">1</span></div><div class="pf" style="flex:1 1 220px"><span class="pfl">Certificate association data</span><span class="pfv" id="tl-f3">…</span></div></div>
+      <div class="controls">
+        <label>Certificate usage<select id="tl-u"><option value="0">0 · PKIX-TA</option><option value="1">1 · PKIX-EE</option><option value="2">2 · DANE-TA</option><option value="3" selected>3 · DANE-EE</option></select></label>
+        <label>Selector<select id="tl-s"><option value="0">0 · full certificate</option><option value="1" selected>1 · public key only</option></select></label>
+        <label>Matching type<select id="tl-m"><option value="0">0 · exact match</option><option value="1" selected>1 · SHA-256</option><option value="2">2 · SHA-512</option></select></label>
+        <label>Host<input type="text" id="tl-h" value="mail.example.org" spellcheck="false"></label>
+        <button type="button" class="ghost" id="tl-new">New key</button>
+      </div>
+      <div id="tl-out" class="out"></div>
+    </div>
+  </div>
+  <p class="cap">The lab generates a real P-256 public key in your browser and hashes its DER SubjectPublicKeyInfo. It has no certificate, so selector 0 shows what would be hashed instead. The numeric codes, the <code>_25._tcp.</code> owner-name prefix (port 25, TCP) and the presentation format come from RFC 6698; the acronyms from RFC 7218.</p>
+  <h3>Use of DANE for SMTP</h3>
+  <p>STARTTLS runs SMTP over TLS so the whole message and SMTP envelope are encrypted, but only <b>opportunistically</b>, if both sides support it. Even then TLS is vulnerable:</p>
+  <div class="cmp">
+    <div><h4>Downgrade</h4><p>Attackers strip the TLS capability advertisement so the connection does not use TLS. <b>DANE fix</b>: the presence of a TLSA RR signals that encryption <i>must</i> be used.</p></div>
+    <div><h4>Unauthenticated TLS</h4><p>Self-signed and mismatched certificates are common. <b>DANE fix</b>: the certificate is authenticated with a DNSSEC-signed TLSA RR.</p></div>
+  </div>
+  <p>DANE can authenticate both the SMTP submission server the MUA talks to and the TLS connections between MTAs.</p>
+  <h3>Use of DNSSEC for S/MIME</h3>
+  <p>S/MIME messages often carry certificates that authenticate the sender and can be used to encrypt replies, but the receiving MUA must validate the certificate of the purported sender. A proposed <b>SMIMEA</b> DNS RR associates certificates with DNS domain names for this. It has the same format and function as TLSA, but serves MUAs dealing with the domain names in email addresses in the message body, not those in the outer SMTP envelope.</p>
+</section>
+
+<!-- ============ 19.8 ============ -->
+<section class="unit" id="s198">
+  <h2><span class="sec">19.8</span>Sender Policy Framework</h2>
+  <p class="why">Any host can put any domain name in the identifiers of a mail message, not only the name of the domain where it is located.</p>
+  <p>Two drawbacks of that freedom: it is a major obstacle to reducing <b>unsolicited bulk email (UBE)</b>, or spam, because mail cannot be filtered by known UBE sources; and ADMDs worry about how easily others can use their domain names, often maliciously.</p>
+  <div class="def"><b>Sender Policy Framework (SPF)</b> (RFC 7208) — the standardized way for a sending domain to identify and assert the mail senders for that domain. Compliant ADMDs publish SPF records in the DNS listing the hosts permitted to use their names in the <b>“MAIL FROM”</b> or <b>“HELO”</b> identities; compliant receivers use them to test the authorization of a sending MTA during the mail transaction.</div>
+  <p>SPF checks the sender’s <b>IP address</b> against the policy at the <b>sending domain</b>: the domain used in the SMTP connection, <i>not</i> the domain in the message header shown by the MUA. So SPF can be checked before the message content is received.</p>
+  <div class="lab proto" data-protos="spfenv" data-name="Envelope does not match header"></div>
+  <div class="note"><span class="t">Correction</span>The book says the receiver queries the SPF RR “that corresponds to example.com”; in its own example the MAIL FROM domain is <b>example.org</b>, and that is the domain SPF checks.</div>
+
+  <h3>SPF on the sender side</h3>
+  <p>A sending domain identifies all its senders and encodes a policy for each in a <b>TXT</b> RR as a list of <b>mechanisms</b> (define an IP address or range to match) and <b>modifiers</b> (the policy for a match).</p>
+  <div class="grid2">
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Mechanism (Table 19.7a)</th><th class="l">Matches</th></tr>
+    <tr><td class="l"><code>ip4</code></td><td class="l">An IPv4 address or range of authorized senders.</td></tr>
+    <tr><td class="l"><code>ip6</code></td><td class="l">An IPv6 address or range.</td></tr>
+    <tr><td class="l"><code>mx</code></td><td class="l">The hosts listed in the domain’s MX RRs are also valid senders.</td></tr>
+    <tr><td class="l"><code>include</code></td><td class="l">Another domain’s SPF RR is checked, recursively and in its entirety (not a concatenation of checks). Useful for organizations with many domains sharing senders.</td></tr>
+    <tr><td class="l"><code>all</code></td><td class="l">Every IP address not otherwise matched.</td></tr>
+  </table></div>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Modifier (Table 19.7b)</th><th class="l">Meaning</th></tr>
+    <tr><td class="l"><code>+</code></td><td class="l">The check must pass. The default; need not be written.</td></tr>
+    <tr><td class="l"><code>-</code></td><td class="l">Not allowed to send email on behalf of the domain.</td></tr>
+    <tr><td class="l"><code>~</code></td><td class="l">In transition: accept mail from it but mark it for closer inspection.</td></tr>
+    <tr><td class="l"><code>?</code></td><td class="l">Says nothing explicitly; by default accept (equivalent to + unless some message review is done).</td></tr>
+  </table></div>
+  </div>
+  <h3>SPF on the receiver side</h3>
+  <p>The receiver uses the envelope MAIL FROM domain and the sender’s IP address to query the SPF TXT RR. Checks may start before the body arrives (possibly blocking its transmission) or after the whole message is buffered; either way, they finish before the mail reaches the inbox.</p>
+  <ol class="props">
+    <li>No SPF TXT RR returned → by default, accept the message.</li>
+    <li>The SPF TXT RR has formatting errors → by default, accept.</li>
+    <li>Otherwise the mechanisms and modifiers determine the disposition.</li>
+  </ol>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Evaluate an SPF record</span><span class="pill">Figure 19.9 · Table 19.7</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label class="grow">SPF TXT record for example.org<input type="text" id="spf-rec" class="wide" value="v=spf1 ip4:192.168.0.0/24 mx include:mailer.example ~all" spellcheck="false"></label>
+        <label>Sender IP address<input type="text" id="spf-ip" value="192.168.0.1" spellcheck="false"></label>
+      </div>
+      <div class="controls tryset" role="group" aria-label="Example senders"><span class="cap" style="margin:0">Try a sender:</span><button type="button" class="ghost" data-ip="192.168.0.1">192.168.0.1</button><button type="button" class="ghost" data-ip="198.51.100.25">198.51.100.25 (MX host)</button><button type="button" class="ghost" data-ip="203.0.113.7">203.0.113.7 (mailer.example)</button><button type="button" class="ghost" data-ip="10.9.8.7">10.9.8.7</button><button type="button" class="ghost" data-rec="">no record</button></div>
+      <div class="lab-res"><div class="t">Result</div><div id="spf-out" class="out"></div></div>
+    </div>
+  </div>
+  <p class="cap">The lab’s DNS is simulated: example.org’s MX host is 198.51.100.25 and <code>mailer.example</code> publishes <code>v=spf1 ip4:203.0.113.0/24 -all</code>. Mechanisms are tried left to right and the first match decides; if none matches, the result is neutral (RFC 7208). Only ip4, ip6 (exact address), mx, include and all are implemented.</p>
+</section>
+
+<!-- ============ 19.9 ============ -->
+<section class="unit" id="s199">
+  <h2><span class="sec">19.9</span>DomainKeys Identified Mail</h2>
+  <p class="why">SPF authorizes a sending host; DKIM lets a domain cryptographically sign the message itself.</p>
+  <div class="def"><b>DomainKeys Identified Mail (DKIM)</b> (RFC 6376) — a specification for cryptographically signing email so that a <b>signing domain</b> can claim responsibility for a message in the mail stream. Recipients verify by querying the signer’s domain directly for the public key, confirming the message was attested by a holder of the domain’s private key. Widely adopted by corporations, government agencies, gmail, Yahoo! and many ISPs.</div>
+  <h3>Email threats (RFC 4686)</h3>
+  <p>RFC 4686 describes the threats DKIM addresses by the attackers’ characteristics, capabilities and location.</p>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Threat level</th><th class="l">Attackers</th></tr>
+    <tr><td class="l"><b>Low</b></td><td class="l">Want to send email the recipient does not want, using commercially available tools to falsify the origin address, so spam cannot be filtered by originating address or domain.</td></tr>
+    <tr><td class="l"><b>Middle</b></td><td class="l">Professional bulk spammers, often commercial enterprises sending for third parties, with MTAs, registered domains and networks of compromised computers (<b>zombies</b>) to send messages and harvest addresses.</td></tr>
+    <tr><td class="l"><b>High</b></td><td class="l">The most sophisticated, financially motivated senders (e.g., email-based fraud). All of the above, plus attacks on Internet infrastructure itself: DNS cache poisoning and IP routing attacks.</td></tr>
+  </table></div>
+  <details><summary>Capabilities an attacker might have (11)</summary><ol class="props">
+    <li>Submit messages to MTAs and MSAs at multiple Internet locations.</li>
+    <li>Construct arbitrary header fields, including ones claiming to be mailing lists, resenders and other agents.</li>
+    <li>Sign messages on behalf of domains under their control.</li>
+    <li>Generate many unsigned or apparently signed messages for a denial-of-service attempt.</li>
+    <li>Resend messages previously signed by the domain.</li>
+    <li>Transmit messages with any envelope information.</li>
+    <li>Act as an authorized submitter from a compromised computer.</li>
+    <li>Manipulate IP routing: submit from specific or hard-to-trace addresses, or divert messages to a domain.</li>
+    <li>Limited influence over parts of DNS (e.g., cache poisoning), to influence routing or falsify DNS-based keys or signing practices.</li>
+    <li>Significant computing resources (worm-infected zombies) for brute-force attacks.</li>
+    <li>Eavesdrop on existing traffic, perhaps from a wireless network.</li>
+  </ol></details>
+  <p><b>Location.</b> DKIM focuses on attackers <b>outside</b> the administrative units of the claimed originator and the recipient. Inside them, other mechanisms such as authenticated message submission are easier to deploy; outside, the trust relationships those need do not exist and do not scale. External attackers exploit the “any-to-any” nature of email that makes recipient MTAs accept mail from anywhere: unsigned messages, incorrect signatures, correct signatures from barely traceable domains, or posing as mailing lists, greeting cards and other agents that send on behalf of others.</p>
+
+  <h3>DKIM strategy</h3>
+  <p>DKIM is transparent to the end user. The message is signed with the private key of the <b>administrative domain</b> it originates from; the signature covers all the content and some RFC 5322 headers. At the receiving end the MDA gets the public key through DNS and verifies, so mail claiming a domain it did not come from fails and can be rejected. S/MIME and PGP instead sign with the <b>originator’s</b> private key. Reasons for DKIM:</p>
+  <ol class="props">
+    <li>S/MIME needs both sender and receiver to use it; most mail sent and received does not.</li>
+    <li>S/MIME signs only the content, so RFC 5322 header information about origin can be compromised.</li>
+    <li>DKIM is not implemented in MUAs, so the user need not do anything.</li>
+    <li>DKIM applies to all mail from cooperating domains.</li>
+    <li>Good senders can prove they sent a message, and forgers cannot masquerade as them.</li>
+  </ol>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Figure · DKIM deployment and functional flow</span><span class="pill">Figures 19.10–19.11</span></div>
+    <div class="lab-b">
+      <div class="pvar"><span class="seg" role="group" aria-label="Case"><button type="button" data-dk="pass" aria-pressed="true">Signature verifies</button><button type="button" data-dk="fail" aria-pressed="false">Signature fails</button><button type="button" data-dk="none" aria-pressed="false">Message unsigned</button></span></div>
+      <div class="figure"><svg id="dk-svg" viewBox="0 0 712 262" width="712" role="img" aria-label="DKIM: the signing ADMD signs with a private key from its key store; the verifying ADMD retrieves the public key from DNS, verifies, and feeds the result to message filtering."></svg></div>
+      <div id="dk-out" class="out"></div>
+    </div>
+  </div>
+  <ul class="props">
+    <li><b>Signing</b> is done by an authorized module in the signing ADMD (MUA, MSA or MTA), using private information from a <b>key store</b>. The default algorithm is RSA with SHA-256; RSA with SHA-1 may be used.</li>
+    <li><b>Verifying</b> is done in the verifying ADMD (MTA, MDA or MUA) using public information from the key store, retrieved through DNS. The flow may cross other ADMDs on the handling path.</li>
+  </ul>
+
+  <h3>The DKIM-Signature header</h3>
+  <p>The signature is inserted as an additional RFC 5322 header starting with <code>Dkim-Signature</code>. Each field is a tag code, “=”, the value, and a semicolon.</p>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Tag</th><th class="l">Meaning</th><th class="l">In the book’s example</th></tr>
+    <tr><td class="l"><code>v=</code></td><td class="l">DKIM version.</td><td class="l"><code>1</code></td></tr>
+    <tr><td class="l"><code>a=</code></td><td class="l">Signing algorithm: rsa-sha1 or rsa-sha256.</td><td class="l"><code>rsa-sha256</code></td></tr>
+    <tr><td class="l"><code>c=</code></td><td class="l">Canonicalization method for header/body.</td><td class="l"><code>relaxed/relaxed</code></td></tr>
+    <tr><td class="l"><code>d=</code></td><td class="l"><b>Signing Domain IDentifier (SDID)</b>: identity of the responsible person or organization.</td><td class="l"><code>gmail.com</code></td></tr>
+    <tr><td class="l"><code>s=</code></td><td class="l"><b>Selector</b>: names a key, so one domain can use different keys (expiring old keys, separate departmental signing). The verifier uses it to fetch the right key.</td><td class="l"><code>gamma</code></td></tr>
+    <tr><td class="l"><code>h=</code></td><td class="l">Signed header fields: colon-separated list of header names given to the signing algorithm.</td><td class="l"><code>domainkey-signature:mime-version:…</code></td></tr>
+    <tr><td class="l"><code>bh=</code></td><td class="l">Hash of the canonicalized body; helps diagnose verification failures.</td><td class="l"><code>5mZvQDyC…</code></td></tr>
+    <tr><td class="l"><code>b=</code></td><td class="l">The signature data in base64: the encrypted hash code.</td><td class="l"><code>PcUvPSDy…</code></td></tr>
+  </table></div>
+  <div class="def"><b>Canonicalization</b> — performed on header and body before signing, to cope with minor changes en route (character encoding, trailing white space, “folding” and “unfolding” of header lines). It is a minimal transformation for signing only: the message itself is not changed, so the verifier canonicalizes again. DKIM defines <b>simple</b> and <b>relaxed</b> algorithms for headers and for the body: simple tolerates almost no modification, relaxed tolerates common modifications.</div>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Canonicalize the body and compute bh=</span><span class="pill">RFC 6376 §3.4, §3.7</span></div>
+    <div class="lab-b">
+      <div class="pvar"><span class="seg" role="group" aria-label="Body canonicalization"><button type="button" data-bc="simple" aria-pressed="true">simple</button><button type="button" data-bc="relaxed" aria-pressed="false">relaxed</button></span></div>
+      <div class="controls"><label class="grow">Message body (as sent)<textarea id="bc-in" spellcheck="false"></textarea></label></div>
+      <div class="controls tryset" role="group" aria-label="Changes made in transit"><span class="cap" style="margin:0">A relay changes it:</span><button type="button" class="ghost" id="bc-ws">adds trailing spaces</button><button type="button" class="ghost" id="bc-tab">turns spaces into a tab</button><button type="button" class="ghost" id="bc-nl">adds blank lines at end</button><button type="button" class="ghost" id="bc-word">changes a word</button><button type="button" class="ghost" id="bc-reset">reset</button></div>
+      <div id="bc-out" class="out"></div>
+    </div>
+  </div>
+  <p class="cap">Simple and relaxed body rules from RFC 6376: simple removes empty lines at the end; relaxed also deletes white space at line ends and reduces runs of white space inside lines to one space. <code>bh</code> = base64(SHA-256(canonical body)), computed in your browser. · shows a space, → a tab, ⏎ a CRLF.</p>
+</section>
+
+<!-- ============ 19.10 ============ -->
+<section class="unit" id="s1910">
+  <h2><span class="sec">19.10</span>Domain-Based Message Authentication, Reporting, and Conformance</h2>
+  <p class="why">SPF and DKIM let senders advise receivers through DNS, but neither tells a receiver whether they are in use, and neither tells the sender how well they work.</p>
+  <div class="def"><b>DMARC</b> (RFC 7489) — lets email senders specify a policy for how their mail should be handled, the types of reports receivers can send back, and how often. It works with SPF and DKIM, standardizing how receivers perform email authentication with them.</div>
+  <p>Example of the gap: a message arrives with no DKIM signature. DKIM alone cannot tell the receiver whether the message is authentic from a sender that does not use DKIM, or a spoof.</p>
+  <h3>Identifier alignment</h3>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Mechanism</th><th class="l">Authenticates</th></tr>
+    <tr><td class="l"><b>DKIM</b></td><td class="l">The domain that affixed a signature (<code>d=</code>).</td></tr>
+    <tr><td class="l"><b>SPF</b></td><td class="l">The SMTP envelope (RFC 5321): the MAIL FROM domain, the HELO domain, or both. Usually not visible to the end user.</td></tr>
+    <tr><td class="l"><b>DMARC</b></td><td class="l">The <b>From</b> domain in the message header (RFC 5322).</td></tr>
+  </table></div>
+  <p>The RFC 5322 From field is DMARC’s central identity because it is a required header (always present) and most MUAs display it as the originator. End users identify the source by it, so it is a prime target for abuse. DMARC requires the From domain to <b>match (be aligned with)</b> an authenticated identifier: the DKIM signing domain, or the SPF-authenticated domain.</p>
+  <div class="lab">
+    <div class="lab-h"><span class="t">Lab · Alignment and DMARC result</span><span class="pill">Table 19.8</span></div>
+    <div class="lab-b">
+      <div class="controls">
+        <label>RFC 5322 From<input type="text" id="dm-from" value="announce@example.org" spellcheck="false"></label>
+        <label>SPF MAIL FROM domain<input type="text" id="dm-mf" value="smtp.example.org" spellcheck="false"></label>
+        <label>SPF result<select id="dm-spf"><option value="pass">pass</option><option value="fail">fail</option></select></label>
+        <label>DKIM d=<input type="text" id="dm-d" value="mailer.example.net" spellcheck="false"></label>
+        <label>DKIM result<select id="dm-dkim"><option value="pass">pass</option><option value="fail">fail</option></select></label>
+      </div>
+      <div class="controls">
+        <label>p=<select id="dm-p"><option>none</option><option selected>quarantine</option><option>reject</option></select></label>
+        <label>aspf=<select id="dm-aspf"><option value="r">r (relaxed)</option><option value="s">s (strict)</option></select></label>
+        <label>adkim=<select id="dm-adkim"><option value="r">r (relaxed)</option><option value="s">s (strict)</option></select></label>
+        <label>pct=<input type="number" id="dm-pct" value="100" min="0" max="100"></label>
+      </div>
+      <div id="dm-out" class="out"></div>
+    </div>
+  </div>
+  <p class="cap">Relaxed alignment compares organizational domains; the lab takes the last two labels as the organizational domain. Real receivers use the Public Suffix List (RFC 7489 §3.2), so names such as example.co.uk are handled differently.</p>
+
+  <h3>DMARC on the sender side</h3>
+  <p>A DMARC sender must also use SPF, DKIM or both. It posts a policy in a DNS <b>TXT</b> RR as semicolon-separated tag=value pairs, and sets up addresses to receive aggregate and forensic reports. Those addresses are published unencrypted in DNS, so they invite UBE; the poster needs abuse countermeasures.</p>
+  <div class="tbl"><table class="modes">
+    <tr><th class="l">Tag (Table 19.8)</th><th class="l">Description</th></tr>
+    <tr><td class="l"><code>v=</code> version</td><td class="l">Must be first; always <code>DMARC1</code>.</td></tr>
+    <tr><td class="l"><code>p=</code> policy</td><td class="l">Mandatory: <code>none</code> (no specific action on failing mail), <code>quarantine</code> (treat as suspicious) or <code>reject</code> (reject, preferably during the SMTP transaction). Lets the policy tighten gradually.</td></tr>
+    <tr><td class="l"><code>aspf=</code></td><td class="l"><code>r</code> (default) relaxed or <code>s</code> strict SPF alignment. Strict: exact match of From domain and MAIL FROM domain. Relaxed: only the domains need be in alignment (smtp.example.org and announce@example.org align, but are not a strict match).</td></tr>
+    <tr><td class="l"><code>adkim=</code></td><td class="l">Optional; <code>r</code> (default) or <code>s</code>, same idea between the From domain and the DKIM <code>d=</code> domain.</td></tr>
+    <tr><td class="l"><code>fo=</code></td><td class="l">Optional failure reporting options, ignored without <code>ruf</code>: <code>0</code> report if all mechanisms fail to give an aligned pass; <code>1</code> if any gives something other than an aligned pass; <code>d</code> DKIM failure report; <code>s</code> SPF failure report. May be combined.</td></tr>
+    <tr><td class="l"><code>ruf=</code></td><td class="l">Optional (requires <code>fo</code>): URIs (mailto:) for forensic reports on message-specific failures.</td></tr>
+    <tr><td class="l"><code>rua=</code></td><td class="l">Optional: URIs (mailto:) for aggregate feedback, sent at the <code>ri</code> interval.</td></tr>
+    <tr><td class="l"><code>ri=</code></td><td class="l">Optional reporting interval; default 86400 seconds.</td></tr>
+    <tr><td class="l"><code>pct=</code></td><td class="l">Optional, default 100: percentage of the sender’s mail subject to the policy, so enforcement can ramp up before committing.</td></tr>
+    <tr><td class="l"><code>sp=</code></td><td class="l">Optional, default none: policy for all identified subdomains, same values as <code>p</code>.</td></tr>
+  </table></div>
+  <p>Once the DMARC RR is posted, the sending side typically processes mail as follows:</p>
+  <ol class="props">
+    <li>The domain owner publishes an SPF policy, configures DKIM signing, and publishes a DMARC message-handling policy.</li>
+    <li>The author hands a message to the domain owner’s designated mail submission service.</li>
+    <li>The submission service passes details to the DKIM signing module, which signs.</li>
+    <li>The submission service relays the signed message to its transport service for routing.</li>
+  </ol>
+  <h3>DMARC on the receiver side</h3>
+  <div class="lab proto" data-protos="dmarc" data-name="DMARC receiver processing"></div>
+  <div class="note"><span class="t">Correction</span>Step 6 in the book reads “the RFC 5321 From”; the identifier being aligned is the RFC 5322 From extracted in step 2.</div>
+
+  <h3>DMARC reports</h3>
+  <div class="cmp">
+    <div><h4>Aggregate reports</h4><p>Sent periodically by receivers, with figures for successful and failed authentications: the sender’s policy for the interval; disposition (delivered, quarantined, rejected); SPF and DKIM results per identifier; whether identifiers aligned; results by sender subdomain; the sending/receiving domain pair; the policy applied and whether it differs from the one requested; the number of successful authentications; totals for all messages.</p></div>
+    <div><h4>Forensic reports</h4><p>Help refine SPF and DKIM and alert the sender that its domain is used in phishing/spam. Like aggregate reports, plus: as much of the message and header as reasonable, with an Identity-Alignment field; optional Delivery-Result; DKIM Domain, Identity and selector (and optionally canonical header and body); and an extra failure type for when mechanisms fail to give aligned identifiers.</p></div>
+  </div>
+  <div class="note"><span class="t">SP 800-177 rollout</span>Start with <code>p=none</code>, so failing mail is handled by the receiver’s local policy. As aggregate reports show how well outside receivers authenticate your mail, move to <code>p=reject</code>. Receivers, from their own traffic analysis, decide whether a sender’s p=reject is trustworthy enough to act on.</div>
+</section>
+
+<!-- ============ Key terms ============ -->
+<section class="unit" id="terms">
+  <h2>Key Terms</h2>
+  <p class="why">The key-term list of Chapter 19, plus the intermediate terms it depends on, one line each.</p>
+  <h3>Architecture and formats</h3>
+  <dl class="gloss">
+    <dt>Electronic mail</dt><dd>The most heavily used network-based application in distributed environments.</dd>
+    <dt>Message User Agent (MUA)</dt><dd>Acts for users within the email service; formats, submits, displays mail.</dd>
+    <dt>Message Handling Service (MHS)</dt><dd>The transfer world: MTAs that carry a message from one user to others.</dd>
+    <dt>Mail Submission Agent (MSA)</dt><dd>Accepts mail from an MUA and enforces domain policies and standards.</dd>
+    <dt>Message Transfer Agents (MTA)</dt><dd>Relays mail one application-level hop; adds trace information.</dd>
+    <dt>Mail Delivery Agent (MDA)</dt><dd>Moves the message from the MHS to the Message Store.</dd>
+    <dt>Message Store</dt><dd>Long-term storage the MUA reads, locally or via POP/IMAP.</dd>
+    <dt>Administrative management domain (ADMD)</dt><dd>An Internet email provider with its own policies and trust decisions.</dd>
+    <dt>Domain Name System (DNS)</dt><dd>Directory service mapping host names to numerical addresses.</dd>
+    <dt>Simple Mail Transfer Protocol (SMTP)</dt><dd>Text command/reply protocol relaying enveloped messages between MTAs (RFC 5321).</dd>
+    <dt>Envelope</dt><dd>Information needed for transmission and delivery, separate from the message contents.</dd>
+    <dt>STARTTLS</dt><dd>SMTP extension that runs SMTP over TLS for confidentiality and authentication.</dd>
+    <dt>SUBMISSION</dt><dd>SMTP-derived MUA-to-MSA standard on a separate port, with access authorization.</dd>
+    <dt>Post Office Protocol (POP3)</dt><dd>Client downloads (and deletes) mail from a server; TCP port 110.</dd>
+    <dt>Internet Mail Access Protocol (IMAP)</dt><dd>More capable mail access with stronger authentication; TCP port 143.</dd>
+    <dt>RFC 5322</dt><dd>Internet Message Format: header lines, blank line, body.</dd>
+    <dt>Multipurpose Internet Mail Extensions (MIME)</dt><dd>RFC 5322 extension: new headers, content types, transfer encodings.</dd>
+    <dt>Content type</dt><dd>Type/subtype declaring what the body’s data is.</dd>
+    <dt>Transfer encoding</dt><dd>Transformation making the body safe for mail transport.</dd>
+    <dt>base64</dt><dd>Radix-64 encoding: 3 octets to 4 printable ASCII characters.</dd>
+    <dt>Quoted-printable</dt><dd>Hex-escapes nonsafe characters; mostly-ASCII text stays readable.</dd>
+    <dt>Canonical form</dt><dd>Content format standardized between systems, as opposed to native form.</dd>
+  </dl>
+  <h3>Security mechanisms</h3>
+  <dl class="gloss">
+    <dt>S/MIME</dt><dd>Security enhancement to MIME: signature, encryption, compression, 7-bit encoding.</dd>
+    <dt>Cryptographic Message Syntax (CMS)</dt><dd>RFC 5652 syntax to sign, digest, authenticate or encrypt content.</dd>
+    <dt>Session key</dt><dd>One-time symmetric content-encryption key, sent encrypted with the recipient’s public key.</dd>
+    <dt>Detached signature</dt><dd>Signature stored and transmitted separately from the message it signs.</dd>
+    <dt>Clear signing</dt><dd>multipart/signed: readable by non-S/MIME clients, with a detached signature part.</dd>
+    <dt>PKCS object</dt><dd>S/MIME’s processed form of a MIME entity, wrapped back in MIME.</dd>
+    <dt>Pretty Good Privacy (PGP)</dt><dd>Email security with S/MIME-like functions; standardized as OpenPGP.</dd>
+    <dt>Trust</dt><dd>Basis for accepting a public key: a CA chain (S/MIME) or the Web-of-Trust (PGP).</dd>
+    <dt>Web-of-Trust</dt><dd>A key is trusted if signed by another key the recipient trusts.</dd>
+    <dt>DNS Security Extensions (DNSSEC)</dt><dd>Signed DNS data: origin authentication and integrity of RRs.</dd>
+    <dt>Resource record (RR) / RRset</dt><dd>One DNS data item / all RRs with the same label, class and type.</dd>
+    <dt>Trust anchor</dt><dd>The public key of the trusted zone where a chain of trust starts.</dd>
+    <dt>DNS-based Authentication of Named Entities (DANE)</dt><dd>Binds X.509 certificates to DNS names using DNSSEC.</dd>
+    <dt>TLSA record</dt><dd>DANE RR: certificate usage, selector, matching type, association data.</dd>
+    <dt>Sender Policy Framework (SPF)</dt><dd>DNS TXT policy listing hosts allowed to send for a domain.</dd>
+    <dt>Unsolicited bulk email (UBE)</dt><dd>Spam.</dd>
+    <dt>DomainKeys Identified Mail (DKIM)</dt><dd>Domain-level signature over body and selected headers, key in DNS.</dd>
+    <dt>Signing Domain IDentifier (SDID)</dt><dd>The <code>d=</code> domain responsible for a DKIM signature.</dd>
+    <dt>Selector</dt><dd>The <code>s=</code> name of the key used, so a domain can have many keys.</dd>
+    <dt>Canonicalization</dt><dd>Minimal transformation (simple or relaxed) before signing and verifying.</dd>
+    <dt>Domain-based Message Authentication, Reporting, and Conformance (DMARC)</dt><dd>Sender policy and reporting on top of SPF and DKIM.</dd>
+    <dt>Identifier alignment</dt><dd>The RFC 5322 From domain matches the SPF or DKIM authenticated domain.</dd>
+  </dl>
+</section>
+
+<!-- ============ Review ============ -->
+<section class="unit" id="review">
+  <h2>Review Questions</h2>
+  <p class="why">Review questions 19.1–19.9 from the book. Answer first, then open to check.</p>
+  <div class="rv-tools" role="group" aria-label="Review answers"><button type="button" data-rv="open">Expand all</button><button type="button" data-rv="close">Collapse all</button><span class="rv-count" aria-live="polite"></span></div>
+  <details><summary>19.1 What types of interoperability issues are involved in internet mail architecture and how are they handled?</summary><ul class="props"><li><b>User to user</b>: the author’s MUA formats the message (RFC 5322, MIME) so the recipient’s MUA can display it.</li><li><b>MUA to MHS</b>: when a message is posted (ESMTP/SUBMISSION from MUA to MSA) and when it is delivered (MDA to Message Store, then IMAP or POP to the recipient’s MUA).</li><li><b>Among MTAs</b> along the transfer path: SMTP.</li></ul></details>
+  <details><summary>19.2 What are the SMTP and MIME standards?</summary><ul class="props"><li><b>SMTP</b> (RFC 821, now RFC 5321): the protocol that encapsulates a message in an envelope and relays it from source to destination through MTAs, by text commands and replies over TCP.</li><li><b>MIME</b> (RFCs 2045–2049): an extension to the RFC 5322 message format that adds five header fields, standardized content types and transfer encodings, to overcome SMTP/5322 limits such as 7-bit ASCII only and no binary objects.</li></ul></details>
+  <details><summary>19.3 What is the difference between a MIME content type and a MIME transfer encoding?</summary><p>The content type (Content-Type, type/subtype) describes what the data in the body are, so the receiving agent can choose how to present them. The transfer encoding (Content-Transfer-Encoding) describes the transformation applied to represent the body in a form acceptable for mail transport, e.g., base64 or quoted-printable.</p></details>
+  <details><summary>19.4 Briefly explain base64 encoding.</summary><p>The input is taken three octets (24 bits) at a time and split into four 6-bit groups; each 6-bit value selects one of 64 printable ASCII characters. So every 3 octets of binary become 4 characters, which pass through mail transport programs unchanged. The input is converted blindly, whatever its content.</p></details>
+  <details><summary>19.5 Why is base64 conversion useful for an email application?</summary><p>Signing and encryption produce arbitrary 8-bit binary octets, but many mail systems accept only ASCII text. Base64 turns the binary into printable ASCII that mail-transport programs will not alter, so encrypted or signed messages arrive intact.</p></details>
+  <details><summary>19.6 What is S/MIME?</summary><p>Secure/Multipurpose Internet Mail Extension: a security enhancement to the MIME email format standard, based on RSA Data Security technology, providing digital signatures, encryption, compression and email-compatible encoding for MIME entities.</p></details>
+  <details><summary>19.7 What are the four principal services provided by S/MIME?</summary><ul class="props"><li><b>Authentication</b>: digital signature, typically RSA with SHA-256.</li><li><b>Confidentiality</b>: message encryption, typically AES-128/CBC with a one-time key sent under RSA.</li><li><b>Compression</b>.</li><li><b>Email compatibility</b>: radix-64 (base64) conversion to ASCII.</li></ul></details>
+  <details><summary>19.8 What is the utility of a detached signature?</summary><ul class="props"><li>A user can keep a separate log of signatures of all messages sent or received.</li><li>A detached signature of an executable program can detect later virus infection.</li><li>When several parties must sign a document, such as a legal contract, each signature is independent and applies only to the document; otherwise signatures would have to be nested.</li></ul></details>
+  <details><summary>19.9 What is DKIM?</summary><p>DomainKeys Identified Mail (RFC 6376): a specification for cryptographically signing email with a private key of the originating administrative domain, so the domain claims responsibility for the message. Recipients retrieve the public key from the signer’s domain through DNS and verify. It is transparent to users, covers the body and selected RFC 5322 headers, and applies to all mail from cooperating domains.</p></details>
+</section>
+
+<!-- ============ Sources ============ -->
+<section class="unit" id="res">
+  <h2><span class="sec">Ref</span>References / Sources</h2>
+  <ul>
+    <li>W. Stallings, <i>Cryptography and Network Security: Principles and Practice</i>, 7th ed., Global Edition, Pearson, 2017. Chapter 19, pp. 612–660. All content not marked otherwise.</li>
+    <li><b>In the book:</b> Chapter 6 (AES, CBC), Chapter 9 (RSA), Chapter 11 (SHA), Chapter 13 (digital signatures), Chapter 14 (X.509, PKI, key distribution), Chapter 17 (TLS); Appendix P (PGP) and Appendix X (radix-64), online.</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc5598" target="_blank" rel="noopener">RFC 5598, Internet Mail Architecture</a>; <a href="https://www.rfc-editor.org/rfc/rfc5321" target="_blank" rel="noopener">RFC 5321, SMTP</a>; <a href="https://www.rfc-editor.org/rfc/rfc5322" target="_blank" rel="noopener">RFC 5322, Internet Message Format</a>.</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc3207" target="_blank" rel="noopener">RFC 3207, SMTP Service Extension for Secure SMTP over TLS</a> — EHLO/STARTTLS/220 sequence and the fresh EHLO after the handshake, used in the STARTTLS stepper.</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc6409" target="_blank" rel="noopener">RFC 6409, Message Submission for Mail</a>.</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc2045" target="_blank" rel="noopener">RFC 2045, MIME Part One</a> — base64 alphabet and padding, quoted-printable rules (=XX escapes, 76-character soft line breaks, trailing white space) used in the encoding lab; <a href="https://www.rfc-editor.org/rfc/rfc2046" target="_blank" rel="noopener">RFC 2046, Media Types</a>.</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc5751" target="_blank" rel="noopener">RFC 5751, S/MIME 3.2 Message Specification</a>; <a href="https://www.rfc-editor.org/rfc/rfc5652" target="_blank" rel="noopener">RFC 5652, CMS</a>; <a href="https://www.rfc-editor.org/rfc/rfc2634" target="_blank" rel="noopener">RFC 2634, Enhanced Security Services</a>.</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc4880" target="_blank" rel="noopener">RFC 4880, OpenPGP Message Format</a>.</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc4033" target="_blank" rel="noopener">RFC 4033</a>, <a href="https://www.rfc-editor.org/rfc/rfc4034" target="_blank" rel="noopener">RFC 4034</a>, <a href="https://www.rfc-editor.org/rfc/rfc4035" target="_blank" rel="noopener">RFC 4035</a>, DNSSEC.</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc6698" target="_blank" rel="noopener">RFC 6698, DANE TLSA</a> — usage/selector/matching-type codes, presentation format and <code>_port._tcp</code> owner names; <a href="https://www.rfc-editor.org/rfc/rfc7218" target="_blank" rel="noopener">RFC 7218, Acronyms for DANE</a> (PKIX-TA … DANE-EE).</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc7208" target="_blank" rel="noopener">RFC 7208, SPF</a> — left-to-right evaluation and the neutral default result used in the SPF lab.</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc6376" target="_blank" rel="noopener">RFC 6376, DKIM Signatures</a> — simple and relaxed body canonicalization and the body hash used in the canonicalization lab; <a href="https://www.rfc-editor.org/rfc/rfc4686" target="_blank" rel="noopener">RFC 4686, Threats Motivating DKIM</a>.</li>
+    <li><a href="https://www.rfc-editor.org/rfc/rfc7489" target="_blank" rel="noopener">RFC 7489, DMARC</a> — organizational domains and relaxed/strict alignment used in the alignment lab.</li>
+    <li>NIST SP 800-177, <a href="https://csrc.nist.gov/pubs/sp/800/177/r1/final" target="_blank" rel="noopener"><i>Trustworthy Email</i></a> (the book cites the 2015 version).</li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto" target="_blank" rel="noopener">MDN, SubtleCrypto</a> — browser API used by the S/MIME, TLSA and DKIM labs.</li>
+  </ul>
+  <footer>Content follows W. Stallings, <i>Cryptography and Network Security: Principles and Practice</i>, 7th ed., Global Edition, Chapter 19. Protocol steppers show messages as the book’s figures name them; DNS data in the SPF and DNSSEC figures are simulated. The cryptographic labs run real RSA, AES and SHA-256 in your browser; nothing is sent anywhere, and the keys are for study only.</footer>
+</section>
+</main>
+</div>
+<script>
+/* ===== Unit 12: protocol steppers, figures and labs ===== */
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const on=(id,ev,f)=>{const e=$(id);if(e)e.addEventListener(ev,f)};
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const kv=rows=>'<div class="kv">'+rows.map(([k,v])=>'<span class="k">'+k+'</span><span class="v">'+v+'</span>').join('')+'</div>';
+const res=(ok,t)=>'<span class="res '+(ok?'ok':'no')+'">'+t+'</span>';
+const err=t=>'<p class="err">'+t+'</p>';
+const hex=b=>Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');
+const SVGNS='http://www.w3.org/2000/svg';
+
+/* ---------- subscript mini-syntax (from Unit 11): X_{ab} always; X_ab only after a capital letter ---------- */
+function segs(s){const out=[];let i=0,buf='';
+  while(i<s.length){const c=s[i];
+    if(c==='_'&&s[i+1]==='{'){if(buf){out.push({t:buf});buf=''}const j=s.indexOf('}',i);out.push({t:s.slice(i+2,j),sub:true});i=j+1}
+    else if(c==='_'&&i>0&&/[A-Z]/.test(s[i-1])&&/[a-z0-9]/.test(s[i+1]||'')){if(buf){out.push({t:buf});buf=''}i++;let sb='';
+      while(i<s.length&&/[a-z0-9]/.test(s[i]))sb+=s[i++];out.push({t:sb,sub:true})}
+    else{buf+=c;i++}}
+  if(buf)out.push({t:buf});return out}
+
+
+/* ---------- Unit 12 protocol definitions (messages as the book's figures name them) ---------- */
+const P={
+smtp:{fig:'Figure 19.2',title:'Basic transaction',lanes:['Client bar.com','Server foo.com'],sum:'The client has already opened a TCP connection to port 25 on the server. Every command gets exactly one reply with a three-digit code. Press Next to step through.',groups:[[0,2,'connection + HELO'],[3,10,'envelope'],[11,14,'message data'],[15,16,'close']],m:[
+ [1,0,'220 foo.com Simple Mail Transfer Service Ready','The TCP connection makes the server activate SMTP and send a 220 reply.'],
+ [0,1,'HELO bar.com','Identifies the sending domain.'],
+ [1,0,'250 OK','The server acknowledges and accepts.'],
+ [0,1,'MAIL FROM:<Smith@bar.com>','Identifies the originator of the message: the envelope sender.'],
+ [1,0,'250 OK',''],
+ [0,1,'RCPT TO:<Jones@foo.com>','The message is for three users on foo.com; each is named in a separate RCPT command.'],
+ [1,0,'250 OK','The server has a mailbox for Jones.'],
+ [0,1,'RCPT TO:<Green@foo.com>',''],
+ [1,0,'550 No such user here','The server has no information on Green.',{atk:true}],
+ [0,1,'RCPT TO:<Brown@foo.com>',''],
+ [1,0,'250 OK','At least one recipient was verified, so the client goes on to send the message.'],
+ [0,1,'DATA','Checks that the server is ready for the data.'],
+ [1,0,'354 Start mail input; end with <crlf>.<crlf>',''],
+ [0,1,'Blah blah blah … <crlf>.<crlf>','The message text (RFC 5322 header and body). A line holding only a period ends the data.'],
+ [1,0,'250 OK','The server has received all the data.'],
+ [0,1,'QUIT',''],
+ [1,0,'221 foo.com Service closing transmission channel','The server closes the connection.']]},
+starttls:{fig:'RFC 3207',title:'With STARTTLS',lanes:['Client bar.com','Server foo.com'],sum:'The same transaction upgraded to TLS on the same port. Message wording follows RFC 3207.',groups:[[0,2,'cleartext'],[3,5,'upgrade'],[6,8,'inside TLS']],m:[
+ [1,0,'220 foo.com ESMTP service ready',''],
+ [0,1,'EHLO bar.com','The extended (ESMTP) greeting asks the server to list the extensions it supports.'],
+ [1,0,'250-foo.com … 250 STARTTLS','The server advertises STARTTLS. An attacker who strips this line silently keeps the session in cleartext: the downgrade that DANE (19.7) prevents.'],
+ [0,1,'STARTTLS','Issued in the SMTP command stream.'],
+ [1,0,'220 Ready to start TLS',''],
+ [0,1,'TLS handshake (Unit 11)','Client and server set up a TLS connection; the server’s certificate can be checked against a TLSA record.'],
+ [0,1,'EHLO bar.com','RFC 3207: the client discards what it learned before TLS and greets again, now protected.'],
+ [1,0,'250 …',''],
+ [0,1,'MAIL FROM … RCPT TO … DATA … QUIT','The rest of the transaction, envelope and message, travels encrypted. Protection covers this hop only.']]},
+dns:{fig:'Figure 19.6',title:'Name resolution',lanes:['User program','Name resolver','Name server','Foreign name server'],w:660,sum:'The five steps of DNS operation. The name server and the foreign name server each keep a cache and a database.',m:[
+ [0,1,'query: mail.example.org ?','Step 1: a user program asks for the IP address of a domain name.',{n:1}],
+ [1,2,'query','Step 2: a resolver module in the local host or local ISP queries a local name server in the same domain.',{n:2}],
+ [2,2,'look in database / cache','Step 3: if the name is in its local database or cache, the name server returns the address directly.',{n:3}],
+ [2,3,'query','Otherwise it queries other available name servers, going to the root server if necessary.',{n:''}],
+ [3,2,'response (RR with TTL)','',{n:''}],
+ [2,2,'cache the mapping','Step 4: the local name server stores the name/address mapping in its cache, keeping it for up to the time-to-live given in the retrieved RR.',{n:4}],
+ [2,1,'response','',{n:''}],
+ [1,0,'IP address or error','Step 5: the user program gets the IP address or an error message.',{n:5}]]},
+spfenv:{fig:'Figure 19.8',title:'Envelope vs. header',lanes:['Sending MTA','Receiving MTA'],sum:'The sending MTA is mta.example.net at IP address 192.168.0.1. Watch which domain each identifier names.',groups:[[0,2,'HELO identity'],[3,6,'SMTP envelope (RFC 5321)'],[7,10,'message header (RFC 5322)']],m:[
+ [1,0,'220 foo.com Simple Mail Transfer Service Ready',''],
+ [0,1,'HELO mta.example.net','The HELO identity: the sending MTA’s own domain.'],
+ [1,0,'250 OK',''],
+ [0,1,'MAIL FROM:<alice@example.org>','The envelope sender claims example.org. SPF asks example.org’s SPF record whether 192.168.0.1 may send for it, and can do so now, before any content arrives.'],
+ [1,0,'250 OK',''],
+ [0,1,'RCPT TO:<Jones@foo.com>',''],
+ [1,0,'250 OK',''],
+ [0,1,'DATA',''],
+ [1,0,'354 Start mail input; end with <crlf>.<crlf>',''],
+ [0,1,'To: bob@foo.com · From: alice.sender@example.net','The From the user will see names example.net, a different domain from the envelope. SPF never looks at this header; DMARC (19.10) does.',{atk:true}],
+ [0,1,'Date: Today · Subject: Meeting Today …','']]},
+dmarc:{fig:'Section 19.10',title:'Receiver steps',lanes:['Sender side','Receiver','DNS'],nonum:true,sum:'The typical order of DMARC processing at the receiver (Figure 19.12 shows the same flow).',m:[
+ [0,1,'message arrives','Possibly via other relays, at the receiver’s transport service.'],
+ [1,1,'1 · standard validation','IP blocklists, domain reputation lists, rate limits for a source.'],
+ [1,1,'2 · extract RFC 5322 From','It must hold a single, valid address, or the mail is refused as an error.'],
+ [1,2,'3 · DMARC record?','Queried for the sending domain. If none exists, DMARC processing ends.'],
+ [2,1,'TXT v=DMARC1; p=…',''],
+ [1,2,'4 · DKIM key (d=, s=)','DKIM signature checks; if there is more than one signature, one must verify.'],
+ [2,1,'DKIM public key',''],
+ [1,2,'5 · SPF record?','SPF validation for the sending domain.'],
+ [2,1,'TXT v=spf1 …',''],
+ [1,1,'6 · identifier alignment','The From domain is compared with the SPF and DKIM authenticated domains.'],
+ [1,1,'7–8 · DMARC result','Results and the Author’s domain go to the DMARC module. With no policy for that domain it retries with the organizational domain. Policy + results give pass or fail, and may trigger one of the two report types.'],
+ [1,1,'9 · deliver or act','The message goes to the inbox, or local policy is applied (quarantine, reject) according to the result.'],
+ [1,0,'10 · feedback data','When requested, data from the delivery session is collected for reports to the sender.']]}
+};
+const html=s=>segs(s).map(g=>g.sub?'<sub>'+esc(g.t)+'</sub>':esc(g.t)).join('');
+function svgText(s){let o='',down=false;segs(s).forEach(g=>{
+  if(g.sub){o+='<tspan dy="3" font-size="8.5">'+esc(g.t)+'</tspan>';down=true}
+  else{o+='<tspan'+(down?' dy="-3"':'')+'>'+esc(g.t)+'</tspan>';down=false}});return o}
+const textW=s=>segs(s).reduce((w,g)=>w+g.t.length*(g.sub?5.1:6.6),0);
+
+/* ---------- stepper ---------- */
+function drawProto(p,i){
+  const W=p.w||(p.lanes.length>3?660:620),n=p.lanes.length,mx=W/(2*n)+14,sp=(W-2*mx)/(n-1);
+  const lx=k=>mx+k*sp, grp=p.groups||[];
+  const hw=Math.min(150,sp-10),hl=p.lanes.map(l=>{if(textW(l)*1.12<=hw-14)return [l];const w=l.split(' ');let best=null;
+    for(let c=1;c<w.length;c++){const a=w.slice(0,c).join(' '),b=w.slice(c).join(' '),m=Math.max(textW(a),textW(b));if(!best||m<best[2])best=[a,b,m]}
+    return best?[best[0],best[1]]:[l]}),two=hl.some(x=>x.length>1),hh=two?42:30;
+  let y=8+hh+26;const ys=[];
+  p.m.forEach((m,k)=>{if(grp.some(g=>g[0]===k))y+=26;ys.push(y);y+=m[0]===m[1]?50:40});
+  /* Unit 11: lanes stop just below the last message (or the last phase box); phase labels are drawn after the lanes so they sit on top */
+  const L=p.m.length-1;let end=ys[L]+(p.m[L][0]===p.m[L][1]?26:14),s='',gl='';
+  grp.forEach(g=>{const y0=ys[g[0]]-38,y1=ys[g[1]]+(p.m[g[1]][0]===p.m[g[1]][1]?26:12);end=Math.max(end,y1);
+    s+='<rect class="gb" x="2" y="'+y0+'" width="'+(W-4)+'" height="'+(y1-y0)+'" rx="6"/>';
+    gl+='<rect class="glb" x="5" y="'+(y0+2)+'" width="'+(g[2].length*6.3+8)+'" height="14" rx="3"/><text class="gl" x="9" y="'+(y0+12)+'">'+esc(g[2])+'</text>'});
+  const H=end+6;
+  p.lanes.forEach((l,k)=>{const x=lx(k),L=hl[k];s+='<line class="ll" x1="'+x+'" y1="'+(10+hh)+'" x2="'+x+'" y2="'+end+'"/>'+
+    '<rect class="lh" x="'+(x-hw/2)+'" y="8" width="'+hw+'" height="'+hh+'" rx="5"/>'+
+    (L.length>1?'<text class="lt" x="'+x+'" y="25" text-anchor="middle">'+svgText(L[0])+'</text><text class="lt" x="'+x+'" y="40" text-anchor="middle">'+svgText(L[1])+'</text>'
+      :'<text class="lt" x="'+x+'" y="'+(8+hh/2+4)+'" text-anchor="middle">'+svgText(L[0])+'</text>')});
+  s+=gl;
+  p.m.forEach((m,k)=>{const st=i<0||k<i?'':k===i?' cur':' todo',atk=m[4]&&m[4].atk?' atk':'',x1=lx(m[0]),x2=lx(m[1]),yy=ys[k];
+    const mk=k===i?'ahm':atk?'ahb':'ah';const lab=(m[4]&&m[4].short)||m[2];
+    const nn=(m[4]&&m[4].n!=null)?m[4].n:(k+1),num=(p.nonum||nn==='')?'':'('+nn+') ';const t=num+lab,tw=textW(t);
+    if(x1===x2){s+='<path class="ms'+st+atk+'" d="M'+x1+' '+(yy-8)+' h28 v18 h-24" marker-end="url(#'+mk+')"/>';
+      let tx=x1+34,anc='start';if(tx+tw>W-4){tx=x1-8;anc='end'}
+      s+='<text class="ml'+st+atk+'" x="'+tx+'" y="'+(yy+5)+'" text-anchor="'+anc+'">'+svgText(t)+'</text>'}
+    else{const dir=x2>x1?1:-1;s+='<path class="ms'+st+atk+'" d="M'+x1+' '+yy+' H'+(x2-dir*3)+'" marker-end="url(#'+mk+')"/>';
+      let cx=(x1+x2)/2;cx=Math.max(4+tw/2,Math.min(W-4-tw/2,cx));
+      s+='<text class="ml'+st+atk+'" x="'+cx+'" y="'+(yy-7)+'" text-anchor="middle">'+svgText(t)+'</text>'}});
+  return {svg:s,W,H,ys,lx}}
+function initProto(el){
+  const ids=el.dataset.protos.split(',');let pid=ids[0],i=-1,anim=0;
+  const P0=P[pid],name=el.dataset.name||P0.title;
+  el.innerHTML='<div class="lab-h"><span class="t">Protocol · '+esc(name)+'</span>'+
+    (P0.fig?'<span class="pill">'+P0.fig+'</span>':'')+'</div><div class="lab-b">'+
+    (ids.length>1?'<div class="pvar"><span class="seg" role="group" aria-label="Protocol variant">'+ids.map((d,k)=>'<button type="button" data-v="'+d+'" aria-pressed="'+(k?'false':'true')+'">'+esc(P[d].title)+'</button>').join('')+'</span></div>':'')+
+    '<div class="figure"><svg role="img"></svg></div>'+
+    '<div class="pctl"><button type="button" class="ghost" data-a="prev">◀ Back</button><button type="button" data-a="next">Next ▶</button><button type="button" class="ghost" data-a="all">Show all</button><span class="cnt" aria-live="polite"></span></div><div class="pnote"></div></div>';
+  const svg=el.querySelector('svg'),note=el.querySelector('.pnote'),cnt=el.querySelector('.cnt'),bp=el.querySelector('[data-a=prev]'),bn=el.querySelector('[data-a=next]'),ba=el.querySelector('[data-a=all]');
+  function render(fwd){const p=P[pid],d=drawProto(p,i);
+    svg.setAttribute('viewBox','0 0 '+d.W+' '+d.H);svg.setAttribute('width',d.W);svg.innerHTML=d.svg;
+    svg.setAttribute('aria-label',p.title+': '+p.lanes.join(', ')+'. '+p.m.length+' messages.');
+    const nm=p.m.length;cnt.textContent=i<0?'All '+nm+' messages':'Message '+(i+1)+' of '+nm;
+    bp.disabled=i<0;bn.disabled=i>=nm-1;ba.disabled=i<0;
+    if(i<0){note.innerHTML='<p>'+html(p.sum)+'</p>'}
+    else{const m=p.m[i],atk=m[4]&&m[4].atk,nn=(m[4]&&m[4].n!=null)?m[4].n:(i+1),num=(p.nonum||nn==='')?'':'('+nn+') ';
+      note.innerHTML='<div class="ml1'+(atk?' atk':'')+'">'+esc(num)+html(p.lanes[m[0]])+(m[0]===m[1]?'':' → '+html(p.lanes[m[1]]))+': '+html(m[2])+'</div>'+(m[3]?'<p>'+html(m[3])+'</p>':'')}
+    if(fwd&&i>=0&&!reduce){const m=p.m[i];if(m[0]===m[1])return;const x1=d.lx(m[0]),x2=d.lx(m[1]),y=d.ys[i];
+      const c=document.createElementNS(SVGNS,'circle');c.setAttribute('class','pk');c.setAttribute('r','5');c.setAttribute('cy',y);svg.appendChild(c);
+      const t0=performance.now(),me=++anim;(function f(t){if(me!==anim){c.remove();return}const u=Math.min(1,(t-t0)/550),e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
+        c.setAttribute('cx',x1+(x2-x1)*e);if(u<1)requestAnimationFrame(f);else c.remove()})(t0)}}
+  bn.addEventListener('click',()=>{if(i<P[pid].m.length-1){i++;render(true)}});
+  bp.addEventListener('click',()=>{if(i>=0){i--;render(false)}});
+  ba.addEventListener('click',()=>{i=-1;render(false)});
+  el.querySelectorAll('[data-v]').forEach(b=>b.addEventListener('click',()=>{pid=b.dataset.v;i=-1;
+    el.querySelectorAll('[data-v]').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));render(false)}));
+  render(false)}
+document.querySelectorAll('.lab.proto').forEach(initProto);
+const segBtns=(attr,f)=>{const bs=[...document.querySelectorAll('['+attr+']')];bs.forEach(b=>b.addEventListener('click',()=>{bs.forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));f(b.getAttribute(attr))}))};
+
+/* ===== Unit 12 helpers ===== */
+const enc8=new TextEncoder();
+const B64='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+function b64(bytes){let o='';for(let i=0;i<bytes.length;i+=3){const a=bytes[i],b=bytes[i+1],c=bytes[i+2],n=(a<<16)|((b||0)<<8)|(c||0);
+  o+=B64[(n>>18)&63]+B64[(n>>12)&63]+(i+1<bytes.length?B64[(n>>6)&63]:'=')+(i+2<bytes.length?B64[n&63]:'=')}return o}
+const wrap=(s,n)=>s.replace(new RegExp('(.{'+n+'})','g'),'$1\n').replace(/\n$/,'');
+const short=(s,n)=>s.length>n?s.slice(0,n)+'…':s;
+const cat2=(...a)=>{const n=a.reduce((s,x)=>s+x.length,0),o=new Uint8Array(n);let k=0;a.forEach(x=>{o.set(x,k);k+=x.length});return o};
+const rnd=n=>crypto.getRandomValues(new Uint8Array(n));
+const sha=async(alg,b)=>new Uint8Array(await crypto.subtle.digest(alg,b));
+const box=(id,x,y,w,h,t1,t2,cls)=>'<g class="dimg" id="'+id+'"><rect class="'+(cls||'bx')+'" x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="5"/>'+
+  (t2?'<text class="tx" x="'+(x+w/2)+'" y="'+(y+h/2-3)+'" text-anchor="middle">'+svgText(t1)+'</text><text class="tm" x="'+(x+w/2)+'" y="'+(y+h/2+11)+'" text-anchor="middle">'+svgText(t2)+'</text>'
+     :'<text class="tx" x="'+(x+w/2)+'" y="'+(y+h/2+4)+'" text-anchor="middle">'+svgText(t1)+'</text>')+'</g>';
+
+/* ---------- 19.1 architecture ---------- */
+const AR={
+ ua:{x:8,y:72,w:86,t:['MUA','author'],d:'<b>Message User Agent (author).</b> Formats the message for the author and submits it into the MHS through an MSA, using ESMTP (Submission).'},
+ msa:{x:202,y:72,t:['MSA','submission'],d:'<b>Mail Submission Agent.</b> Accepts the message from the MUA and enforces the hosting domain’s policies and Internet standards. If it is separate from the MUA, SMTP (today the SUBMISSION standard) is used between them.'},
+ mta1:{x:362,y:72,t:['MTA','relay'],d:'<b>Message Transfer Agent.</b> Relays the mail one application-level hop, choosing a route toward the recipients like a packet switch or IP router, and adds trace information to the header. MTAs talk SMTP.'},
+ mta2:{x:522,y:72,t:['MTA','relay'],d:'<b>Message Transfer Agent.</b> Another hop. A sending MTA finds the receiving MTA by querying DNS for the MX record of the recipient’s domain (Section 19.6).'},
+ mta3:{x:522,y:192,t:['MTA','relay'],d:'<b>Message Transfer Agent.</b> Relaying continues by a sequence of MTAs until the message reaches a destination MDA.'},
+ mda:{x:362,y:192,t:['MDA','delivery'],d:'<b>Mail Delivery Agent.</b> Transfers the message from the MHS to the Message Store.'},
+ ms:{x:202,y:192,t:['MS','store'],d:'<b>Message Store.</b> Long-term storage, on a remote server or on the MUA’s own machine.'},
+ ur:{x:8,y:192,w:86,t:['MUA','recipient'],d:'<b>Message User Agent (recipient).</b> Retrieves mail from the MS, typically with IMAP or POP, and processes it for storage and/or display to the recipient.'}};
+const AR_SEQ=['ua','msa','mta1','mta2','mta3','mda','ms','ur'];
+const AR_LINK=[['ESMTP','(Submission)'],['SMTP'],['SMTP'],['SMTP'],['SMTP'],['SMTP,','local'],['IMAP, POP,','local']];
+const AW=100,AH=46;
+function arCenter(k){const a=AR[k];return [a.x+(a.w||AW)/2,a.y+AH/2]}
+function drawArch(){let s='<rect class="mhs" x="186" y="40" width="448" height="216" rx="12"/><text class="pl" x="198" y="58" style="fill:var(--accent);font-weight:600">MESSAGE HANDLING SYSTEM (MHS)</text>'+
+  '<text class="tm" x="8" y="62">Message author</text><text class="tm" x="8" y="256">Message recipient</text>';
+  for(let i=0;i<AR_SEQ.length-1;i++){const a=AR[AR_SEQ[i]],b=AR[AR_SEQ[i+1]],L=AR_LINK[i];
+    if(a.y===b.y){const fwd=b.x>a.x,x1=fwd?a.x+(a.w||AW):a.x,x2=fwd?b.x:b.x+(b.w||AW),y=a.y+AH/2,mx=(x1+x2)/2;
+      s+='<path class="ln" d="M'+x1+' '+y+' H'+(x2+(fwd?-2:2))+'" marker-end="url(#ah)"/>';
+      s+='<text class="pl" x="'+mx+'" y="'+(y-(L.length>1?16:6))+'" text-anchor="middle" font-size="9">'+esc(L[0])+'</text>'+(L[1]?'<text class="pl" x="'+mx+'" y="'+(y-6)+'" text-anchor="middle" font-size="9">'+esc(L[1])+'</text>':'')}
+    else{const x=a.x+AW/2;s+='<path class="ln" d="M'+x+' '+(a.y+AH)+' V'+(b.y-2)+'" marker-end="url(#ah)"/><text class="pl" x="'+(x+6)+'" y="'+((a.y+AH+b.y)/2+3)+'">'+esc(L[0])+'</text>'}}
+  AR_SEQ.forEach(k=>{const a=AR[k],AW=a.w||100;s+='<g class="ag" data-k="'+k+'" tabindex="0" role="button" aria-label="'+a.t.join(' ')+'"><rect class="bx" x="'+a.x+'" y="'+a.y+'" width="'+AW+'" height="'+AH+'" rx="6"/><text class="tx" x="'+(a.x+AW/2)+'" y="'+(a.y+20)+'" text-anchor="middle" font-weight="700">'+a.t[0]+'</text><text class="tm" x="'+(a.x+AW/2)+'" y="'+(a.y+35)+'" text-anchor="middle">'+a.t[1]+'</text></g>'});
+  $('arch-svg').innerHTML=s;
+  $('arch-svg').querySelectorAll('.ag').forEach(g=>{const f=()=>arSel(g.dataset.k);g.addEventListener('click',f);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f()}})})}
+function arSel(k,pre){$('arch-svg').querySelectorAll('.ag').forEach(g=>g.classList.toggle('sel',g.dataset.k===k));$('arch-out').innerHTML='<p>'+(pre||'')+AR[k].d+'</p>'}
+let arTimer=null;
+function arSend(){clearTimeout(arTimer);const svg=$('arch-svg');let i=0;
+  const step=()=>{const k=AR_SEQ[i];arSel(k,'<span class="pill mk">'+(i+1)+' / '+AR_SEQ.length+'</span> ');
+    if(i<AR_SEQ.length-1&&!reduce){const [x1,y1]=arCenter(k),[x2,y2]=arCenter(AR_SEQ[i+1]);
+      const c=document.createElementNS(SVGNS,'circle');c.setAttribute('class','pk');c.setAttribute('r','6');svg.appendChild(c);
+      const t0=performance.now();(function f(t){const u=Math.min(1,(t-t0)/650);c.setAttribute('cx',x1+(x2-x1)*u);c.setAttribute('cy',y1+(y2-y1)*u);if(u<1)requestAnimationFrame(f);else c.remove()})(t0)}
+    i++;if(i<AR_SEQ.length)arTimer=setTimeout(step,reduce?0:1100)};step()}
+drawArch();arSel('ua');on('arch-send','click',arSend);
+
+/* ---------- 19.2 multipart structure ---------- */
+const MP={
+ mixed:{vb:'0 0 620 300',svg:
+  '<rect class="bx" x="4" y="4" width="612" height="292" rx="8"/><text class="tx" x="14" y="22" font-weight="700">multipart/mixed · boundary=unique-boundary-1</text>'+
+  '<rect class="tf dim" x="16" y="32" width="588" height="24" rx="4"/><text class="tm" x="26" y="48">preamble (ignored by mail readers that understand multipart)</text>'+
+  '<rect class="tf" x="16" y="62" width="588" height="30" rx="4"/><text class="tx" x="26" y="81">1 · no header fields → text/plain, US-ASCII (implicit typing)</text>'+
+  '<rect class="tf" x="16" y="98" width="588" height="30" rx="4"/><text class="tx" x="26" y="117">2 · Content-type: text/plain; charset=US-ASCII (explicit typing)</text>'+
+  '<rect class="bxa" x="16" y="134" width="588" height="74" rx="4"/><text class="tx" x="26" y="150">3 · multipart/parallel · boundary=unique-boundary-2</text>'+
+  '<rect class="tf" x="28" y="158" width="280" height="42" rx="4"/><text class="tx" x="168" y="176" text-anchor="middle">audio/basic</text><text class="tm" x="168" y="191" text-anchor="middle">base64 · 8000 Hz μ-law</text>'+
+  '<rect class="tf" x="316" y="158" width="276" height="42" rx="4"/><text class="tx" x="454" y="176" text-anchor="middle">image/jpeg</text><text class="tm" x="454" y="191" text-anchor="middle">base64</text>'+
+  '<rect class="tf" x="16" y="214" width="588" height="30" rx="4"/><text class="tx" x="26" y="233">4 · text/enriched (richtext, RFC 1896)</text>'+
+  '<rect class="bxm" x="16" y="250" width="588" height="40" rx="4"/><text class="tx" x="26" y="266">5 · message/rfc822 — an encapsulated message with its own From, To, Subject</text><text class="tm" x="26" y="282">inner body: text/plain; charset=ISO-8859-1 · quoted-printable</text>',
+  out:'<p>Five parts displayed <b>serially</b>: two introductory plain-text parts, an embedded multipart message whose two parts (a picture and an audio fragment) are shown <b>in parallel</b>, a richtext part, and a closing encapsulated message in a non-ASCII character set. The base64 parts carry binary data; the quoted-printable part is mostly readable text.</p>'},
+ alt:{vb:'0 0 620 180',svg:
+  '<rect class="bx" x="4" y="4" width="612" height="172" rx="8"/><text class="tx" x="14" y="22" font-weight="700">multipart/alternative · boundary=boundary42</text>'+
+  '<rect class="tf" x="16" y="34" width="460" height="58" rx="4"/><text class="tx" x="26" y="58">--boundary42 · Content-Type: text/plain; charset=us-ascii</text><text class="tm" x="26" y="76">plain text version of the message</text>'+
+  '<rect class="tf new" x="16" y="104" width="460" height="58" rx="4"/><text class="tx" x="26" y="128">--boundary42 · Content-Type: text/enriched</text><text class="tm" x="26" y="146">RFC 1896 text/enriched version of the same message</text>'+
+  '<path class="ln" d="M500 40 V156" marker-end="url(#ah)"/><text class="tm" x="558" y="92" text-anchor="middle">more</text><text class="tm" x="558" y="106" text-anchor="middle">preferred</text>',
+  out:'<p>The parts are the <b>same information</b> in increasing order of preference. If the recipient’s system can display text/enriched, it does; otherwise it uses the plain-text part. The closing delimiter is <code>--boundary42--</code>.</p>'}};
+function mp(k){const M=MP[k];$('mp-svg').setAttribute('viewBox',M.vb);$('mp-svg').setAttribute('width',M.vb.split(' ')[2]);$('mp-svg').innerHTML=M.svg;$('mp-out').innerHTML=M.out}
+segBtns('data-mp',mp);mp('mixed');
+
+/* ---------- 19.2 base64 / quoted-printable ---------- */
+function qp(bytes){/* RFC 2045 §6.7 */
+  const lines=[];let cur=[];for(let i=0;i<bytes.length;i++){if(bytes[i]===10){lines.push(cur);cur=[]}else if(bytes[i]===13&&bytes[i+1]===10){}else cur.push(bytes[i])}lines.push(cur);
+  const out=[];let esc_=0,soft=0;
+  lines.forEach(L=>{const toks=L.map((b,i)=>{const last=i===L.length-1;
+      if((b===32||b===9)&&!last)return {t:String.fromCharCode(b),q:false};
+      if(b>=33&&b<=126&&b!==61)return {t:String.fromCharCode(b),q:false};
+      esc_++;return {t:'='+b.toString(16).toUpperCase().padStart(2,'0'),q:true}});
+    let line='',len=0;toks.forEach(t=>{if(len+t.t.length>75){line+='<span class="q">=</span>\n';len=0;soft++}
+      const v=t.t.replace(/ /g,'·').replace(/\t/g,'→');line+=t.q?'<span class="q">'+esc(t.t)+'</span>':(t.t===' '||t.t==='\t'?'<span class="sp">'+v+'</span>':esc(t.t));len+=t.t.length});
+    out.push(line)});
+  return {html:out.join('\n'),esc:esc_,soft}}
+function encLab(){const s=$('enc-in').value,b=enc8.encode(s.replace(/\r?\n/g,'\r\n')),e=b64(b),q=qp(b);
+  let grid='';if(b.length){const g=[b[0],b[1],b[2]];const n=((g[0]||0)<<16)|((g[1]||0)<<8)|(g[2]||0);
+    grid='<div class="b64">'+g.map(x=>x==null?'<div class="vis">(none)<b>—</b>padding</div>':'<div>'+(x>=33&&x<=126?esc(String.fromCharCode(x)):'0x'+x.toString(16).padStart(2,'0'))+'<b>'+x.toString(2).padStart(8,'0')+'</b>octet</div>').join('')+'</div>'+
+    '<div class="b64 s6">'+[0,1,2,3].map(k=>{const v=(n>>(18-6*k))&63,pad=(k===2&&g[1]==null)||(k===3&&g[2]==null);return '<div>'+(pad?'pad':v.toString(2).padStart(6,'0'))+'<b>'+(pad?'=':B64[v])+'</b>'+(pad?'':'value '+v)+'</div>'}).join('')+'</div>'}
+  $('enc-out').innerHTML=kv([['UTF-8 bytes',b.length+' (line breaks sent as CRLF)'],['base64 length',e.length+' characters · ×'+(b.length?(e.length/b.length).toFixed(2):'—')],['quoted-printable','='+'XX escapes: '+q.esc+' · soft line breaks: '+q.soft]])+
+    '<h4 class="pk-h" style="margin-top:12px">First group: 3 octets → 4 characters</h4>'+(grid||'<p class="cap">Type some text.</p>')+
+    '<h4 class="pk-h">base64 (lines of 76)</h4><div class="encout">'+esc(wrap(e,76))+'</div>'+
+    '<h4 class="pk-h">quoted-printable</h4><div class="encout">'+q.html+'</div><p class="cap">Orange = escaped octet or soft line break “=”. Non-ASCII letters become =XX escapes (one per UTF-8 byte); “=” itself becomes =3D; white space at the end of a line is escaped so mail transport cannot strip it.</p>'}
+on('enc-in','input',encLab);encLab();
+
+/* ---------- 19.3 Figure 19.4 ---------- */
+function drawCP(){let s='';
+  s+='<g class="dimg" id="cp-dsnd"><rect class="gb" x="10" y="14" width="300" height="116" rx="8"/><text class="tx" x="20" y="32" font-weight="700">Sender DNS</text><text class="tm" x="300" y="32" text-anchor="end">DNSSEC secured</text></g>';
+  s+='<g class="dimg" id="cp-drcv"><rect class="gb" x="330" y="14" width="300" height="116" rx="8"/><text class="tx" x="340" y="32" font-weight="700">Receiver DNS</text><text class="tm" x="620" y="32" text-anchor="end">DNSSEC secured</text></g>';
+  [['cp-spf','SPF TXT: sender’s IP addresses',44],['cp-dkim','DKIM TXT: sending MTA’s public key',70],['cp-dmarc','DMARC TXT: sender uses DKIM + SPF',96]].forEach(r=>{s+='<g class="dimg" id="'+r[0]+'"><rect class="tf" x="20" y="'+r[2]+'" width="280" height="20" rx="4"/><text class="tx" x="28" y="'+(r[2]+14)+'" font-size="10.5">'+esc(r[1])+'</text></g>'});
+  s+='<g class="dimg" id="cp-tlsa"><rect class="tf" x="340" y="44" width="280" height="20" rx="4"/><text class="tx" x="348" y="58" font-size="10.5">DANE TLSA RR: SMTP TLS certificate</text></g>';
+  const N=[['cp-smua',10,'Sender MUA'],['cp-smta',170,'Sending MTA'],['cp-rmta',340,'Receiving MTA'],['cp-rmua',510,'Receiver MUA']];
+  N.forEach(n=>{s+=box(n[0],n[1],190,120,44,n[2])});
+  [['cp-l1',130,170],['cp-l2',290,340],['cp-l3',460,510]].forEach(l=>{s+='<path class="lk" id="'+l[0]+'" d="M'+l[1]+' 212 H'+(l[2]-2)+'" marker-end="url(#ah)"/>'});
+  s+='<path class="lk" id="cp-q1" d="M390 190 C390 165 240 160 200 132" stroke-dasharray="5 4" marker-end="url(#ahd)"/><text class="tm" x="398" y="180" font-size="10">DNS lookups</text>';
+  s+='<path class="lk" id="cp-q2" d="M240 190 C240 165 420 165 450 132" stroke-dasharray="5 4" marker-end="url(#ahd)"/>';
+  s+='<g class="dimg" id="cp-sig1"><rect class="bxm" x="16" y="242" width="268" height="24" rx="5"/><text class="tx" x="150" y="258" text-anchor="middle" font-size="10">S/MIME sig: sender’s private key</text></g>';
+  s+='<g class="dimg" id="cp-sig2"><rect class="bxa" x="300" y="242" width="250" height="24" rx="5"/><text class="tx" x="425" y="258" text-anchor="middle" font-size="10">DKIM sig: MTA’s signing key</text></g>';
+  $('cp-svg').innerHTML=s}
+const CPD={
+ starttls:{h:['cp-smta','cp-rmta','cp-l2'],t:'<b>STARTTLS.</b> An SMTP security extension that gives authentication, integrity, non-repudiation (via digital signatures) and confidentiality (via encryption) for the <b>entire SMTP message</b> by running SMTP over TLS. It protects the hop between servers.'},
+ smime:{h:['cp-smua','cp-rmua','cp-l1','cp-l2','cp-l3','cp-sig1'],t:'<b>S/MIME.</b> Authentication, integrity, non-repudiation (via digital signatures) and confidentiality (via encryption) of the <b>message body</b> carried in SMTP. The sender’s MUA signs with the sender’s S/MIME private key; the receiver’s MUA verifies, end to end.'},
+ dnssec:{h:['cp-dsnd','cp-drcv','cp-spf','cp-dkim','cp-dmarc','cp-tlsa'],t:'<b>DNS Security Extensions (DNSSEC).</b> Authentication and integrity protection of DNS data; an underlying tool for the other email security protocols, which all publish their records in the DNS.'},
+ dane:{h:['cp-tlsa','cp-q2','cp-smta','cp-rmta','cp-l2','cp-drcv'],t:'<b>DNS-based Authentication of Named Entities (DANE).</b> Overcomes problems in the CA system with an alternative channel for authenticating public keys based on DNSSEC: the same trust relationships that certify IP addresses certify the servers at those addresses. The TLSA RR names the receiving server’s TLS certificate.'},
+ spf:{h:['cp-spf','cp-q1','cp-rmta','cp-smta','cp-l2','cp-dsnd'],t:'<b>Sender Policy Framework (SPF).</b> Domain owners create DNS records associating the domain with the IP address range of authorized senders. Receivers check the SPF TXT record to confirm the purported sender may use that source address, and reject mail from unauthorized addresses.'},
+ dkim:{h:['cp-dkim','cp-q1','cp-smta','cp-rmta','cp-l2','cp-sig2','cp-dsnd'],t:'<b>DomainKeys Identified Mail (DKIM).</b> Lets an MTA sign selected headers and the body. This validates the source domain and gives message body integrity. The DKIM TXT RR gives the sending MTA’s public key to the receiving MTA.'},
+ dmarc:{h:['cp-dmarc','cp-spf','cp-dkim','cp-q1','cp-rmta','cp-dsnd'],t:'<b>DMARC.</b> Lets senders know the proportionate effectiveness of their SPF and DKIM policies, and signals to receivers what action to take in individual and bulk attack scenarios. The DMARC TXT RR tells the receiving MTA that the sender uses DKIM and SPF.'}};
+function cp(k){const H=CPD[k].h;$('cp-svg').querySelectorAll('.dimg').forEach(g=>g.classList.toggle('hl',H.includes(g.id)));
+  $('cp-svg').querySelectorAll('.lk').forEach(l=>{l.classList.toggle('on',H.includes(l.id))});$('cp-out').innerHTML='<p>'+CPD[k].t+'</p>'}
+drawCP();segBtns('data-cp',cp);cp('starttls');
+
+/* ---------- 19.4 S/MIME lab ---------- */
+const SM={order:'se',keys:null};
+function smFig(){const se=SM.order==='se';let s='';const L=(x1,y1,x2,y2)=>'<path class="ln" d="M'+x1+' '+y1+' L'+x2+' '+y2+'" marker-end="url(#ah)"/>';
+  if(se){s+=box('a',8,30,44,40,'M')+box('b',72,30,120,40,'Sign RSA/SHA-256','with PR_a','bxm')+box('c',212,30,90,40,'M ‖ sig')+box('d',322,30,130,40,'Encrypt','AES-128-CBC','bxa')+box('e',472,30,160,40,'E(K_s, M ‖ sig)')+
+    box('f',322,112,130,40,'K_s','128-bit, one-time','bxm')+box('g',472,112,160,40,'RSA with PU_b','→ E(PU_b, K_s)','bxa');
+    s+=L(52,50,70,50)+L(192,50,210,50)+L(302,50,320,50)+L(452,50,470,50)+L(387,112,387,72)+L(452,132,470,132)}
+  else{s+=box('a',8,30,44,40,'M')+box('b',72,30,130,40,'Encrypt','AES-128-CBC','bxa')+box('c',222,30,110,40,'C = E(K_s, M)')+box('d',352,30,110,40,'Sign RSA/SHA-256','with PR_a','bxm')+box('e',482,30,150,40,'C ‖ sig')+
+    box('f',72,112,130,40,'K_s','128-bit, one-time','bxm')+box('g',222,112,140,40,'RSA with PU_b','→ E(PU_b, K_s)','bxa');
+    s+=L(52,50,70,50)+L(202,50,220,50)+L(332,50,350,50)+L(462,50,480,50)+L(137,112,137,72)+L(202,132,220,132)}
+  $('sm-svg').innerHTML=s}
+async function smKeys(){
+  const a=await crypto.subtle.generateKey({name:'RSASSA-PKCS1-v1_5',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'},false,['sign','verify']);
+  const b=await crypto.subtle.generateKey({name:'RSA-OAEP',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'},false,['encrypt','decrypt']);
+  SM.keys={a,b};$('sm-out').innerHTML='<p class="cap">Keys ready: sender A (signing) and receiver B (key transport), RSA-2048. Press Send.</p>'}
+const st=(h,v,cls)=>'<div class="stage'+(cls?' '+cls:'')+'"><span class="h">'+h+'</span><span class="v">'+v+'</span></div>';
+const lenp=m=>{const o=new Uint8Array(2);o[0]=m.length>>8;o[1]=m.length&255;return o};
+async function aesEnc(k,iv,d){const key=await crypto.subtle.importKey('raw',k,'AES-CBC',false,['encrypt']);return new Uint8Array(await crypto.subtle.encrypt({name:'AES-CBC',iv},key,d))}
+async function aesDec(k,iv,d){const key=await crypto.subtle.importKey('raw',k,'AES-CBC',false,['decrypt']);return new Uint8Array(await crypto.subtle.decrypt({name:'AES-CBC',iv},key,d))}
+async function smRun(){if(!SM.keys)return;const {a,b}=SM.keys,se=SM.order==='se',T=$('sm-tamper').value;
+  const M=enc8.encode($('sm-msg').value||' ');const out=[];
+  const dg=await sha('SHA-256',M);
+  const Ks=rnd(16),iv=rnd(16);
+  let C,sig,EK;
+  out.push('<h4 class="pk-h">Sender A</h4><div class="stagegrid">');
+  if(se){sig=new Uint8Array(await crypto.subtle.sign('RSASSA-PKCS1-v1_5',a.privateKey,M));
+    out.push(st('1 · digest SHA-256(M)',hex(dg))+st('2 · sig = E(PR<sub>a</sub>, digest) · 256 bytes',short(b64(sig),88)));
+    C=await aesEnc(Ks,iv,cat2(lenp(M),M,sig));
+    out.push(st('3 · one-time K<sub>s</sub> (128 bits) and IV',hex(Ks)+' · IV '+hex(iv))+st('4 · C = E(K<sub>s</sub>, M ‖ sig) · '+C.length+' bytes',short(b64(C),88)))}
+  else{C=await aesEnc(Ks,iv,M);
+    out.push(st('1 · one-time K<sub>s</sub> (128 bits) and IV',hex(Ks)+' · IV '+hex(iv))+st('2 · C = E(K<sub>s</sub>, M) · '+C.length+' bytes',short(b64(C),88)));
+    sig=new Uint8Array(await crypto.subtle.sign('RSASSA-PKCS1-v1_5',a.privateKey,cat2(iv,C)));
+    out.push(st('3 · sig = E(PR<sub>a</sub>, SHA-256(IV ‖ C))',short(b64(sig),88)))}
+  EK=new Uint8Array(await crypto.subtle.encrypt({name:'RSA-OAEP'},b.publicKey,Ks));
+  out.push(st((se?'5':'4')+' · E(PU<sub>b</sub>, K<sub>s</sub>) · 256 bytes',short(b64(EK),88)));
+  let wire=se?cat2(EK,iv,C):cat2(EK,iv,C,sig);
+  out.push(st((se?'6':'5')+' · base64 for transport · '+wire.length+' octets → '+b64(wire).length+' characters','<span style="white-space:pre-wrap">'+esc(wrap(short(b64(wire),228),76))+'</span>'));
+  out.push('</div>');
+  /* transit */
+  let rEK=EK,rC=C,rsig=sig,rIV=iv,note='';
+  if(T==='ct'){rC=C.slice();rC[Math.min(5,rC.length-1)]^=0x01;note='Attacker flipped one bit of the ciphertext.'}
+  if(T==='key'){const Kx=rnd(16),M2=enc8.encode('Pay Mallory 9000 dollars today.');rEK=new Uint8Array(await crypto.subtle.encrypt({name:'RSA-OAEP'},b.publicKey,Kx));
+    const fake=rnd(256);rC=se?await aesEnc(Kx,iv,cat2(lenp(M2),M2,fake)):await aesEnc(Kx,iv,M2);if(!se)rsig=sig;
+    note=se?'Attacker built her own envelope: a new message under her own session key, encrypted with B’s public key (anyone can do that). She cannot sign as A, so she attaches random bytes as the signature.':'Attacker built her own envelope with B’s public key and kept A’s signature from the original message.'}
+  out.push('<h4 class="pk-h">In transit</h4><div class="stagegrid">'+st('attacker',note||'Message delivered unchanged.',note?'no':'')+'</div>');
+  out.push('<h4 class="pk-h">Receiver B</h4><div class="stagegrid">');
+  let ok=false;
+  try{
+    if(!se){const v=await crypto.subtle.verify('RSASSA-PKCS1-v1_5',a.publicKey,rsig,cat2(rIV,rC));
+      out.push(st('1 · verify sig over IV ‖ C with PU<sub>a</sub> (no decryption needed)',v?'valid':'INVALID: rejected before decrypting',v?'ok':'no'));if(!v)throw 0}
+    const k2=new Uint8Array(await crypto.subtle.decrypt({name:'RSA-OAEP'},b.privateKey,rEK));
+    out.push(st((se?'1':'2')+' · K<sub>s</sub> = D(PR<sub>b</sub>, E(PU<sub>b</sub>, K<sub>s</sub>))',hex(k2)+(hex(k2)===hex(Ks)?'':' (not A’s key)')));
+    let P_;try{P_=await aesDec(k2,rIV,rC)}catch(e){out.push(st((se?'2':'3')+' · D(K<sub>s</sub>, C)','decryption failed: bad CBC padding','no'));throw 0}
+    if(se){const n=(P_[0]<<8)|P_[1],m2=P_.slice(2,2+n),s2=P_.slice(2+n);
+      out.push(st('2 · D(K<sub>s</sub>, C) = M ‖ sig',esc(new TextDecoder().decode(m2))));
+      const v=s2.length===256&&await crypto.subtle.verify('RSASSA-PKCS1-v1_5',a.publicKey,s2,m2);
+      out.push(st('3 · verify: D(PU<sub>a</sub>, sig) = SHA-256(M) ?',v?'match: the message is from A and unchanged':'no match: rejected',v?'ok':'no'));ok=v}
+    else{out.push(st('3 · D(K<sub>s</sub>, C) = M',esc(new TextDecoder().decode(P_)),'ok'));ok=true}
+  }catch(e){}
+  out.push('</div><p>'+res(ok,ok?'accepted':'rejected')+' '+(se?'Sign-then-encrypt: the signature is hidden inside the encryption, and B must decrypt before verifying.':'Encrypt-then-sign: B (or a gateway without B’s private key) can check the signature on the ciphertext first, but the signature says nothing about who wrote the plaintext.')+'</p>');
+  $('sm-out').innerHTML=out.join('')}
+segBtns('data-so',k=>{SM.order=k;smFig();if(SM.keys)smRun()});smFig();
+on('sm-run','click',smRun);on('sm-tamper','change',smRun);
+smKeys().then(smRun).catch(()=>{$('sm-out').innerHTML=err('Web Crypto is not available in this browser (it needs a secure https page).')});
+
+/* ---------- 19.4b algorithm rules ---------- */
+const AR_R=['If the sending agent has a list of preferred decrypting capabilities from the recipient, it SHOULD choose the first (highest preference) one it can use.',
+ 'If it has no list but has received messages from the recipient, it SHOULD use the encryption algorithm of the last signed and encrypted message received from that recipient.',
+ 'If it knows nothing about the recipient’s capabilities and is willing to risk that the recipient cannot decrypt, it SHOULD use triple DES.',
+ 'If it knows nothing and is not willing to take that risk, it MUST use RC2/40.'];
+function arRule(){const L=$('ar-list').checked,Pv=$('ar-prev').checked,R=$('ar-risk').checked;
+  $('ar-pref').disabled=!L;$('ar-last').disabled=!Pv;$('ar-risk').disabled=L||Pv;
+  const k=L?0:Pv?1:R?2:3,alg=[$('ar-pref').value,$('ar-last').value,'Triple DES CBC','RC2/40'][k];
+  $('ar-out').innerHTML='<ol class="props chain-steps">'+AR_R.map((t,i)=>'<li class="'+(i===k?'cur':i<k?'':'')+'">'+t+'</li>').join('')+'</ol><p>Rule '+(k+1)+' applies → content encryption with <span class="verdict '+(k===3?'fail':'pass')+'">'+alg+'</span>'+(k===3?' (40-bit: weak)':'')+'</p>'}
+['ar-list','ar-prev','ar-risk','ar-pref','ar-last'].forEach(i=>on(i,'change',arRule));arRule();
+
+/* ---------- 19.4c message types ---------- */
+const MT={
+ env:{h:'envelopedData',ct:'Content-Type: application/pkcs7-mime; smime-type=enveloped-data;\n    name=smime.p7m\nContent-Transfer-Encoding: base64\nContent-Disposition: attachment; filename=smime.p7m\n\nrfvbnj756tbBghyHhHUujhJhjH77n8HHGT9HG4VQpfyF467GhIGfHfYT6…',
+  steps:['Generate a pseudorandom session key for a symmetric algorithm (RC2/40 or triple DES in the book’s list).','For each recipient, encrypt the session key with the recipient’s public RSA key.','For each recipient, prepare a <b>RecipientInfo</b> block: an identifier of the recipient’s public-key certificate (X.509), an identifier of the algorithm used to encrypt the session key, and the encrypted session key.','Encrypt the message content with the session key.'],
+  after:'The RecipientInfo blocks followed by the encrypted content make up the envelopedData, then encoded in base64.',
+  recv:'Strip the base64 encoding; use the private key to recover the session key; decrypt the content with the session key.'},
+ sig:{h:'signedData',ct:'Content-Type: application/pkcs7-mime; smime-type=signed-data;\n    name=smime.p7m\nContent-Transfer-Encoding: base64\nContent-Disposition: attachment; filename=smime.p7m\n\n567GhIGfHfYT6ghyHhHUujpfyF4f8HHGTrfvhJhjH776tbB9HG4VQbnj7…',
+  steps:['Select a message digest algorithm (SHA or MD5).','Compute the message digest of the content to be signed.','Encrypt the digest with the signer’s private key.','Prepare a <b>SignerInfo</b> block: the signer’s public-key certificate, the digest algorithm identifier, the identifier of the algorithm used to encrypt the digest, and the encrypted digest.'],
+  after:'The signedData entity is a series of blocks: a digest algorithm identifier, the message being signed, and SignerInfo. It may also include a set of certificates forming a chain from a recognized root or top-level CA to the signer. Then base64. One or more signers are possible; this describes one.',
+  recv:'Strip the base64 encoding; decrypt the digest with the signer’s public key; compute the digest independently and compare.'},
+ clear:{h:'Clear signing · multipart/signed',ct:'Content-Type: multipart/signed;\n    protocol="application/pkcs7-signature";\n    micalg=sha1; boundary=boundary42\n\n--boundary42\nContent-Type: text/plain\n\nThis is a clear-signed message.\n\n--boundary42\nContent-Type: application/pkcs7-signature; name=smime.p7s\nContent-Transfer-Encoding: base64\nContent-Disposition: attachment; filename=smime.p7s\n\nghyHhHUujhJhjH77n8HHGTrfvbnj756tbB9HG4VQpfyF467GhIGfHfYT6…\n\n--boundary42--',
+  steps:['Part 1: any MIME type, prepared so it will not be altered in transfer (if not 7-bit, encoded with base64 or quoted-printable). Sent “in the clear”.','Part 1 is processed like signedData, but the resulting signedData object has an <b>empty message content field</b>: a <b>detached signature</b>.','The detached signature is base64 encoded and becomes part 2, type application/pkcs7-signature.'],
+  after:'The <code>protocol</code> parameter marks a two-part clear-signed entity; <code>micalg</code> gives the message digest used. Recipients with MIME but not S/MIME can still read the message.',
+  recv:'Take the message digest of the first part and compare it to the digest recovered from the signature in the second part.'},
+ reg:{h:'Registration request · application/pkcs10',ct:'Content-Type: application/pkcs10',
+  steps:['A <b>certificationRequestInfo</b> block: the name of the certificate subject (the entity whose key is to be certified) and a bit-string of the user’s public key.','An identifier of the public-key encryption algorithm.','The signature of the certificationRequestInfo block, made with the sender’s private key.'],
+  after:'Used by an application or user to apply to a certification authority for a public-key certificate.',recv:''},
+ cert:{h:'Certificates-only message',ct:'Content-Type: application/pkcs7-mime; smime-type=degenerate',
+  steps:['Same steps as creating a signedData message, except there is no message content and the signerInfo field is empty.'],
+  after:'Contains only certificates or a certificate revocation list (CRL); can be sent in response to a registration request.',recv:''}};
+function mt(k){const m=MT[k];$('mt-out').innerHTML='<h4 class="pk-h">'+m.h+'</h4><div class="reqline" style="white-space:pre-wrap">'+esc(m.ct)+'</div><p><b>Preparing it</b></p><ol class="props">'+m.steps.map(s=>'<li>'+s+'</li>').join('')+'</ol><p>'+m.after+'</p>'+(m.recv?'<p><b>Receiver:</b> '+m.recv+'</p>':'')}
+document.querySelectorAll('[data-mt]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-mt]').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));mt(b.dataset.mt)}));mt('env');
+
+/* ---------- 19.6 DNSSEC chain ---------- */
+function drawCH(){let s='';const Z=[['root (.)',10],['org',90],['example.org',170]];
+  Z.forEach(z=>{s+='<rect class="gb" x="8" y="'+z[1]+'" width="624" height="70" rx="8"/><text class="tm" x="622" y="'+(z[1]+64)+'" text-anchor="end">zone: '+z[0]+'</text>'});
+  const pill=(id,x,y,w,t,t2)=>'<g class="dimg" id="'+id+'"><rect class="tf" x="'+x+'" y="'+y+'" width="'+w+'" height="34" rx="5"/><text class="tx" x="'+(x+w/2)+'" y="'+(y+(t2?14:21))+'" text-anchor="middle" font-size="11">'+t+'</text>'+(t2?'<text class="tm" x="'+(x+w/2)+'" y="'+(y+28)+'" text-anchor="middle" font-size="10">'+t2+'</text>':'')+'</g>';
+  s+=pill('k0',30,28,150,'DNSKEY (root)','trust anchor')+pill('ds1',250,28,170,'DS for org','+ RRSIG by root key');
+  s+=pill('k1',30,108,150,'DNSKEY (org)')+pill('ds2',250,108,190,'DS for example.org','+ RRSIG by org key');
+  s+=pill('k2',30,188,150,'DNSKEY (example.org)')+pill('sg',220,188,150,'RRSIG (MX)','by example.org key')+pill('rr',410,188,180,'MX RRset','mail → 198.51.100.25');
+  const ln=(id,d)=>'<path class="lk" id="'+id+'" d="'+d+'" marker-end="url(#ahd)"/>';
+  s+=ln('l1','M180 45 H248')+ln('l2','M335 62 C335 90 140 85 120 106')+ln('l3','M180 125 H248')+ln('l4','M345 142 C345 170 140 165 120 186')+ln('l5','M180 205 H218')+ln('l6','M370 205 H408');
+  $('ch-svg').innerHTML=s}
+const CH0=[{t:'The resolver is configured with the root zone’s DNSKEY: the <b>trust anchor</b>. Every other key must be verified from it.',h:['k0'],l:[]},
+ {t:'The root zone’s RRSIG over the <b>DS record for org</b> verifies with the root DNSKEY, so the DS record is authentic.',h:['k0','ds1'],l:['l1']},
+ {t:'The org zone’s DNSKEY matches what the DS record in its <b>parent</b> vouches for: the org key is now trusted. The parent verifies the child.',h:['ds1','k1'],l:['l2']},
+ {t:'The org zone’s RRSIG over the <b>DS record for example.org</b> verifies with the org DNSKEY.',h:['k1','ds2'],l:['l3']},
+ {t:'The example.org DNSKEY matches the DS record: the zone answering the query is now authenticated back to the trust anchor.',h:['ds2','k2'],l:['l4']}];
+const CH={ok:CH0.concat([{t:'The <b>RRSIG</b> returned with the MX RRset verifies with the example.org DNSKEY: <b>data origin authentication</b> and <b>data integrity</b> hold, whatever caches or intermediate servers handled the answer. The MX RRset is accepted.',h:['k2','sg','rr'],l:['l5','l6'],ok:true}]),
+ forged:CH0.concat([{t:'An attacker (e.g., by cache poisoning) changed the MX RRset to point at her own server. The <b>RRSIG no longer verifies</b> with the example.org DNSKEY, and she cannot make a new one without the zone’s private key. The resolver rejects the forged record.',h:['k2','sg','rr'],l:['l5','l6'],bad:true}]),
+ nods:CH0.slice(0,3).concat([{t:'The org zone has <b>no DS record</b> for example.org, so its key cannot be verified from the parent. The chain from the trust anchor is broken: DNSSEC gives no assurance for example.org’s records, signed or not.',h:['k1','ds2','k2'],l:['l3','l4'],bad:true}])};
+let chK='ok',chI=0;
+function ch(){const S=CH[chK],s=S[chI];$('ch-svg').querySelectorAll('.dimg').forEach(g=>{g.classList.toggle('hl',s.h.includes(g.id))});
+  $('ch-svg').querySelectorAll('.lk').forEach(l=>l.classList.toggle('on',s.l.includes(l.id)));
+  const bad=s.bad;$('ch-svg').querySelectorAll('.dimg.hl rect').forEach(r=>{r.style.fill=bad&&chI===S.length-1&&!s.h.slice(0,1).includes(r.parentNode.id)?'var(--bad-soft)':'';r.style.stroke=bad&&chI===S.length-1&&!s.h.slice(0,1).includes(r.parentNode.id)?'var(--bad)':''});
+  $('ch-cnt').textContent='Step '+(chI+1)+' of '+S.length;$('ch-prev').disabled=chI===0;$('ch-next').disabled=chI===S.length-1;
+  $('ch-out').innerHTML='<p>'+s.t+'</p>'+(chI===S.length-1?'<p>'+res(!bad,bad?'not validated':'validated')+'</p>':'')}
+drawCH();segBtns('data-ch',k=>{chK=k;chI=0;ch()});on('ch-next','click',()=>{chI++;ch()});on('ch-prev','click',()=>{chI--;ch()});on('ch-reset','click',()=>{chI=0;ch()});ch();
+
+/* ---------- 19.7 TLSA ---------- */
+const TL={spki:null};
+async function tlKey(){const k=await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign']);TL.spki=new Uint8Array(await crypto.subtle.exportKey('spki',k.publicKey));tl()}
+async function tl(){if(!TL.spki)return;const u=+$('tl-u').value,s=+$('tl-s').value,m=+$('tl-m').value,h=($('tl-h').value||'mail.example.org').replace(/\.$/,'');
+  $('tl-f0').textContent=u;$('tl-f1').textContent=s;$('tl-f2').textContent=m;
+  const U=['PKIX-TA: the server’s chain must pass PKIX validation to a root in the client <i>and</i> include the CA named here.','PKIX-EE: the chain must pass PKIX validation <i>and</i> the end-entity certificate must match.','DANE-TA: the named, domain-operated CA is the trust anchor; no public root needed.','DANE-EE: the server’s own certificate must match; no CA involved.'][u];
+  let data,note;
+  if(s===0){data=null;note='Selector 0 hashes or copies the whole DER certificate. This lab has a key but no certificate, so there is nothing to show; use selector 1.'}
+  else{const d=m===0?TL.spki:m===1?await sha('SHA-256',TL.spki):await sha('SHA-512',TL.spki);data=hex(d).toUpperCase();
+    note=(m===0?'Exact match: the full '+TL.spki.length+'-byte SubjectPublicKeyInfo':'Hash of the '+TL.spki.length+'-byte DER SubjectPublicKeyInfo ('+(m===1?'32':'64')+' bytes)')+' of a P-256 key generated in your browser.'}
+  $('tl-f3').textContent=data?short(data,48):'—';
+  $('tl-out').innerHTML='<div class="rec"><span class="dm">_25._tcp.</span>'+esc(h)+'. IN TLSA <span class="t0">'+u+'</span> <span class="t1">'+s+'</span> <span class="t2">'+m+'</span> '+(data?esc(wrap(data,64).replace(/\n/g,'\n    ')):'<span class="dm">(certificate data)</span>')+'</div>'+
+    '<p>'+U+'</p><p class="cap">'+note+' The record must be DNSSEC-signed; a client finding it knows TLS is required on port 25 of this host.</p>'}
+['tl-u','tl-s','tl-m','tl-h'].forEach(i=>{on(i,'change',tl);on(i,'input',tl)});on('tl-new','click',tlKey);
+tlKey().catch(()=>{$('tl-out').innerHTML=err('Web Crypto is not available in this browser (it needs a secure https page).')});
+
+/* ---------- 19.8 SPF ---------- */
+const SPF_DNS={mx:{'example.org':['198.51.100.25']},txt:{'mailer.example':'v=spf1 ip4:203.0.113.0/24 -all'}};
+const ip4n=s=>{const p=s.split('.');if(p.length!==4||p.some(x=>!/^\d{1,3}$/.test(x)||+x>255))return null;return p.reduce((a,x)=>a*256+(+x),0)};
+function spfEval(rec,ip,dom,depth){const terms=rec.trim().split(/\s+/);const out={terms:[],result:null,err:null,match:-1};
+  if(terms[0].toLowerCase()!=='v=spf1'){out.err='The record does not start with v=spf1.';return out}
+  out.terms.push({t:terms[0],c:''});
+  for(let i=1;i<terms.length;i++){let t=terms[i],q='+';if(/^[+\-~?]/.test(t)){q=t[0];t=t.slice(1)}
+    const [mech,arg]=t.split(/:(.*)/s);let hit=false,bad=false,sub=null;const ml=mech.toLowerCase();
+    if(ml==='all')hit=true;
+    else if(ml==='ip4'){const [a,len]=(arg||'').split('/'),n=ip4n(a||''),L=len===undefined?32:+len,x=ip4n(ip);
+      if(n===null||!(L>=0&&L<=32))bad=true;else if(x!==null){const mask=L===0?0:(0xFFFFFFFF<<(32-L))>>>0;hit=((x&mask)>>>0)===((n&mask)>>>0)}}
+    else if(ml==='ip6'){if(!arg||!arg.includes(':'))bad=true;else hit=arg.split('/')[0].toLowerCase()===ip.toLowerCase()}
+    else if(ml==='mx'){hit=(SPF_DNS.mx[arg||dom]||[]).includes(ip)}
+    else if(ml==='include'){const r=SPF_DNS.txt[arg];if(!r||depth>3)bad=true;else{sub=spfEval(r,ip,arg,depth+1);hit=sub.result==='pass'}}
+    else bad=true;
+    if(bad){out.terms.push({t:terms[i],c:'err'});out.err='Term “'+terms[i]+'” is not understood'+(ml==='include'?' (no SPF record for that domain in this lab’s DNS)':'')+'.';return out}
+    out.terms.push({t:terms[i],c:hit?'hit':'miss',sub});
+    if(hit){out.match=i;out.result={'+':'pass','-':'fail','~':'softfail','?':'neutral'}[q];
+      for(let j=i+1;j<terms.length;j++)out.terms.push({t:terms[j],c:''});return out}}
+  out.result='neutral';return out}
+function spf(){const rec=$('spf-rec').value,ip=$('spf-ip').value.trim();
+  document.querySelectorAll('[data-ip]').forEach(b=>b.setAttribute('aria-pressed',rec.trim()&&b.dataset.ip===ip?'true':'false'));document.querySelectorAll('[data-rec]').forEach(b=>b.setAttribute('aria-pressed',rec.trim()?'false':'true'));
+  if(!rec.trim()){$('spf-out').innerHTML='<p><span class="verdict neu">no SPF record</span></p><p>Rule 1: no SPF TXT RR is returned, so by default the message is <b>accepted</b>.</p>';return}
+  const r=spfEval(rec,ip,'example.org',0);
+  const chips='<div class="terms">'+r.terms.map(t=>'<span class="'+t.c+'">'+esc(t.t)+'</span>').join('')+'</div>';
+  if(r.err){$('spf-out').innerHTML=chips+'<p><span class="verdict neu">formatting error</span></p><p>'+esc(r.err)+' Rule 2: by default the message is <b>accepted</b>. (RFC 7208 calls this result permerror.)</p>';return}
+  const D={pass:['pass','The sending host is authorized: accept and go on to further policy checks.'],fail:['fail','The host is not allowed to send for example.org: block/delete or junk the message.'],softfail:['soft','In transition: accept, but mark the message for closer inspection (e.g., quarantine).'],neutral:['neu','The record says nothing about this host: accept by default.']}[r.result];
+  const sub=r.terms.find(t=>t.sub);
+  $('spf-out').innerHTML=chips+(r.match<0?'<p class="cap">No mechanism matched.</p>':'')+'<p><span class="verdict '+D[0]+'">'+r.result+'</span></p><p>'+D[1]+'</p>'+
+    (sub?'<p class="cap">include:mailer.example evaluated that domain’s record <code>'+esc(SPF_DNS.txt['mailer.example'])+'</code> in its entirety: '+sub.sub.result+(sub.sub.result==='pass'?' → the include matches.':' → the include does not match.')+'</p>':'')+
+    (ip4n(ip)===null&&!ip.includes(':')?err('Enter a dotted IPv4 address (or an IPv6 address for ip6).'):'')}
+on('spf-rec','input',spf);on('spf-ip','input',spf);
+document.querySelectorAll('[data-ip]').forEach(b=>b.addEventListener('click',()=>{$('spf-ip').value=b.dataset.ip;if(!$('spf-rec').value.trim())$('spf-rec').value='v=spf1 ip4:192.168.0.0/24 mx include:mailer.example ~all';spf()}));
+document.querySelectorAll('[data-rec]').forEach(b=>b.addEventListener('click',()=>{$('spf-rec').value=b.dataset.rec;spf()}));spf();
+
+/* ---------- 19.9 DKIM flow ---------- */
+function drawDK(){let s='';
+  s+='<rect class="gb" x="4" y="4" width="232" height="254" rx="8"/><text class="gl" x="12" y="18">ORIGINATING OR RELAYING ADMD</text>';
+  s+='<rect class="gb" x="346" y="4" width="360" height="254" rx="8"/><text class="gl" x="354" y="18">RELAYING OR DELIVERING ADMD</text>';
+  s+=box('d-msg',16,30,130,36,'RFC 5322 message')+box('d-sign',16,98,130,44,'Sign message','with SDID (d=)','bxm')+box('d-priv',16,178,130,40,'Private key','store','bxm');
+  s+=box('d-net',250,100,80,40,'Internet');
+  s+=box('d-q',360,28,140,36,'Message signed?')+box('d-ver',360,98,140,44,'Verify signature','RSA / SHA-256','bxa')+box('d-pub',540,98,150,44,'Public key store','retrieved via DNS','bxa');
+  s+=box('d-rep',354,180,100,44,'Reputation /','accreditation')+box('d-prac',470,180,100,44,'Check signing','practices')+box('d-filt',586,180,116,44,'Message','filtering engine');
+  const P=(id,d,lab,lx,ly)=>'<path class="lk" id="'+id+'" d="'+d+'" marker-end="url(#ah)"/>'+(lab?'<text class="tm" x="'+lx+'" y="'+ly+'" font-size="10">'+lab+'</text>':'');
+  s+=P('e1','M81 66 V96')+P('e2','M81 178 V144')+P('e3','M146 120 H248')+P('e4','M330 120 H338 V46 H358')+P('e5','M430 64 V96','yes',435,84)+P('e6','M500 46 H530 V178','no',534,90)+P('e7','M404 142 V178','pass',408,165)+P('e8','M480 142 V178','fail',484,165)+P('e9','M540 120 H502')+P('e10','M570 202 H584')+P('e11','M404 224 V250 H644 V226');
+  $('dk-svg').innerHTML=s}
+const DK={pass:{h:['d-msg','d-sign','d-priv','d-net','d-q','d-ver','d-pub','d-rep','d-filt'],e:['e1','e2','e3','e4','e5','e7','e9','e11'],t:'The signature passes. <b>Reputation information</b> is used to assess the signer, and that assessment goes to the message filtering system.'},
+ fail:{h:['d-msg','d-sign','d-priv','d-net','d-q','d-ver','d-pub','d-prac','d-filt'],e:['e1','e2','e3','e4','e5','e8','e9','e10'],t:'The signature fails (e.g., the message was altered after signing). Information about the author’s <b>signing practices</b> is retrieved remotely and/or locally and passed to the filtering system.'},
+ none:{h:['d-msg','d-net','d-q','d-prac','d-filt'],e:['e1','e4','e6','e10'],t:'No signature using the author’s domain. Signing practices are checked: if the sender (e.g., gmail) is known to use DKIM but no DKIM signature is present, the message may be considered <b>fraudulent</b>.'}};
+function dk(k){const D=DK[k];$('dk-svg').querySelectorAll('.dimg').forEach(g=>g.classList.toggle('hl',D.h.includes(g.id)));$('dk-svg').querySelectorAll('.lk').forEach(l=>l.classList.toggle('on',D.e.includes(l.id)));$('dk-out').innerHTML='<p>'+D.t+'</p>'}
+drawDK();segBtns('data-dk',dk);dk('pass');
+
+/* ---------- 19.9 body canonicalization ---------- */
+const BC={mode:'simple',mut:new Set()};
+const BC0='Hi Bob,\n\nThe meeting moved to  3 pm.\nBring the  report.\n\nAlice\n';
+const crlf=s=>s.replace(/\r?\n/g,'\r\n');
+function canonBody(s,mode){let L=crlf(s).split('\r\n');if(L[L.length-1]==='')L.pop();
+  if(mode==='relaxed')L=L.map(l=>l.replace(/[ \t]+$/,'').replace(/[ \t]+/g,' '));
+  while(L.length&&L[L.length-1]==='')L.pop();
+  if(!L.length)return mode==='relaxed'?'':'\r\n';return L.join('\r\n')+'\r\n'}
+const vis=s=>esc(s).replace(/ /g,'<span class="sp">·</span>').replace(/\t/g,'<span class="q">→</span>').replace(/\r\n/g,'<span class="sp">⏎</span>\n');
+function mutate(s){let r=s;if(BC.mut.has('word'))r=r.replace('3 pm','4 pm');if(BC.mut.has('tab'))r=r.replace('to  3','to\t3').replace('to  4','to\t4');
+  if(BC.mut.has('ws'))r=r.split('\n').map(l=>l?l+'  ':l).join('\n');if(BC.mut.has('nl'))r=r.replace(/\n*$/,'\n\n\n\n');return r}
+async function bc(){const sent=$('bc-in').value,recv=mutate(sent),a=canonBody(sent,BC.mode),b=canonBody(recv,BC.mode);
+  const ha=b64(await sha('SHA-256',enc8.encode(a))),hb=b64(await sha('SHA-256',enc8.encode(b))),same=ha===hb;
+  ['ws','tab','nl','word'].forEach(k=>{const e=$('bc-'+k);e.setAttribute('aria-pressed',BC.mut.has(k)?'true':'false')});
+  $('bc-out').innerHTML='<div class="grid2"><div><h4 class="pk-h">Signer: c=…/'+BC.mode+'</h4><div class="encout">'+vis(a)+'</div><div class="bhv">bh='+ha+'</div></div>'+
+    '<div><h4 class="pk-h">Verifier, after relay changes</h4><div class="encout">'+vis(b)+'</div><div class="bhv">bh='+hb+'</div></div></div>'+
+    '<p>'+res(same,same?'body hash matches':'body hash differs: signature fails')+' '+(BC.mut.size===0?'No changes in transit.':same?'The '+BC.mode+' algorithm absorbed these changes.':BC.mut.has('word')?'Real content changed: no canonicalization should hide that.':'The '+BC.mode+' algorithm does not tolerate this change'+(BC.mode==='simple'?'; try relaxed.':'.'))+'</p>'}
+$('bc-in').value=BC0;on('bc-in','input',bc);
+['ws','tab','nl','word'].forEach(k=>on('bc-'+k,'click',()=>{BC.mut.has(k)?BC.mut.delete(k):BC.mut.add(k);bc()}));
+on('bc-reset','click',()=>{BC.mut.clear();$('bc-in').value=BC0;bc()});
+segBtns('data-bc',k=>{BC.mode=k;bc()});bc();
+
+/* ---------- 19.10 DMARC alignment ---------- */
+const orgD=d=>d.toLowerCase().replace(/\.$/,'').split('.').slice(-2).join('.');
+function dm(){const from=$('dm-from').value.trim(),fd=(from.split('@')[1]||'').toLowerCase().replace(/>$/,''),mf=$('dm-mf').value.trim().toLowerCase(),d=$('dm-d').value.trim().toLowerCase();
+  const spfP=$('dm-spf').value==='pass',dkP=$('dm-dkim').value==='pass',as=$('dm-aspf').value,ad=$('dm-adkim').value,p=$('dm-p').value,pct=Math.max(0,Math.min(100,+$('dm-pct').value||0));
+  if(!fd||!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(fd)){$('dm-out').innerHTML=err('Step 2 fails: the RFC 5322 From must hold a single valid address. The mail is refused as an error.');return}
+  const al=(x,m)=>m==='s'?x===fd:orgD(x)===orgD(fd);
+  const sA=al(mf,as),dA=al(d,ad),sOK=spfP&&sA,dOK=dkP&&dA,pass=sOK||dOK;
+  const row=(n,res_,a,m,dom)=>'<div><div class="h">'+n+'</div><div class="d '+(res_&&a?'ok':'no')+'">'+(res_?'pass':'fail')+' · '+(a?'aligned':'not aligned')+'</div><div class="cap" style="margin:2px 0 0">'+esc(dom)+' vs '+esc(fd)+' ('+(m==='s'?'strict: exact match':'relaxed: '+esc(orgD(dom))+' vs '+esc(orgD(fd)))+')</div></div>';
+  $('dm-out').innerHTML='<div class="rec"><span class="dm">_dmarc.'+esc(orgD(fd))+'. IN TXT</span> "v=DMARC1; p=<span class="t0">'+p+'</span>; aspf=<span class="t1">'+as+'</span>; adkim=<span class="t1">'+ad+'</span>; pct=<span class="t2">'+pct+'</span>"</div>'+
+    '<div class="alg">'+row('SPF identifier',spfP,sA,as,mf)+row('DKIM identifier',dkP,dA,ad,d)+'<div><div class="h">DMARC result</div><div class="d '+(pass?'ok':'no')+'">'+(pass?'pass':'fail')+'</div><div class="cap" style="margin:2px 0 0">needs at least one passing <i>and</i> aligned identifier</div></div></div>'+
+    '<p>'+(pass?'Deliver: the From domain is authenticated.':p==='none'?'Policy <b>none</b>: no specific action; the receiver’s local policy decides, and the failure shows up in reports.':'Policy <b>'+p+'</b> applies to '+pct+'% of the sender’s mail: '+(p==='quarantine'?'treat as suspicious (e.g., junk folder)':'reject, preferably during the SMTP transaction')+'.')+'</p>'}
+['dm-from','dm-mf','dm-spf','dm-d','dm-dkim','dm-p','dm-aspf','dm-adkim','dm-pct'].forEach(i=>{on(i,'input',dm);on(i,'change',dm)});dm();
+
+/* ===== scroll-following contents ===== */
+const links=[...document.querySelectorAll('nav.toc a')];
+const secs=links.map(l=>document.querySelector(l.getAttribute('href'))).filter(Boolean);
+const list=document.querySelector('nav.toc ol');let current=null,ticking=false;
+function spy(){ticking=false;const line=window.innerHeight*0.3;let idx=0;
+  secs.forEach((s,k)=>{if(s.getBoundingClientRect().top<=line)idx=k});
+  if((window.innerHeight+window.scrollY)>=document.documentElement.scrollHeight-4)idx=secs.length-1;
+  const l=links[idx];
+  if(l!==current){if(current){current.classList.remove('active');current.removeAttribute('aria-current')}
+    l.classList.add('active');l.setAttribute('aria-current','true');current=l;
+    if(list.scrollWidth>list.clientWidth){list.scrollTo({left:l.parentElement.offsetLeft-list.clientWidth/2+l.parentElement.offsetWidth/2,behavior:reduce?'auto':'smooth'})}}
+  const max=document.documentElement.scrollHeight-window.innerHeight;
+  $('toc-progress').style.width=(max>0?Math.min(100,window.scrollY/max*100):0)+'%'}
+window.addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(spy)}},{passive:true});
+window.addEventListener('resize',spy);spy();
+})();
+</script>
+<button class="to-top" id="to-top" type="button" aria-label="Back to top">↑ Top</button>
+<script>
+(function(){
+  var btn=document.getElementById('to-top');if(!btn)return;
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches,tick=false;
+  function upd(){tick=false;btn.classList.toggle('show',window.scrollY>600)}
+  window.addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(upd)}},{passive:true});
+  btn.addEventListener('click',function(){window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});var h=document.querySelector('.topbar a.home');if(h)h.focus({preventScroll:true})});
+  upd();
+})();
+</script>
+<script>
+/* Phones: keep wide diagrams readable; they scroll inside their own box instead of shrinking */
+(function(){var mq=window.matchMedia&&matchMedia('(max-width:600px)');if(!mq)return;
+  function fit(){document.querySelectorAll('.figure svg[viewBox]').forEach(function(s){var w=s.viewBox.baseVal.width;
+    if(mq.matches&&w>=480){s.style.minWidth=Math.round(w*0.8)+'px';s.style.maxWidth='none'}else{s.style.minWidth='';s.style.maxWidth=''}})}
+  fit();document.addEventListener('click',function(){setTimeout(fit,60)});document.addEventListener('input',function(){setTimeout(fit,60)});
+  if(mq.addEventListener)mq.addEventListener('change',fit)})();
+</script>
+<script>
+/* Side navbar: keep the highlighted entry in view while the page scrolls (wide screens only) */
+(function(){var nav=document.querySelector('nav.toc');if(!nav||!window.MutationObserver)return;
+  var wide=window.matchMedia('(min-width:901px)');
+  new MutationObserver(function(ms){if(!wide.matches||nav.scrollHeight<=nav.clientHeight)return;
+    for(var i=0;i<ms.length;i++){var a=ms[i].target;if(!/(^|\s)(active|on)(\s|$)/.test(a.className))continue;
+      var n=nav.getBoundingClientRect(),r=a.getBoundingClientRect(),pad=24;
+      if(r.top<n.top+pad)nav.scrollTop-= (n.top+pad-r.top);else if(r.bottom>n.bottom-pad)nav.scrollTop+= (r.bottom-(n.bottom-pad));break}
+  }).observe(nav,{subtree:true,attributes:true,attributeFilter:['class']});
+})();
+/* Review Questions: Expand all / Collapse all */
+(function(){var sec=document.getElementById('review');if(!sec)return;var bar=sec.querySelector('.rv-tools');if(!bar)return;
+  var ds=[].slice.call(sec.querySelectorAll('details'));if(!ds.length){bar.remove();return}
+  var op=bar.querySelector('[data-rv="open"]'),cl=bar.querySelector('[data-rv="close"]'),ct=bar.querySelector('.rv-count');
+  function upd(){var n=ds.filter(function(d){return d.open}).length;op.disabled=n===ds.length;cl.disabled=n===0;ct.textContent=n+' of '+ds.length+' open'}
+  op.addEventListener('click',function(){ds.forEach(function(d){d.open=true});upd()});
+  cl.addEventListener('click',function(){ds.forEach(function(d){d.open=false});upd()});
+  ds.forEach(function(d){d.addEventListener('toggle',upd)});upd();
+})();
+</script>
+<script src="notation.js" data-unit="12" defer></script>
+</body>
+</html>

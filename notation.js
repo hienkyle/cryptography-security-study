@@ -55,7 +55,8 @@ var UNIT_USES={
   8:["K","dPU","ePR","PR","PU","zn","gfp","gcd","mod","cong","dlog","phi","div","cat","approx","xor","in"],
   9:["dK","eK","dPR","dPU","ePR","ePU","K","PR","PU","abs","cat","xor"],
   10:["eK","dK","K","ePU","PU","cat","xor"],
-  11:["K","ePU","PU","PR","mod","gfp","cat","xor"]
+  11:["K","ePU","PU","PR","mod","gfp","cat","xor"],
+  12:["dK","eK","dPR","dPU","ePR","ePU","K","PR","PU","cat"]
 };
 var UNIT_TITLES={1:"Security Foundations",2:"Number Theory",3:"Classical Ciphers & DES",4:"Finite Fields & AES",5:"Using Symmetric Ciphers",6:"Public-Key Cryptography",7:"Hashes & MACs",8:"Digital Signatures",9:"Key Management & Authentication",10:"Access Control & Wireless",11:"Protocol-Layer Security",12:"Email Security"};
 
